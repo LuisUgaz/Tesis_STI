@@ -1,0 +1,132 @@
+Contexto general del proyecto:
+El proyecto de tesis consiste en el desarrollo de un Sistema Tutor Inteligente Adaptativo orientado a apoyar el aprendizaje de problemas geométricos en estudiantes de segundo de secundaria del colegio Pedro Abel Labarthe Durand. El propósito central del sistema es fortalecer el aprendizaje en geometría mediante una plataforma web que personaliza ejercicios, brinda retroalimentación inmediata y registra el progreso del estudiante.
+
+La problemática parte de que, en el nivel de secundaria, y particularmente en segundo grado, existen dificultades en la comprensión de nociones básicas de geometría y en la resolución de problemas vinculados a esta área. En la documentación se señala que este contexto requiere apoyos más eficaces, ya que los estudiantes presentan vacíos de aprendizaje que afectan su desempeño y hacen necesario un reforzamiento más específico y personalizado. Además, se menciona que en el colegio se reportan necesidades de recuperación académica, lo que refuerza la necesidad de una solución que acompañe al estudiante de manera más individualizada.
+
+Frente a esta situación, la propuesta plantea una solución tecnológica en forma de tutor inteligente accesible desde navegador, capaz de adaptar el contenido según el rendimiento del estudiante. El sistema incorpora un examen diagnóstico, un mecanismo de recomendación de temas, ejercicios por tema y nivel, retroalimentación inmediata, material teórico, videos de apoyo, seguimiento del progreso, gamificación y paneles de reportes para docentes. La idea es que el estudiante no reciba una secuencia fija de ejercicios, sino una experiencia más ajustada a sus necesidades de aprendizaje.
+
+Desde el enfoque pedagógico, el proyecto se apoya en principios como la progresión por dominio, la evaluación formativa con retroalimentación inmediata, la práctica guiada, la metacognición y el uso de recursos visuales o dinámicos para fortalecer el razonamiento espacial en geometría. La tesis sostiene que esta combinación busca atacar causas frecuentes del problema, como vacíos conceptuales, débil razonamiento espacial y baja autorregulación en el aprendizaje.
+
+En cuanto a la implementación tecnológica, la aplicación está concebida como una plataforma web basada en Django, donde el backend administra la autenticación, la lógica del negocio, los roles de usuario, el procesamiento del progreso, la gamificación y la interacción con la base de datos. El frontend se apoya en HTML, CSS y JavaScript, mostrando módulos como ejercicios, exámenes, temas, videos, perfil del estudiante y reportes. La documentación también menciona una arquitectura con servicios web y posibilidad de actualización en tiempo real mediante Django Channels y WebSockets, especialmente para ranking, notificaciones o avances dinámicos.
+
+La base de datos propuesta para el proyecto es PostgreSQL, utilizada para almacenar usuarios, ejercicios, resultados, logros, estadísticas y demás elementos del sistema. La tesis remarca que su estructura relacional permite mantener integridad referencial y consultas eficientes, lo cual es importante porque el sistema maneja información académica, seguimiento del progreso y elementos de gamificación.
+
+Además, el sistema contempla distintos tipos de usuario, como estudiantes, docentes y administrador. El estudiante interactúa con el examen diagnóstico, los temas recomendados, los ejercicios, la retroalimentación y su perfil gamificado. El docente puede revisar reportes, monitorear el progreso y gestionar ciertos contenidos. El administrador se encarga de la gestión general del sistema.
+
+En términos funcionales ya evidenciados en la documentación, el sistema cuenta con módulos de temas como triángulos, ángulos y segmentos, ejercicios por tema, feedback inmediato, seguimiento del progreso, videos de apoyo, gamificación con puntos, niveles e insignias, y gestión de contenidos. La documentación de ejecución indica que la mayor parte de los requisitos funcionales ya fueron implementados y probados, quedando pendiente principalmente la exportación de reportes a formatos externos.
+
+2. Contexto técnico del proyecto:
+Proyecto: Sistema Tutor Inteligente Adaptativo para el aprendizaje de problemas geométricos en estudiantes de segundo de secundaria del colegio Pedro Abel Labarthe Durand.
+
+Enfoque funcional del sistema:
+Autenticación de usuarios
+Examen diagnóstico
+Recomendación de temas según desempeño
+Ejercicios por tema y nivel
+Retroalimentación inmediata
+Material teórico y videos de apoyo
+Registro de progreso
+Perfil del estudiante con puntos, niveles e insignias
+Reportes para docentes
+Gestión de contenidos por roles
+
+Stack tecnológico:
+Lenguaje principal: Python
+Framework backend: Django
+Base de datos: PostgreSQL
+Frontend: HTML, CSS, JavaScript
+Posible soporte en tiempo real: Django Channels + WebSockets
+
+Base de datos PostgreSQL:
+NAME = Base_Tesis
+USER = postgres
+PASSWORD = 1234
+HOST = 127.0.0.1
+PORT = 5432
+
+Contexto de arquitectura:
+Aplicación web accesible desde navegador
+Backend Django para lógica de negocio, autenticación y gestión de roles
+PostgreSQL como base de datos relacional
+Frontend web para interacción del estudiante y docente
+Sistema orientado a aprendizaje adaptativo y gamificación
+
+Roles principales:
+Estudiante
+Docente
+Administrador
+
+Módulos principales esperados:
+Login / autenticación
+Examen diagnóstico
+Temas de geometría
+Ejercicios y exámenes
+Retroalimentación
+Videos y teoría
+Perfil del estudiante
+Reportes
+Gestión de preguntas y contenidos
+
+
+OBJETIVO GENERAL:
+Desarrollar un sistema tutor inteligente para apoyar el proceso de aprendizaje en el área de geometría de los alumnos de segundo de secundaria del colegio nacional Pedro Abel Labarthe Durand.
+
+OBJETIVOS ESPECÍFICOS:
+Evaluar diferentes algoritmos de recomendación, a partir de los resultados del examen diagnóstico del estudiante, con el fin de seleccionar el más adecuado para contextualizar las variables que requiera el algoritmo con la realidad de estudio y personalizar los ejercicios de apoyo.
+Incorporar un modelo educativo contextualizado, adaptado a las necesidades del aprendizaje en geometría, de modo que el software integre un enfoque pedagógico que respalde el proceso de aprendizaje y las interfaces diseñadas.
+Integrar el algoritmo seleccionado con el modelo a la aplicación web que permita la interacción humana y computador más ágil.
+Determinar el nivel de calidad de software en cuanto a su funcionalidad, con el propósito de validar su funcionamiento en términos de satisfacción de los usuarios.
+
+Requerimientos funcionales:
+
+El sistema debe permitir el registro de usuarios.
+El sistema debe permitir el inicio de sesión de estudiantes, docentes y administrador.
+El sistema debe gestionar perfiles diferenciados según rol.
+El sistema debe aplicar un examen diagnóstico de geometría.
+El sistema debe registrar los resultados del examen diagnóstico.
+El sistema debe procesar los resultados con un algoritmo de recomendación.
+El sistema debe recomendar el tema a reforzar según el desempeño del estudiante.
+El sistema debe asignar ejercicios personalizados según el rendimiento del estudiante.
+El sistema debe ajustar la dificultad de los ejercicios de forma adaptativa.
+El sistema debe permitir resolver ejercicios dentro del entorno web.
+El sistema debe brindar retroalimentación inmediata a cada respuesta.
+El sistema debe mostrar apoyo teórico por tema.
+El sistema debe mostrar videos recomendados de apoyo.
+El sistema debe registrar el progreso del estudiante.
+El sistema debe almacenar y consultar el historial de resultados y logros.
+El sistema debe calcular métricas de desempeño académico.
+El sistema debe otorgar puntos por actividades completadas.
+El sistema debe permitir al estudiante subir de nivel según su rendimiento.
+El sistema debe otorgar insignias automáticas por metas o constancia.
+El sistema debe mostrar al estudiante su perfil con progreso, puntos, niveles e insignias.
+El sistema debe generar reportes de progreso para docentes.
+El sistema debe permitir filtrar reportes por estudiante, fecha u otros criterios.
+El sistema debe permitir administrar el banco de problemas geométricos.
+El sistema debe permitir registrar, editar y eliminar preguntas y respuestas del banco.
+El sistema debe permitir administrar videos recomendados.
+El sistema debe permitir al docente visualizar estadísticas por estudiante y por aula.
+El sistema debe permitir la gestión administrativa de usuarios, contenidos e insignias.
+El sistema debe permitir el envío de consultas del estudiante al docente mediante el módulo “Contáctanos”.
+
+Requerimientos no funcionales:
+
+El sistema debe ser accesible desde navegadores web comunes.
+El sistema debe ser multiplataforma y funcionar en PC, laptop, tablet y móviles compatibles.
+El sistema debe autenticar usuarios con credenciales seguras.
+El sistema debe cifrar los datos sensibles y las contraseñas.
+El sistema debe usar comunicación segura mediante HTTPS/TLS.
+El sistema debe responder en menos de 2 segundos en los procesos principales.
+El sistema debe estar disponible al menos el 95 % del tiempo escolar.
+El sistema debe soportar al menos 200 usuarios concurrentes en su primera versión.
+El sistema debe ser mantenible, modular y documentado.
+La interfaz debe ser intuitiva y motivadora sin distraer del aprendizaje.
+El sistema debe ser compatible con HTML5, CSS3, JavaScript y WebSockets en navegadores soportados.
+El sistema debe funcionar con una resolución mínima de 1280x720.
+El sistema debe operar sin instalación pesada, ejecutándose desde navegador.
+El sistema debe preservar la integridad de los datos mediante una base de datos relacional.
+El sistema debe permitir escalabilidad e integración mediante backend web/API.
+El sistema debe ofrecer usabilidad aceptable validada con pruebas o encuestas de usuarios.
+
+Regla Importante:
+Toda la documentación, preguntas y acciones que se realicen debe estar en español
+No realizar ningún commit o git, los cambios se guardaran de forma manual
