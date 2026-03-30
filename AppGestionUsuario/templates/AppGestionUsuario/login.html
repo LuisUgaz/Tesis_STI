@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Bienvenido de Nuevo! - Iniciar Sesión</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --accent-color: #f5a623;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--secondary-color) 1px, transparent 1px);
+            background-size: 20px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .login-container {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            border: 4px solid var(--primary-color);
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0px var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .checkbox-group input {
+            margin-right: 0.5rem;
+            cursor: pointer;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem 0;
+            color: #d0021b;
+            font-size: 0.9rem;
+            text-align: center;
+            background: #f8d7da;
+            padding: 0.5rem;
+            border-radius: 10px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .footer-text a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>¡Entrar!</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div style="
+                    padding: 0.8rem;
+                    margin-bottom: 1rem;
+                    border-radius: 10px;
+                    text-align: center;
+                    background-color: {% if message.tags == 'success' %}#d4edda{% else %}#f8d7da{% endif %};
+                    color: {% if message.tags == 'success' %}#155724{% else %}#721c24{% endif %};
+                    border: 1px solid {% if message.tags == 'success' %}#c3e6cb{% else %}#f5c6cb{% endif %};
+                ">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <ul class="errorlist">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Usuario</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div style="color: red; font-size: 0.8rem;">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div style="color: red; font-size: 0.8rem;">{{ form.password.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" name="remember_me" id="remember_me">
+                <label for="remember_me" style="margin-bottom: 0; font-weight: normal;">Mantener sesión iniciada</label>
+            </div>
+
+            <button type="submit" class="btn-login">¡Aprender!</button>
+        </form>
+
+        <div class="footer-text">
+            ¿No tienes cuenta? <a href="{% url 'register' %}">Regístrate aquí</a>
+        </div>
+    </div>
+</body>
+</html>

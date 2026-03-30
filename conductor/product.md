@@ -72,7 +72,7 @@ GestiÃ³n de preguntas y contenidos
 OBJETIVO GENERAL:
 Desarrollar un sistema tutor inteligente para apoyar el proceso de aprendizaje en el Ã¡rea de geometrÃ­a de los alumnos de segundo de secundaria del colegio nacional Pedro Abel Labarthe Durand.
 
-OBJETIVOS ESPECÃFICOS:
+OBJETIVOS ESPECÃFICOS:
 Evaluar diferentes algoritmos de recomendaciÃ³n, a partir de los resultados del examen diagnÃ³stico del estudiante, con el fin de seleccionar el mÃ¡s adecuado para contextualizar las variables que requiera el algoritmo con la realidad de estudio y personalizar los ejercicios de apoyo.
 Incorporar un modelo educativo contextualizado, adaptado a las necesidades del aprendizaje en geometrÃ­a, de modo que el software integre un enfoque pedagÃ³gico que respalde el proceso de aprendizaje y las interfaces diseÃ±adas.
 Integrar el algoritmo seleccionado con el modelo a la aplicaciÃ³n web que permita la interacciÃ³n humana y computador mÃ¡s Ã¡gil.
@@ -152,6 +152,9 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **Examen DiagnÃ³stico:** EvaluaciÃ³n inicial para determinar el nivel de partida en cada tema crÃ­tico (TriÃ¡ngulos, Ãngulos, Segmentos, etc.).
 - **Algoritmo de RecomendaciÃ³n HeurÃ­stica:** LÃ³gica personalizada que procesa el desempeÃ±o del diagnÃ³stico para sugerir temas y niveles de dificultad especÃ­ficos.
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
+- **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.
+- **Cierre de SesiÃ³n (HU03):** FinalizaciÃ³n segura de sesiÃ³n con invalidaciÃ³n de credenciales y mensaje de retroalimentaciÃ³n.
+- **VisualizaciÃ³n de Perfil (HU04):** Consulta de datos personales y acadÃ©micos con visualizaciÃ³n diferenciada por rol (Estudiante/Docente).
 - **Banco de Problemas GeomÃ©tricos:** Ejercicios categorizados por tema y dificultad con soporte visual y teÃ³rico.
 - **RetroalimentaciÃ³n Inmediata:** Explicaciones y correcciones en tiempo real tras cada respuesta del estudiante.
 - **Sistema de GamificaciÃ³n:**
