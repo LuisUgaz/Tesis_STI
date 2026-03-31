@@ -151,7 +151,8 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 ## Funcionalidades Core
 - **Examen Diagnóstico (HU05):** Evaluación inicial implementada con gestión de preguntas (opción múltiple/texto) vía Admin, temporizador global y cálculo de resultados por tema.
 - **Persistencia de Resultados (HU06):** Registro formal del desempeño diagnóstico con cálculo de puntaje automatizado (escala 100), validación de intento único y almacenamiento histórico para alimentar los algoritmos de recomendación.
-- **Algoritmo de Recomendación Heurística:** Lógica personalizada que procesa el desempeño del diagnóstico para sugerir temas y niveles de dificultad específicos.
+- **Algoritmo de Recomendación (HU07):** Lógica de procesamiento de resultados que identifica el tema con mayor necesidad de refuerzo mediante un algoritmo de pesos por desempeño, permitiendo una personalización precisa del aprendizaje.
+
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
 - **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.
 - **Cierre de SesiÃ³n (HU03):** FinalizaciÃ³n segura de sesiÃ³n con invalidaciÃ³n de credenciales y mensaje de retroalimentaciÃ³n.
