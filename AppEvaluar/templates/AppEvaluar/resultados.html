@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados - {{ examen.nombre }}</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --accent-color: #f5a623;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 5px solid var(--secondary-color);
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '★';
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            font-size: 5rem;
+            color: rgba(80, 227, 194, 0.2);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+
+        .score-box {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tema-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-top: 6px solid var(--accent-color);
+            text-align: center;
+        }
+
+        .tema-nombre {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .tema-porcentaje {
+            font-size: 2rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background: #eee;
+            height: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            transition: width 1s ease-out;
+        }
+
+        .btn-home {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: transform 0.2s, background 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-home:hover {
+            transform: scale(1.05);
+            background: #357abd;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            .header {
+                padding: 1.5rem;
+            }
+            .score-box {
+                font-size: 1.5rem;
+                padding: 0.8rem 1.5rem;
+            }
+            .tema-porcentaje {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>¡Examen Completado!</h1>
+            <p>Has terminado el <strong>{{ examen.nombre }}</strong></p>
+            <div class="score-box">
+                {{ puntaje_total }} / 20.0
+            </div>
+            <p>Respondiste correctamente {{ total_correctas }} de {{ total_preguntas }} preguntas.</p>
+        </div>
+
+        <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">Resumen por Temas</h2>
+        
+        <div class="results-grid">
+            {% for tema, datos in resumen_temas.items %}
+                <div class="tema-card">
+                    <div class="tema-nombre">{{ tema }}</div>
+                    <div class="tema-porcentaje">{{ datos.porcentaje }}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ datos.porcentaje }}%"></div>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                        {{ datos.correctas }} de {{ datos.total }} correctas
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="{% url 'home' %}" class="btn-home">Ir al Inicio</a>
+        </div>
+    </div>
+</body>
+</html>

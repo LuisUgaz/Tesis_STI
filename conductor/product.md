@@ -149,8 +149,8 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **Administrador del Sistema:** Encargado de la gestión general de usuarios, banco de preguntas, contenidos multimedia e insignias.
 
 ## Funcionalidades Core
-- **Examen DiagnÃ³stico:** EvaluaciÃ³n inicial para determinar el nivel de partida en cada tema crÃ­tico (TriÃ¡ngulos, Ãngulos, Segmentos, etc.).
-- **Algoritmo de RecomendaciÃ³n HeurÃ­stica:** LÃ³gica personalizada que procesa el desempeÃ±o del diagnÃ³stico para sugerir temas y niveles de dificultad especÃ­ficos.
+- **Examen Diagnóstico (HU05):** Evaluación inicial implementada con gestión de preguntas (opción múltiple/texto) vía Admin, temporizador global y cálculo de resultados por tema.
+- **Algoritmo de Recomendación Heurística:** Lógica personalizada que procesa el desempeño del diagnóstico para sugerir temas y niveles de dificultad específicos.
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
 - **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.
 - **Cierre de SesiÃ³n (HU03):** FinalizaciÃ³n segura de sesiÃ³n con invalidaciÃ³n de credenciales y mensaje de retroalimentaciÃ³n.

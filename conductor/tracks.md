@@ -26,3 +26,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: Visualización de Perfil por Rol (HU04)**
   *Link: [./tracks/user_profile_20260329/](./tracks/user_profile_20260329/)*
+
+---
+
+- [x] **Track: HU05 - Rendir examen diagnóstico para identificar el nivel de geometría del estudiante.**
+  *Link: [./tracks/user_exam_diagnosis_20260330/](./tracks/user_exam_diagnosis_20260330/)*
