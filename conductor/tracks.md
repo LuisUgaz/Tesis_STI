@@ -31,3 +31,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU05 - Rendir examen diagnóstico para identificar el nivel de geometría del estudiante.**
   *Link: [./tracks/user_exam_diagnosis_20260330/](./tracks/user_exam_diagnosis_20260330/)*
+
+---
+
+- [x] **Track: HU06 - Registrar resultado diagnóstico para el aprendizaje de problemas geométricos.**
+  *Link: [./tracks/user_exam_diagnosis_persistence_20260330/](./tracks/user_exam_diagnosis_persistence_20260330/)*

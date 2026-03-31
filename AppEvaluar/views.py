@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario
+from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
@@ -17,6 +17,12 @@ def student_required(view_func):
 @student_required
 def rendir_examen(request, examen_id):
     examen = get_object_or_404(ExamenDiagnostico, id=examen_id)
+    
+    # Validar si el estudiante ya realizó el examen (HU06)
+    if ResultadoDiagnostico.objects.filter(estudiante=request.user, examen=examen).exists():
+        messages.error(request, "Ya has realizado este examen diagnóstico.")
+        return redirect('ver_resultados', examen_id=examen.id)
+
     preguntas = examen.preguntas.all().prefetch_related('opciones')
     
     if request.method == 'GET':
@@ -40,9 +46,12 @@ def rendir_examen(request, examen_id):
                 # Aún así guardamos lo que llegó, o podríamos rechazarlo. 
                 # Por requerimiento, solemos guardar lo enviado.
         
-        # Eliminar respuestas previas
+        # Eliminar respuestas previas (si las hubiera, aunque el bloqueo anterior lo previene)
         RespuestaUsuario.objects.filter(usuario=request.user, pregunta__examen=examen).delete()
         
+        total_correctas = 0
+        total_preguntas = preguntas.count()
+
         for pregunta in preguntas:
             campo_nombre = f'pregunta_{pregunta.id}'
             valor = request.POST.get(campo_nombre)
@@ -57,6 +66,8 @@ def rendir_examen(request, examen_id):
                     try:
                         opcion = Opcion.objects.get(id=valor, pregunta=pregunta)
                         respuesta.opcion_seleccionada = opcion
+                        if opcion.es_correcta:
+                            total_correctas += 1
                     except (Opcion.DoesNotExist, ValueError):
                         continue
                 else:
@@ -64,6 +75,16 @@ def rendir_examen(request, examen_id):
                 
                 respuesta.save()
         
+        # Calcular puntaje (HU06: Respuestas Correctas / Total de Preguntas * 100)
+        puntaje = (total_correctas / total_preguntas * 100) if total_preguntas > 0 else 0
+        
+        # Persistir resultado (HU06)
+        ResultadoDiagnostico.objects.create(
+            estudiante=request.user,
+            examen=examen,
+            puntaje=puntaje
+        )
+
         # Limpiar sesión
         if session_key in request.session:
             del request.session[session_key]
@@ -81,8 +102,9 @@ def rendir_examen(request, examen_id):
 def ver_resultados(request, examen_id):
     examen = get_object_or_404(ExamenDiagnostico, id=examen_id)
     respuestas = RespuestaUsuario.objects.filter(usuario=request.user, pregunta__examen=examen)
+    resultado_persistido = ResultadoDiagnostico.objects.filter(estudiante=request.user, examen=examen).first()
     
-    if not respuestas.exists():
+    if not respuestas.exists() and not resultado_persistido:
         messages.warning(request, "No tienes resultados para este examen.")
         return redirect('home')
 
@@ -90,30 +112,34 @@ def ver_resultados(request, examen_id):
     total_correctas = 0
     resumen_temas = {}
 
-    for respuesta in respuestas:
-        tema = respuesta.pregunta.categoria
-        if tema not in resumen_temas:
-            resumen_temas[tema] = {'correctas': 0, 'total': 0}
-        
-        resumen_temas[tema]['total'] += 1
-        
-        es_correcta = False
-        if respuesta.pregunta.tipo == 'OPCION_MULTIPLE':
-            if respuesta.opcion_seleccionada and respuesta.opcion_seleccionada.es_correcta:
-                es_correcta = True
-        else:
-            # Para texto corto, la lógica de corrección es más compleja.
-            pass
+    # Si hay respuestas, calculamos el resumen por temas (esto es para el detalle visual)
+    if respuestas.exists():
+        for respuesta in respuestas:
+            tema = respuesta.pregunta.categoria
+            if tema not in resumen_temas:
+                resumen_temas[tema] = {'correctas': 0, 'total': 0}
             
-        if es_correcta:
-            total_correctas += 1
-            resumen_temas[tema]['correctas'] += 1
+            resumen_temas[tema]['total'] += 1
+            
+            es_correcta = False
+            if respuesta.pregunta.tipo == 'OPCION_MULTIPLE':
+                if respuesta.opcion_seleccionada and respuesta.opcion_seleccionada.es_correcta:
+                    es_correcta = True
+            
+            if es_correcta:
+                total_correctas += 1
+                resumen_temas[tema]['correctas'] += 1
 
-    # Calcular porcentajes por tema
-    for tema, datos in resumen_temas.items():
-        datos['porcentaje'] = round((datos['correctas'] / datos['total']) * 100, 2)
+        # Calcular porcentajes por tema
+        for tema, datos in resumen_temas.items():
+            datos['porcentaje'] = round((datos['correctas'] / datos['total']) * 100, 2)
 
-    puntaje_total = round((total_correctas / total_preguntas) * 20, 2) if total_preguntas > 0 else 0
+    # El puntaje total lo tomamos del persistido si existe, si no, lo calculamos (compatibilidad)
+    if resultado_persistido:
+        # El modelo guarda sobre 100, pero la vista actual muestra sobre 20
+        puntaje_total = round(float(resultado_persistido.puntaje) * 20 / 100, 2)
+    else:
+        puntaje_total = round((total_correctas / total_preguntas) * 20, 2) if total_preguntas > 0 else 0
 
     return render(request, 'AppEvaluar/resultados.html', {
         'examen': examen,

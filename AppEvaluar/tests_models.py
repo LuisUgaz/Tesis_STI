@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario
+from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
 
 class EvaluarModelsTest(TestCase):
     def setUp(self):
@@ -72,3 +72,14 @@ class EvaluarModelsTest(TestCase):
             respuesta_texto="Es una porción de recta limitada por dos puntos."
         )
         self.assertEqual(respuesta.respuesta_texto, "Es una porción de recta limitada por dos puntos.")
+
+    def test_resultado_diagnostico_creation(self):
+        from .models import ResultadoDiagnostico
+        resultado = ResultadoDiagnostico.objects.create(
+            estudiante=self.user,
+            examen=self.examen,
+            puntaje=85.50
+        )
+        self.assertEqual(resultado.estudiante.username, 'teststudent')
+        self.assertEqual(float(resultado.puntaje), 85.50)
+        self.assertIsNotNone(resultado.fecha_realizacion)

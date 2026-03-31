@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from AppGestionUsuario.models import Profile
-from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario
+from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
 
 class EvaluarViewsTest(TestCase):
     def setUp(self):
@@ -41,11 +41,35 @@ class EvaluarViewsTest(TestCase):
             f'pregunta_{self.pregunta.id}': Opcion.objects.get(texto="Opcion A").id
         }
         response = self.client.post(self.url_examen, data)
-        # Por ahora debe redirigir a algún lugar (ej. home o resultados)
+        # Debe redirigir a resultados
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(RespuestaUsuario.objects.count(), 1)
-        respuesta = RespuestaUsuario.objects.first()
-        self.assertEqual(respuesta.opcion_seleccionada.texto, "Opcion A")
-        self.assertEqual(respuesta.usuario, self.user_student)
+        
+        # Verificar que se creó el ResultadoDiagnostico (HU06)
+        self.assertEqual(ResultadoDiagnostico.objects.count(), 1)
+        resultado = ResultadoDiagnostico.objects.first()
+        self.assertEqual(resultado.estudiante, self.user_student)
+        self.assertEqual(float(resultado.puntaje), 100.0)
+
+    def test_examen_submission_prevents_multiple_attempts(self):
+        self.client.login(username='student', password='password123')
+        # Crear un resultado previo
+        ResultadoDiagnostico.objects.create(
+            estudiante=self.user_student,
+            examen=self.examen,
+            puntaje=100.0
+        )
+        
+        data = {
+            f'pregunta_{self.pregunta.id}': Opcion.objects.get(texto="Opcion A").id
+        }
+        # follow=True para ver el mensaje en la página de redirección
+        response = self.client.post(self.url_examen, data, follow=True)
+        # print(response.content.decode()) # Depuración
+        # Debe mostrar mensaje de error
+        self.assertContains(response, "Ya has realizado este examen diagnóstico.")
+        # No deben haberse creado nuevos resultados
+        self.assertEqual(ResultadoDiagnostico.objects.count(), 1)
 
     def test_results_view_shows_score(self):
         self.client.login(username='student', password='password123')

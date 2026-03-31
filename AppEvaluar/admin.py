@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario
+from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
 
 class OpcionInline(admin.TabularInline):
     model = Opcion
@@ -23,6 +23,12 @@ class RespuestaUsuarioAdmin(admin.ModelAdmin):
     list_filter = ('usuario', 'pregunta')
     readonly_fields = ('fecha_respuesta',)
 
+class ResultadoDiagnosticoAdmin(admin.ModelAdmin):
+    list_display = ('estudiante', 'examen', 'puntaje', 'fecha_realizacion')
+    list_filter = ('examen', 'fecha_realizacion')
+    readonly_fields = ('fecha_realizacion',)
+
 admin.site.register(ExamenDiagnostico, ExamenDiagnosticoAdmin)
 admin.site.register(Pregunta, PreguntaAdmin)
 admin.site.register(RespuestaUsuario, RespuestaUsuarioAdmin)
+admin.site.register(ResultadoDiagnostico, ResultadoDiagnosticoAdmin)

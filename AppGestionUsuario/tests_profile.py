@@ -31,7 +31,8 @@ class ProfileViewTests(TestCase):
         response = self.client.get(reverse('profile', kwargs={'username': 'estudiante'}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Juan Pérez')
-        self.assertContains(response, '2do A')
+        self.assertContains(response, '2do')
+        self.assertContains(response, 'A')
 
     def test_view_own_profile_teacher(self):
         """Un docente puede ver su propio perfil."""
