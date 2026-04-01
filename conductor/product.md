@@ -152,6 +152,7 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **Examen Diagnóstico (HU05):** Evaluación inicial implementada con gestión de preguntas (opción múltiple/texto) vía Admin, temporizador global y cálculo de resultados por tema.
 - **Persistencia de Resultados (HU06):** Registro formal del desempeño diagnóstico con cálculo de puntaje automatizado (escala 100), validación de intento único y almacenamiento histórico para alimentar los algoritmos de recomendación.
 - **Algoritmo de Recomendación (HU07):** Lógica de procesamiento de resultados que identifica el tema con mayor necesidad de refuerzo mediante un algoritmo de pesos por desempeño, permitiendo una personalización precisa del aprendizaje.
+- **Visualización de Temas Recomendados (HU08):** Interfaz personalizada que resalta el tema sugerido para el estudiante en el menú de tutoría, reordenando los contenidos para priorizar el refuerzo identificado.
 
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
 - **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.

@@ -52,3 +52,12 @@ class ResultadoDiagnostico(models.Model):
 
     def __str__(self):
         return f"Resultado {self.estudiante.username} - {self.puntaje}%"
+
+class RecomendacionEstudiante(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recomendaciones')
+    tema = models.CharField(max_length=100)
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+    metrica_desempeno = models.DecimalField(max_digits=5, decimal_places=2, help_text="Porcentaje de acierto en el tema")
+
+    def __str__(self):
+        return f"Recomendación para {self.usuario.username}: {self.tema}"

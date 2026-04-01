@@ -20,6 +20,16 @@
                 margin-right: 0.5rem;
             ">Ver mi Perfil</a>
 
+            <a href="{% url 'lista_temas' %}" style="
+                text-decoration: none;
+                color: white;
+                background-color: #50e3c2;
+                padding: 0.5rem 1rem;
+                border-radius: 5px;
+                font-weight: bold;
+                margin-right: 0.5rem;
+            ">Mis Temas</a>
+
             <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
             {% csrf_token %}
             <button type="submit" onclick="return confirmarCierreSesion();" style="

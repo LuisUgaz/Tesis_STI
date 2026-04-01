@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 from django.contrib.auth.models import User
-from .models import ResultadoDiagnostico, RespuestaUsuario
+from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante
 
 class SinResultadosError(Exception):
     """Excepción lanzada cuando un estudiante no tiene resultados de diagnóstico."""
@@ -67,5 +67,15 @@ def calcular_recomendacion(estudiante: User) -> Optional[Dict]:
                 'total_preguntas': datos['total'],
                 'correctas': datos['correctas']
             }
+
+    if mejor_recomendacion:
+        # Persistir la recomendación (HU08)
+        # Eliminamos previa para mantener solo una (la más reciente del diagnóstico)
+        RecomendacionEstudiante.objects.filter(usuario=estudiante).delete()
+        RecomendacionEstudiante.objects.create(
+            usuario=estudiante,
+            tema=mejor_recomendacion['tema'],
+            metrica_desempeno=mejor_recomendacion['metrica']
+        )
 
     return mejor_recomendacion

@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from AppEvaluar.models import ExamenDiagnostico, Pregunta, ResultadoDiagnostico, RespuestaUsuario, Opcion
+from AppEvaluar.models import ExamenDiagnostico, Pregunta, ResultadoDiagnostico, RespuestaUsuario, Opcion, RecomendacionEstudiante
 from AppEvaluar.services import calcular_recomendacion, SinResultadosError
 
 class RecommendationServiceTest(TestCase):
@@ -67,3 +67,19 @@ class RecommendationServiceTest(TestCase):
         # Ambos tienen 0%. Debe retornar el primero (por orden alfabético o de inserción según se implemente)
         # Por simplicidad, asumiremos el primero que el algoritmo procese.
         self.assertIn(recomendacion['tema'], [t1, t2])
+
+    def test_persistencia_recomendacion(self):
+        """Verifica que la recomendación se guarde en el modelo RecomendacionEstudiante."""
+        t1 = 'Triángulos'
+        p1 = Pregunta.objects.create(examen=self.examen, texto='P1', categoria=t1)
+        o1_i = Opcion.objects.create(pregunta=p1, texto='I1', es_correcta=False)
+        RespuestaUsuario.objects.create(usuario=self.user, pregunta=p1, opcion_seleccionada=o1_i)
+        ResultadoDiagnostico.objects.create(estudiante=self.user, examen=self.examen, puntaje=0.0)
+
+        # Ejecutar cálculo
+        calcular_recomendacion(self.user)
+
+        # Verificar persistencia
+        rec_persistida = RecomendacionEstudiante.objects.get(usuario=self.user)
+        self.assertEqual(rec_persistida.tema, t1)
+        self.assertEqual(float(rec_persistida.metrica_desempeno), 0.0)

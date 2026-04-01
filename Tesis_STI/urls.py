@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('AppGestionUsuario.urls')),
     path('evaluar/', include('AppEvaluar.urls')),
+    path('tutoria/', include('AppTutoria.urls')),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(next_page='login'), name='logout'),
     path('', login_required(TemplateView.as_view(template_name='home.html')), name='home'),

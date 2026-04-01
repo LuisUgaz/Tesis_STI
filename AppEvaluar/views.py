@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
+from .services import calcular_recomendacion
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
@@ -84,6 +85,13 @@ def rendir_examen(request, examen_id):
             examen=examen,
             puntaje=puntaje
         )
+
+        # Generar y persistir recomendación (HU08)
+        try:
+            calcular_recomendacion(request.user)
+        except Exception:
+            # Si algo falla en la recomendación, no bloqueamos el flujo principal
+            pass
 
         # Limpiar sesión
         if session_key in request.session:

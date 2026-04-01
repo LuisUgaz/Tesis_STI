@@ -39,5 +39,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: HU07 - Procesar resultados para recomendación**
+- [ ] **Track: HU07 - Procesar resultados para recomendación**
   *Link: [./tracks/user_recommendation_logic_20260331/](./tracks/user_recommendation_logic_20260331/)*
+
+---
+
+- [x] **Track: HU08 - Visualizar tema recomendado**
+  *Link: [./tracks/user_recommendation_ui_20260331/](./tracks/user_recommendation_ui_20260331/)*
+
