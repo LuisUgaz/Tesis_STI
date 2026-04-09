@@ -178,12 +178,12 @@
 
         <div class="temas-grid">
             {% for tema in temas %}
-                <div class="tema-card {% if recomendacion and recomendacion.tema == tema %}recomendado{% endif %}">
-                    {% if recomendacion and recomendacion.tema == tema %}
+                <div class="tema-card {% if recomendacion and recomendacion.tema == tema.nombre %}recomendado{% endif %}">
+                    {% if recomendacion and recomendacion.tema == tema.nombre %}
                         <div class="badge-recomendado">Recomendado para ti</div>
                     {% endif %}
                     
-                    <div class="tema-nombre">{{ tema }}</div>
+                    <div class="tema-nombre">{{ tema.nombre }}</div>
                     
                     <a href="#" class="btn-entrar">Explorar tema</a>
                 </div>

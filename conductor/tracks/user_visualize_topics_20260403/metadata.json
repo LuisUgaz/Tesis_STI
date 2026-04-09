@@ -1,0 +1,8 @@
+{
+  "track_id": "user_visualize_topics_20260403",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-03T19:35:00Z",
+  "updated_at": "2026-04-03T19:35:00Z",
+  "description": "HU09 - Visualizar temas disponibles para elegir cuál revisar, usando Python, Django y PostgreSQL."
+}
