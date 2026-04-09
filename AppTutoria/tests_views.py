@@ -58,3 +58,70 @@ class ListaTemasViewTest(TestCase):
         
         temas_en_contexto = response.context['temas']
         self.assertEqual(temas_en_contexto[0].nombre, "Ángulos")
+
+class TemaDetalleViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        
+        # Crear usuarios
+        self.user_estudiante = User.objects.create_user(username='estudiante', password='password123')
+        Profile.objects.create(user=self.user_estudiante, rol='Estudiante', nombres='Est', apellidos='Test')
+        
+        self.user_docente = User.objects.create_user(username='docente', password='password123')
+        Profile.objects.create(user=self.user_docente, rol='Docente', nombres='Doc', apellidos='Test')
+        
+        # Crear temas y contenido
+        self.tema = Tema.objects.create(nombre="Ángulos", slug="angulos")
+        from .models import ContenidoTema
+        self.contenido = ContenidoTema.objects.create(
+            tema=self.tema, 
+            cuerpo_html="<h3>Teoría de Ángulos</h3><p>Contenido de prueba.</p>"
+        )
+        
+        # URL del detalle (se usará reverse una vez definida en urls.py)
+        # Por ahora usaremos la ruta manual para forzar el fallo si no existe la URL
+        self.url_detalle = f"/tutoria/tema/{self.tema.slug}/"
+
+    def test_acceso_anonimo_redirige_login(self):
+        """Verifica que un usuario no autenticado sea redirigido."""
+        response = self.client.get(self.url_detalle)
+        self.assertEqual(response.status_code, 302)
+
+    def test_acceso_docente_prohibido(self):
+        """Verifica que un docente no pueda acceder al contenido de estudio del estudiante."""
+        self.client.login(username='docente', password='password123')
+        response = self.client.get(self.url_detalle)
+        self.assertEqual(response.status_code, 403)
+
+    def test_acceso_estudiante_sin_recomendacion_prohibido(self):
+        """Verifica que un estudiante no pueda acceder a un tema que no le ha sido recomendado."""
+        self.client.login(username='estudiante', password='password123')
+        # No creamos RecomendacionEstudiante para 'Ángulos'
+        response = self.client.get(self.url_detalle)
+        # Según el spec, debería redirigir o dar error. Vamos a esperar un 403 (Prohibido) o 302 a la lista.
+        # Implementaremos un 403 para mayor seguridad.
+        self.assertEqual(response.status_code, 403)
+
+    def test_acceso_estudiante_con_recomendacion_exitoso(self):
+        """Verifica el acceso exitoso cuando el tema está recomendado."""
+        self.client.login(username='estudiante', password='password123')
+        
+        # Crear recomendación
+        RecomendacionEstudiante.objects.create(
+            usuario=self.user_estudiante, 
+            tema=self.tema.nombre,
+            metrica_desempeno=40.0
+        )
+        
+        # Intentar acceder (aquí fallará si reverse('tema_detalle', args=['angulos']) no existe)
+        # Usaremos la ruta directa para confirmar que la vista no existe aún
+        response = self.client.get(self.url_detalle)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'AppTutoria/tema_detalle.html')
+        self.assertContains(response, "Teoría de Ángulos")
+
+    def test_tema_no_existente_retorna_404(self):
+        """Verifica que un slug inexistente retorne 404."""
+        self.client.login(username='estudiante', password='password123')
+        response = self.client.get("/tutoria/tema/no-existe/")
+        self.assertEqual(response.status_code, 404)

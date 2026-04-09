@@ -185,7 +185,7 @@
                     
                     <div class="tema-nombre">{{ tema.nombre }}</div>
                     
-                    <a href="#" class="btn-entrar">Explorar tema</a>
+                    <a href="{% url 'tema_detalle' slug=tema.slug %}" class="btn-entrar">Explorar tema</a>
                 </div>
             {% endfor %}
         </div>

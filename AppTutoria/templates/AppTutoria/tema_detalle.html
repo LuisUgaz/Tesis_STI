@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tema.nombre }} - Detalle del Tema</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --accent-color: #f5a623;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --recommendation-color: #7ed321;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .nav-back {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-back a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .nav-back a:hover {
+            color: var(--primary-color);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding: 2.5rem;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .content-body {
+            font-size: 1.15rem;
+            color: #444;
+        }
+
+        .content-body h2, .content-body h3 {
+            color: var(--primary-color);
+            margin-top: 1.5rem;
+        }
+
+        .content-body p {
+            margin-bottom: 1.2rem;
+        }
+
+        .material-box {
+            background: #fff8e1;
+            border-left: 5px solid var(--accent-color);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .material-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-download {
+            background: var(--accent-color);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn-download:hover {
+            transform: scale(1.05);
+        }
+
+        .footer-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 3rem;
+        }
+
+        .btn-action {
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f0f7ff;
+        }
+
+        /* Estilos para el contenido HTML dinámico */
+        .content-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-back">
+            <a href="{% url 'lista_temas' %}">← Volver a la lista de temas</a>
+        </div>
+
+        <div class="header">
+            <h1>{{ tema.nombre }}</h1>
+            <p style="color: #666; margin-top: 0.5rem;">Material de aprendizaje y refuerzo</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-body">
+                {{ contenido.cuerpo_html|safe }}
+            </div>
+
+            {% if contenido.material_pdf %}
+                <div class="material-box">
+                    <div class="material-info">
+                        <span style="font-size: 1.5rem;">📄</span>
+                        <div>
+                            <strong style="color: #856404;">Material Complementario</strong>
+                            <p style="margin: 0; font-size: 0.9rem; color: #856404;">Guía de ejercicios y teoría en PDF</p>
+                        </div>
+                    </div>
+                    <a href="{{ contenido.material_pdf.url }}" class="btn-download" target="_blank">Descargar PDF</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="footer-actions">
+            <a href="{% url 'lista_temas' %}" class="btn-action btn-secondary">Lista de Temas</a>
+            <!-- Futuro: Botón para ir a los ejercicios del tema -->
+            <a href="#" class="btn-action btn-primary">Practicar con Ejercicios</a>
+        </div>
+    </div>
+</body>
+</html>

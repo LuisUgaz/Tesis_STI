@@ -1,8 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from AppEvaluar.models import RecomendacionEstudiante
-from .models import Tema
+from .models import Tema, ContenidoTema
 
 @login_required
 def lista_temas(request):
@@ -11,7 +11,7 @@ def lista_temas(request):
     """
     # Verificar que el usuario tenga el perfil de Estudiante
     if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
-        raise PermissionDenied
+        raise PermissionDenied("Solo los estudiantes pueden acceder a la lista de temas.")
 
     # Lista de temas desde la base de datos
     temas_db = list(Tema.objects.all())
@@ -32,4 +32,34 @@ def lista_temas(request):
     return render(request, 'AppTutoria/lista_temas.html', {
         'temas': temas_db,
         'recomendacion': recomendacion
+    })
+
+@login_required
+def tema_detalle(request, slug):
+    """
+    Muestra el contenido detallado de un tema específico si el usuario tiene permiso.
+    """
+    # 1. Verificar rol de Estudiante
+    if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
+        raise PermissionDenied("Solo los estudiantes pueden acceder al contenido de estudio.")
+
+    # 2. Obtener el tema por slug
+    tema = get_object_or_404(Tema, slug=slug)
+
+    # 3. Verificar si el tema está recomendado para el estudiante
+    # Buscamos una recomendación que coincida con el nombre del tema
+    esta_recomendado = RecomendacionEstudiante.objects.filter(
+        usuario=request.user, 
+        tema=tema.nombre
+    ).exists()
+
+    if not esta_recomendado:
+        raise PermissionDenied("No tienes acceso a este tema aún. Debes seguir tu ruta recomendada.")
+
+    # 4. Obtener el contenido asociado (o error si no existe contenido aún)
+    contenido = get_object_or_404(ContenidoTema, tema=tema)
+
+    return render(request, 'AppTutoria/tema_detalle.html', {
+        'tema': tema,
+        'contenido': contenido
     })
