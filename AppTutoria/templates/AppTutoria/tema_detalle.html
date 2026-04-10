@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ tema.nombre }} - Detalle del Tema</title>
+    <title>{{ tema.nombre }} - {{ seccion|capfirst }}</title>
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -13,24 +13,97 @@
             --card-bg: #ffffff;
             --text-color: #333;
             --recommendation-color: #7ed321;
+            --sidebar-width: 250px;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
+            padding: 0;
             color: var(--text-color);
             line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1rem;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: #666;
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .nav-item:hover:not(.disabled) {
+            background: #f0f7ff;
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .nav-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #999;
+        }
+
+        .nav-item .icon {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem 3rem;
+            max-width: 1000px;
         }
 
         .nav-back {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .nav-back a {
@@ -48,7 +121,6 @@
         }
 
         .header {
-            text-align: center;
             margin-bottom: 2.5rem;
             padding: 2.5rem;
             background: var(--card-bg);
@@ -69,6 +141,7 @@
             padding: 3rem;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             margin-bottom: 2rem;
+            min-height: 400px;
         }
 
         .content-body {
@@ -76,13 +149,35 @@
             color: #444;
         }
 
-        .content-body h2, .content-body h3 {
+        .content-body h2, .content-body h3, .content-body h4 {
             color: var(--primary-color);
             margin-top: 1.5rem;
         }
 
         .content-body p {
             margin-bottom: 1.2rem;
+        }
+
+        .content-body ul {
+            margin-bottom: 1.2rem;
+        }
+
+        /* Placeholder Styles */
+        .placeholder {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #999;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .placeholder h2 {
+            color: #ccc;
+            margin-bottom: 0.5rem;
         }
 
         .material-box {
@@ -116,86 +211,102 @@
             transform: scale(1.05);
         }
 
-        .footer-actions {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 3rem;
-        }
-
-        .btn-action {
-            padding: 1rem 2rem;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(74, 144, 226, 0.4);
-        }
-
-        .btn-secondary {
-            background: #fff;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-
-        .btn-secondary:hover {
-            background: #f0f7ff;
-        }
-
-        /* Estilos para el contenido HTML dinámico */
-        .content-body img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            margin: 1rem 0;
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 1rem;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="nav-back">
-            <a href="{% url 'lista_temas' %}">← Volver a la lista de temas</a>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ tema.nombre }}</h2>
         </div>
+        <nav class="nav-menu">
+            <a href="?seccion=resumen" class="nav-item {% if seccion == 'resumen' %}active{% endif %}">
+                <span class="icon">📋</span> Resumen
+            </a>
+            <a href="?seccion=teoria" class="nav-item {% if seccion == 'teoria' %}active{% endif %}">
+                <span class="icon">📖</span> Marco Teórico
+            </a>
+            <a href="#" class="nav-item disabled">
+                <span class="icon">✏️</span> Ejercicios
+            </a>
+            <a href="#" class="nav-item disabled">
+                <span class="icon">🎥</span> Videos
+            </a>
+        </nav>
 
+        <div style="margin-top: auto; padding: 1rem;">
+            <a href="{% url 'lista_temas' %}" style="text-decoration: none; color: var(--primary-color); font-weight: bold;">
+                ← Temas
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
         <div class="header">
-            <h1>{{ tema.nombre }}</h1>
-            <p style="color: #666; margin-top: 0.5rem;">Material de aprendizaje y refuerzo</p>
+            <h1>
+                {% if seccion == 'resumen' %}Resumen: {{ tema.nombre }}
+                {% elif seccion == 'teoria' %}Marco Teórico: {{ tema.nombre }}
+                {% elif seccion == 'ejercicios' %}Ejercicios: {{ tema.nombre }}
+                {% elif seccion == 'videos' %}Videos: {{ tema.nombre }}
+                {% endif %}
+            </h1>
         </div>
 
         <div class="content-card">
             <div class="content-body">
-                {{ contenido.cuerpo_html|safe }}
-            </div>
-
-            {% if contenido.material_pdf %}
-                <div class="material-box">
-                    <div class="material-info">
-                        <span style="font-size: 1.5rem;">📄</span>
-                        <div>
-                            <strong style="color: #856404;">Material Complementario</strong>
-                            <p style="margin: 0; font-size: 0.9rem; color: #856404;">Guía de ejercicios y teoría en PDF</p>
-                        </div>
+                {% if seccion == 'resumen' %}
+                    <p>{{ tema.descripcion }}</p>
+                    <div style="margin-top: 2rem; padding: 2rem; background: #f0f7ff; border-radius: 15px; text-align: center;">
+                        <h3 style="margin-top: 0;">¡Bienvenido al estudio de {{ tema.nombre }}!</h3>
+                        <p>Usa el menú lateral para navegar por los contenidos disponibles para este tema.</p>
+                        <a href="?seccion=teoria" class="btn-download" style="background: var(--primary-color); display: inline-block;">Comenzar con la Teoría</a>
                     </div>
-                    <a href="{{ contenido.material_pdf.url }}" class="btn-download" target="_blank">Descargar PDF</a>
-                </div>
-            {% endif %}
-        </div>
 
-        <div class="footer-actions">
-            <a href="{% url 'lista_temas' %}" class="btn-action btn-secondary">Lista de Temas</a>
-            <!-- Futuro: Botón para ir a los ejercicios del tema -->
-            <a href="#" class="btn-action btn-primary">Practicar con Ejercicios</a>
+                {% elif seccion == 'teoria' %}
+                    {% if contenido %}
+                        {{ contenido.cuerpo_html|safe }}
+                        
+                        {% if contenido.material_pdf %}
+                            <div class="material-box">
+                                <div class="material-info">
+                                    <span style="font-size: 1.5rem;">📄</span>
+                                    <div>
+                                        <strong style="color: #856404;">Material Complementario</strong>
+                                        <p style="margin: 0; font-size: 0.9rem; color: #856404;">Guía de estudio en PDF</p>
+                                    </div>
+                                </div>
+                                <a href="{{ contenido.material_pdf.url }}" class="btn-download" target="_blank">Descargar PDF</a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p>El contenido teórico para este tema aún no está disponible.</p>
+                    {% endif %}
+
+                {% elif seccion == 'ejercicios' or seccion == 'videos' %}
+                    <div class="placeholder">
+                        <span class="placeholder-icon">🚀</span>
+                        <h2>Próximamente</h2>
+                        <p>Esta sección estará disponible muy pronto para ayudarte en tu aprendizaje.</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
+    </main>
 </body>
 </html>

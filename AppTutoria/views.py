@@ -38,6 +38,7 @@ def lista_temas(request):
 def tema_detalle(request, slug):
     """
     Muestra el contenido detallado de un tema específico si el usuario tiene permiso.
+    Permite navegar entre secciones (resumen, teoria, ejercicios, videos).
     """
     # 1. Verificar rol de Estudiante
     if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
@@ -47,7 +48,6 @@ def tema_detalle(request, slug):
     tema = get_object_or_404(Tema, slug=slug)
 
     # 3. Verificar si el tema está recomendado para el estudiante
-    # Buscamos una recomendación que coincida con el nombre del tema
     esta_recomendado = RecomendacionEstudiante.objects.filter(
         usuario=request.user, 
         tema=tema.nombre
@@ -56,10 +56,16 @@ def tema_detalle(request, slug):
     if not esta_recomendado:
         raise PermissionDenied("No tienes acceso a este tema aún. Debes seguir tu ruta recomendada.")
 
-    # 4. Obtener el contenido asociado (o error si no existe contenido aún)
-    contenido = get_object_or_404(ContenidoTema, tema=tema)
+    # 4. Obtener la sección solicitada (por defecto 'resumen')
+    seccion = request.GET.get('seccion', 'resumen')
 
+    # 5. Obtener el contenido asociado si es necesario
+    contenido = None
+    if seccion == 'teoria':
+        contenido = get_object_or_404(ContenidoTema, tema=tema)
+    
     return render(request, 'AppTutoria/tema_detalle.html', {
         'tema': tema,
-        'contenido': contenido
+        'contenido': contenido,
+        'seccion': seccion
     })

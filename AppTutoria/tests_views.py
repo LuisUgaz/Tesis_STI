@@ -103,7 +103,7 @@ class TemaDetalleViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_acceso_estudiante_con_recomendacion_exitoso(self):
-        """Verifica el acceso exitoso cuando el tema está recomendado."""
+        """Verifica el acceso exitoso cuando el tema está recomendado (muestra resumen por defecto)."""
         self.client.login(username='estudiante', password='password123')
         
         # Crear recomendación
@@ -113,15 +113,48 @@ class TemaDetalleViewTest(TestCase):
             metrica_desempeno=40.0
         )
         
-        # Intentar acceder (aquí fallará si reverse('tema_detalle', args=['angulos']) no existe)
-        # Usaremos la ruta directa para confirmar que la vista no existe aún
         response = self.client.get(self.url_detalle)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'AppTutoria/tema_detalle.html')
-        self.assertContains(response, "Teoría de Ángulos")
+        self.assertContains(response, "Resumen")
 
     def test_tema_no_existente_retorna_404(self):
         """Verifica que un slug inexistente retorne 404."""
         self.client.login(username='estudiante', password='password123')
         response = self.client.get("/tutoria/tema/no-existe/")
         self.assertEqual(response.status_code, 404)
+
+    def test_acceso_detalle_muestra_resumen_por_defecto(self):
+        """Verifica que al acceder al detalle se muestre el resumen por defecto."""
+        self.client.login(username='estudiante', password='password123')
+        RecomendacionEstudiante.objects.create(usuario=self.user_estudiante, tema=self.tema.nombre, metrica_desempeno=40.0)
+        
+        # Actualizar tema con descripción
+        self.tema.descripcion = "Esta es la descripción del resumen."
+        self.tema.save()
+        
+        response = self.client.get(self.url_detalle)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.tema.descripcion)
+        self.assertEqual(response.context['seccion'], 'resumen')
+
+    def test_acceso_detalle_teoria_muestra_contenido_teorico(self):
+        """Verifica que al acceder con ?seccion=teoria se muestre el marco teórico."""
+        self.client.login(username='estudiante', password='password123')
+        RecomendacionEstudiante.objects.create(usuario=self.user_estudiante, tema=self.tema.nombre, metrica_desempeno=40.0)
+        
+        response = self.client.get(self.url_detalle + "?seccion=teoria")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Teoría de Ángulos")
+        self.assertEqual(response.context['seccion'], 'teoria')
+
+    def test_acceso_secciones_futuras_muestra_placeholder(self):
+        """Verifica que las secciones futuras (ejercicios/videos) muestren un placeholder."""
+        self.client.login(username='estudiante', password='password123')
+        RecomendacionEstudiante.objects.create(usuario=self.user_estudiante, tema=self.tema.nombre, metrica_desempeno=40.0)
+        
+        for seccion in ['ejercicios', 'videos']:
+            response = self.client.get(self.url_detalle + f"?seccion={seccion}")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.context['seccion'], seccion)
+            self.assertContains(response, "Próximamente")

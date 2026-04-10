@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implementar exportaciÃ³n de reportes acadÃ©micos a formatos externos (PDF/Excel)**
+- [ ] **Track: Implementar exportación de reportes académicos a formatos externos (PDF/Excel)**
   *Link: [./tracks/reports_export_20260327/](./tracks/reports_export_20260327/)*
 
 ---
@@ -14,32 +14,33 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Inicio de SesiÃ³n de Usuarios (HU02)**
+- [ ] **Track: Inicio de Sesión de Usuarios (HU02)**
   *Link: [./tracks/user_login_20260329/](./tracks/user_login_20260329/)*
 
 ---
 
-- [ ] **Track: Cierre de SesiÃ³n de Usuarios (HU03)**
+- [ ] **Track: Cierre de Sesión de Usuarios (HU03)**
   *Link: [./tracks/user_logout_20260329/](./tracks/user_logout_20260329/)*
 
 ---
 
-- [x] **Track: VisualizaciÃ³n de Perfil por Rol (HU04)**
+- [x] **Track: Visualización de Perfil por Rol (HU04)**
   *Link: [./tracks/user_profile_20260329/](./tracks/user_profile_20260329/)*
 
 ---
 
-- [x] **Track: HU05 - Rendir examen diagnÃ³stico para identificar el nivel de geometrÃ­a del estudiante.**      
+- [x] **Track: HU05 - Rendir examen diagnóstico para identificar el nivel de geometría del estudiante.**  
+
   *Link: [./tracks/user_exam_diagnosis_20260330/](./tracks/user_exam_diagnosis_20260330/)*
 
 ---
 
-- [x] **Track: HU06 - Registrar resultado diagnÃ³stico para el aprendizaje de problemas geomÃ©tricos.**
+- [x] **Track: HU06 - Registrar resultado diagnóstico para el aprendizaje de problemas geométricos.**     
   *Link: [./tracks/user_exam_diagnosis_persistence_20260330/](./tracks/user_exam_diagnosis_persistence_20260330/)*
 
 ---
 
-- [ ] **Track: HU07 - Procesar resultados para recomendaciÃ³n**
+- [ ] **Track: HU07 - Procesar resultados para recomendación**
   *Link: [./tracks/user_recommendation_logic_20260331/](./tracks/user_recommendation_logic_20260331/)*
 
 ---
@@ -56,3 +57,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU10 - Acceso a contenido de tema**
 *Link: [./tracks/user_theme_content_20260409/](./tracks/user_theme_content_20260409/)*
+
+---
+
+- [x] **Track: HU11 - Visualización de marco teórico**
+*Link: [./tracks/user_theme_theory_20260409/](./tracks/user_theme_theory_20260409/)*

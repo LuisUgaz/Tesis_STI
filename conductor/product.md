@@ -155,6 +155,7 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **Visualización de Temas Recomendados (HU08):** Interfaz personalizada que resalta el tema sugerido para el estudiante en el menú de tutoría, reordenando los contenidos para priorizar el refuerzo identificado.
 - **Gestión Dinámica de Temas (HU09):** Sistema de persistencia basado en base de datos para los temas de geometría, con control de acceso estricto por rol (Estudiante) y visualización adaptativa.
 - **Acceso a Contenido de Tema (HU10):** Visualización detallada de material de aprendizaje (HTML enriquecido y PDF) con navegación amigable por slugs y control de acceso basado en recomendaciones previas, asegurando un aprendizaje dirigido.
+- **Visualización de Marco Teórico (HU11):** Interfaz de detalle expandida con menú lateral (Sidebar) que permite navegar entre resumen del tema, marco teórico detallado y marcadores para actividades futuras, organizando el estudio de forma jerárquica.
 
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
 - **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.
