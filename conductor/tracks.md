@@ -72,3 +72,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU13 - Registrar visualización de videos**
 *Link: [./tracks/user_track_video_views_20260410/](./tracks/user_track_video_views_20260410/)*
+
+---
+
+- [x] **Track: HU14 - Resolver ejercicios personalizados**
+*Link: [./tracks/user_resolve_custom_exercises_20260410/](./tracks/user_resolve_custom_exercises_20260410/)*

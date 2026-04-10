@@ -1,11 +1,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
+from django.http import JsonResponse, HttpResponseBadRequest
+from .models import (
+    ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, 
+    ResultadoDiagnostico, RecomendacionEstudiante,
+    Ejercicio, OpcionEjercicio, ResultadoEjercicio
+)
 from .services import calcular_recomendacion
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
+from AppTutoria.models import Tema
 
 def student_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
@@ -13,6 +19,66 @@ def student_required(view_func):
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return _wrapped_view_func
+
+@login_required
+@student_required
+def iniciar_practica(request):
+    """
+    Selecciona ejercicios del tema recomendado y nivel del estudiante.
+    Muestra la interfaz de resolución secuencial.
+    """
+    # 1. Obtener la recomendación actual
+    recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
+    
+    if not recomendacion:
+        raise PermissionDenied("Debes rendir tu examen diagnóstico para recibir recomendaciones de práctica.")
+
+    # 2. Obtener el tema asociado
+    tema = get_object_or_404(Tema, nombre=recomendacion.tema)
+
+    # 3. Filtrar ejercicios (por ahora solo por tema, HU futura hará ajuste de nivel dinámico)
+    # Seleccionamos un máximo de 5 ejercicios para la sesión de práctica
+    ejercicios = Ejercicio.objects.filter(tema=tema).prefetch_related('opciones').order_by('?')[:5]
+
+    if not ejercicios.exists():
+        messages.info(request, f"Aún no hay ejercicios cargados para el tema: {tema.nombre}")
+        return redirect('lista_temas')
+
+    return render(request, 'AppEvaluar/practica_ejercicio.html', {
+        'tema': tema,
+        'ejercicios': ejercicios,
+        'total': ejercicios.count()
+    })
+
+@login_required
+@student_required
+def validar_respuesta(request):
+    """
+    Endpoint AJAX para validar la opción seleccionada y guardar el resultado.
+    """
+    if request.method != 'POST':
+        return HttpResponseBadRequest("Método no permitido")
+
+    ejercicio_id = request.POST.get('ejercicio_id')
+    opcion_id = request.POST.get('opcion_id')
+    tiempo = request.POST.get('tiempo', 0)
+
+    ejercicio = get_object_or_404(Ejercicio, id=ejercicio_id)
+    opcion = get_object_or_404(OpcionEjercicio, id=opcion_id, ejercicio=ejercicio)
+
+    # Persistir el resultado
+    ResultadoEjercicio.objects.create(
+        usuario=request.user,
+        ejercicio=ejercicio,
+        es_correcto=opcion.es_correcta,
+        tiempo_empleado=int(tiempo),
+        feedback_mostrado=opcion.retroalimentacion or ""
+    )
+
+    return JsonResponse({
+        'es_correcto': opcion.es_correcta,
+        'feedback': opcion.retroalimentacion or ("¡Correcto!" if opcion.es_correcta else "Sigue intentándolo.")
+    })
 
 @login_required
 @student_required

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica: {{ tema.nombre }}</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            margin: 0 2rem;
+            background: #eee;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .ejercicio-card {
+            display: none;
+        }
+
+        .ejercicio-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pregunta-texto {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .opciones-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .opcion-item {
+            margin-bottom: 1rem;
+        }
+
+        .opcion-label {
+            display: block;
+            padding: 1rem;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opcion-label:hover {
+            background: #f9f9f9;
+            border-color: var(--primary-color);
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        input[type="radio"]:checked + .opcion-label {
+            border-color: var(--primary-color);
+            background: #ebf3ff;
+            font-weight: 600;
+        }
+
+        .feedback-area {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .feedback-area.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-area.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .actions {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: #357abd; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-success:disabled { background: #ccc; cursor: not-allowed; }
+
+        .finish-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .finish-screen.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="practica-ui">
+            <div class="header">
+                <span id="step-info">Pregunta 1 de {{ total }}</span>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <a href="{% url 'lista_temas' %}" style="text-decoration: none; color: #666;">Salir</a>
+            </div>
+
+            {% for ejercicio in ejercicios %}
+            <div class="ejercicio-card {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter }}" data-id="{{ ejercicio.id }}">
+                <div class="pregunta-texto">{{ ejercicio.texto }}</div>
+                
+                {% if ejercicio.imagen %}
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <img src="{{ ejercicio.imagen.url }}" alt="Imagen ejercicio" style="max-width: 100%; border-radius: 10px;">
+                </div>
+                {% endif %}
+
+                <form class="opciones-form">
+                    {% csrf_token %}
+                    <div class="opciones-list">
+                        {% for opcion in ejercicio.opciones.all %}
+                        <div class="opcion-item">
+                            <input type="radio" name="ejercicio_{{ ejercicio.id }}" id="opcion_{{ opcion.id }}" value="{{ opcion.id }}">
+                            <label for="opcion_{{ opcion.id }}" class="opcion-label">
+                                {{ opcion.texto }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+
+                <div class="feedback-area" id="feedback-{{ ejercicio.id }}"></div>
+
+                <div class="actions">
+                    <button class="btn btn-primary btn-validar" onclick="validarActual({{ ejercicio.id }})">Validar</button>
+                    <button class="btn btn-success btn-siguiente" onclick="siguiente()" style="display: none;">Siguiente</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="finish-screen" id="finish-screen">
+            <h2 style="color: var(--success-color);">¡Práctica completada!</h2>
+            <p>Has terminado la sesión de ejercicios para el tema: <strong>{{ tema.nombre }}</strong>.</p>
+            <div style="font-size: 4rem; margin: 2rem 0;">🏆</div>
+            <a href="{% url 'lista_temas' %}" class="btn btn-primary" style="text-decoration: none; display: inline-block;">Volver a Temas</a>
+        </div>
+    </div>
+
+    <script>
+        let currentIndex = 1;
+        const total = {{ total }};
+        let startTime = Date.now();
+
+        function updateProgress() {
+            const percent = ((currentIndex - 1) / total) * 100;
+            document.getElementById('progress-bar').style.width = percent + '%';
+            document.getElementById('step-info').innerText = `Pregunta ${currentIndex} de ${total}`;
+        }
+
+        async function validarActual(ejercicioId) {
+            const card = document.querySelector(`.ejercicio-card[data-index="${currentIndex}"]`);
+            const selectedOpcion = card.querySelector('input[type="radio"]:checked');
+            
+            if (!selectedOpcion) {
+                alert("Por favor selecciona una opción.");
+                return;
+            }
+
+            const endTime = Date.now();
+            const tiempoEmpleado = Math.round((endTime - startTime) / 1000);
+            
+            const formData = new FormData();
+            formData.append('ejercicio_id', ejercicioId);
+            formData.append('opcion_id', selectedOpcion.value);
+            formData.append('tiempo', tiempoEmpleado);
+            formData.append('csrfmiddlewaretoken', card.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            try {
+                const response = await fetch("{% url 'validar_respuesta' %}", {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                const feedback = document.getElementById(`feedback-${ejercicioId}`);
+                feedback.innerText = data.feedback;
+                feedback.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
+                
+                // Deshabilitar radios
+                card.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+                card.querySelector('.btn-validar').style.display = 'none';
+                card.querySelector('.btn-siguiente').style.display = 'block';
+
+            } catch (error) {
+                console.error("Error al validar:", error);
+                alert("Hubo un error al procesar tu respuesta.");
+            }
+        }
+
+        function siguiente() {
+            if (currentIndex < total) {
+                document.querySelector(`.ejercicio-card[data-index="${currentIndex}"]`).classList.remove('active');
+                currentIndex++;
+                document.querySelector(`.ejercicio-card[data-index="${currentIndex}"]`).classList.add('active');
+                startTime = Date.now(); // Reiniciar tiempo
+                updateProgress();
+            } else {
+                // Finalizar
+                document.getElementById('progress-bar').style.width = '100%';
+                document.getElementById('practica-ui').style.display = 'none';
+                document.getElementById('finish-screen').classList.add('active');
+            }
+        }
+
+        // Inicializar barra
+        updateProgress();
+    </script>
+</body>
+</html>

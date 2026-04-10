@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from AppTutoria.models import Tema
 
 # Create your models here.
 
@@ -61,3 +62,40 @@ class RecomendacionEstudiante(models.Model):
 
     def __str__(self):
         return f"Recomendación para {self.usuario.username}: {self.tema}"
+
+class Ejercicio(models.Model):
+    DIFICULTAD_CHOICES = [
+        ('Básico', 'Básico'),
+        ('Intermedio', 'Intermedio'),
+        ('Avanzado', 'Avanzado'),
+    ]
+
+    tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='ejercicios')
+    texto = models.TextField()
+    imagen = models.ImageField(upload_to='ejercicios_imagenes/', blank=True, null=True)
+    dificultad = models.CharField(max_length=20, choices=DIFICULTAD_CHOICES, default='Básico')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.tema.nombre} - {self.dificultad}: {self.texto[:50]}..."
+
+class OpcionEjercicio(models.Model):
+    ejercicio = models.ForeignKey(Ejercicio, on_delete=models.CASCADE, related_name='opciones')
+    texto = models.CharField(max_length=200)
+    es_correcta = models.BooleanField(default=False)
+    retroalimentacion = models.TextField(help_text="Mensaje que se muestra al estudiante tras elegir esta opción", blank=True, null=True)
+
+    def __str__(self):
+        return self.texto
+
+class ResultadoEjercicio(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='resultados_ejercicios')
+    ejercicio = models.ForeignKey(Ejercicio, on_delete=models.CASCADE)
+    es_correcto = models.BooleanField()
+    fecha_resolucion = models.DateTimeField(auto_now_add=True)
+    tiempo_empleado = models.IntegerField(help_text="Tiempo en segundos")
+    feedback_mostrado = models.TextField()
+
+    def __str__(self):
+        estado = "Correcto" if self.es_correcto else "Incorrecto"
+        return f"{self.usuario.username} - {self.ejercicio.id}: {estado}"

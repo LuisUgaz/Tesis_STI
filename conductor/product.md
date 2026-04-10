@@ -158,6 +158,7 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **Visualización de Marco Teórico (HU11):** Interfaz de detalle expandida con menú lateral (Sidebar) que permite navegar entre resumen del tema, marco teórico detallado y marcadores para actividades futuras, organizando el estudio de forma jerárquica.
 - **Visualización de Videos Recomendados (HU12):** Nueva sección independiente con grilla de tarjetas moderna que permite al estudiante acceder a videos educativos (locales) específicos para reforzar el tema recomendado, con reproductor modal integrado.
 - **Seguimiento de Visualización de Videos (HU13):** Registro automatizado que contabiliza cuántas veces un estudiante termina de ver un recurso audiovisual, permitiendo un monitoreo administrativo del uso de materiales por grado y sección.
+- **Resolución de Ejercicios Personalizados (HU14):** Sistema de práctica interactiva que selecciona ejercicios de opción múltiple basados en el tema recomendado para el estudiante, con visualización secuencial, barra de progreso y retroalimentación inmediata asíncrona.
 
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
 - **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.
