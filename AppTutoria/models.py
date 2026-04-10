@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Tema(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
@@ -32,3 +33,18 @@ class VideoTema(models.Model):
 
     def __str__(self):
         return f"{self.titulo} ({self.tema.nombre})"
+
+class VisualizacionVideo(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='visualizaciones_videos')
+    video = models.ForeignKey(VideoTema, on_delete=models.CASCADE, related_name='vistas')
+    contador = models.PositiveIntegerField(default=0)
+    fecha_primera_vista = models.DateTimeField(auto_now_add=True)
+    fecha_ultima_vista = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('usuario', 'video')
+        verbose_name = "Visualización de Video"
+        verbose_name_plural = "Visualizaciones de Videos"
+
+    def __str__(self):
+        return f"{self.usuario.username} vio {self.video.titulo} ({self.contador} veces)"

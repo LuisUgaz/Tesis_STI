@@ -67,3 +67,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU12 - Visualización de videos recomendados**
 *Link: [./tracks/user_view_recommended_videos_20260410/](./tracks/user_view_recommended_videos_20260410/)*
+
+---
+
+- [x] **Track: HU13 - Registrar visualización de videos**
+*Link: [./tracks/user_track_video_views_20260410/](./tracks/user_track_video_views_20260410/)*

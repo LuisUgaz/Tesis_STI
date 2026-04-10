@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.decorators.http import require_POST
 from AppEvaluar.models import RecomendacionEstudiante
-from .models import Tema, ContenidoTema, VideoTema
+from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo
 
 @login_required
 def lista_temas(request):
@@ -98,4 +100,42 @@ def video_list(request, slug):
     return render(request, 'AppTutoria/videos.html', {
         'tema': tema,
         'videos': videos
+    })
+
+@login_required
+@require_POST
+def registrar_visualizacion(request):
+    """
+    Endpoint AJAX para registrar que un estudiante terminó de ver un video.
+    """
+    video_id = request.POST.get('video_id')
+    if not video_id:
+        return JsonResponse({'error': 'ID de video no proporcionado'}, status=400)
+
+    video = get_object_or_404(VideoTema, id=video_id)
+
+    # Validar permiso (mismo que en video_list)
+    esta_recomendado = RecomendacionEstudiante.objects.filter(
+        usuario=request.user, 
+        tema=video.tema.nombre
+    ).exists()
+
+    if not esta_recomendado:
+        raise PermissionDenied("No tienes permiso para registrar visualizaciones de este tema.")
+
+    # Registrar o actualizar contador
+    visualizacion, created = VisualizacionVideo.objects.get_or_create(
+        usuario=request.user,
+        video=video,
+        defaults={'contador': 1}
+    )
+
+    if not created:
+        visualizacion.contador += 1
+        visualizacion.save()
+
+    return JsonResponse({
+        'status': 'success',
+        'contador': visualizacion.contador,
+        'video': video.titulo
     })

@@ -229,6 +229,7 @@
     </style>
 </head>
 <body>
+    {% csrf_token %}
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2>{{ tema.nombre }}</h2>
@@ -274,7 +275,7 @@
                         <div class="video-info">
                             <h3>{{ video.titulo }}</h3>
                             <p>{{ video.descripcion|default:"Sin descripción disponible." }}</p>
-                            <button class="btn-play" onclick="openVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}')">
+                            <button class="btn-play" onclick="openVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}', '{{ video.id }}')">
                                 Ver Video
                             </button>
                         </div>
@@ -305,8 +306,10 @@
         const modal = document.getElementById("videoModal");
         const video = document.getElementById("mainVideo");
         const vTitle = document.getElementById("videoTitle");
+        let currentVideoId = null;
 
-        function openVideo(url, title) {
+        function openVideo(url, title, videoId) {
+            currentVideoId = videoId;
             video.src = url;
             vTitle.innerText = title;
             modal.style.display = "flex";
@@ -317,7 +320,29 @@
             modal.style.display = "none";
             video.pause();
             video.src = "";
+            currentVideoId = null;
         }
+
+        video.onended = function() {
+            console.log("Video finalizado. Registrando visualización...");
+            if (currentVideoId) {
+                const formData = new FormData();
+                formData.append('video_id', currentVideoId);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+                fetch("{% url 'registrar_visualizacion' %}", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Registro exitoso:", data);
+                })
+                .catch(error => {
+                    console.error("Error al registrar visualización:", error);
+                });
+            }
+        };
 
         window.onclick = function(event) {
             if (event.target == modal) {
