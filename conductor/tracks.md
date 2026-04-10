@@ -62,3 +62,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU11 - Visualización de marco teórico**
 *Link: [./tracks/user_theme_theory_20260409/](./tracks/user_theme_theory_20260409/)*
+
+---
+
+- [x] **Track: HU12 - Visualización de videos recomendados**
+*Link: [./tracks/user_view_recommended_videos_20260410/](./tracks/user_view_recommended_videos_20260410/)*

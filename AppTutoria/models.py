@@ -16,3 +16,19 @@ class ContenidoTema(models.Model):
 
     def __str__(self):
         return f"Contenido de {self.tema.nombre}"
+
+class VideoTema(models.Model):
+    tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='videos')
+    titulo = models.CharField(max_length=200)
+    archivo_video = models.FileField(upload_to='videos_temas/', help_text="Archivo de video (MP4 preferible)")
+    miniatura = models.ImageField(upload_to='videos_thumbnails/', help_text="Imagen de previsualización", blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True, help_text="Descripción breve del video")
+    duracion = models.CharField(max_length=20, help_text="Ej: 5:30 min", blank=True, null=True)
+    orden = models.PositiveIntegerField(default=1, help_text="Orden de visualización")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['orden', 'fecha_creacion']
+
+    def __str__(self):
+        return f"{self.titulo} ({self.tema.nombre})"

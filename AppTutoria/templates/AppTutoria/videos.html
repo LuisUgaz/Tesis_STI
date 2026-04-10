@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videos: {{ tema.nombre }}</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --accent-color: #f5a623;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1rem;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-header h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: #666;
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .nav-item:hover {
+            background: #f0f7ff;
+            color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem 3rem;
+        }
+
+        .header {
+            margin-bottom: 2.5rem;
+            padding: 2.5rem;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-bottom: 5px solid var(--primary-color);
+        }
+
+        h1 { color: var(--primary-color); margin: 0; }
+
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .video-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+        }
+
+        .play-overlay {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.9;
+        }
+
+        .duration-badge {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .video-info {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-info h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+        }
+
+        .video-info p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .btn-play {
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 0.8rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-play:hover {
+            background: #357abd;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            width: 90%;
+            max-width: 900px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        video { width: 100%; display: block; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-left: 0; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ tema.nombre }}</h2>
+        </div>
+        <nav class="nav-menu">
+            <a href="{% url 'tema_detalle' tema.slug %}?seccion=resumen" class="nav-item">
+                <span class="icon">📋</span> Resumen
+            </a>
+            <a href="{% url 'tema_detalle' tema.slug %}?seccion=teoria" class="nav-item">
+                <span class="icon">📖</span> Marco Teórico
+            </a>
+            <a href="#" class="nav-item active">
+                <span class="icon">🎥</span> Videos
+            </a>
+        </nav>
+        <div style="margin-top: auto; padding: 1rem;">
+            <a href="{% url 'lista_temas' %}" style="text-decoration: none; color: var(--primary-color); font-weight: bold;">
+                ← Temas
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Videos Recomendados: {{ tema.nombre }}</h1>
+        </div>
+
+        {% if videos %}
+            <div class="video-grid">
+                {% for video in videos %}
+                    <div class="video-card">
+                        <div class="video-thumbnail">
+                            {% if video.miniatura %}
+                                <img src="{{ video.miniatura.url }}" alt="{{ video.titulo }}">
+                            {% else %}
+                                <div style="background: #2c3e50; width: 100%; height: 100%;"></div>
+                            {% endif %}
+                            <span class="play-overlay">▶</span>
+                            {% if video.duracion %}
+                                <span class="duration-badge">{{ video.duracion }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="video-info">
+                            <h3>{{ video.titulo }}</h3>
+                            <p>{{ video.descripcion|default:"Sin descripción disponible." }}</p>
+                            <button class="btn-play" onclick="openVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}')">
+                                Ver Video
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 5rem; background: white; border-radius: 20px;">
+                <span style="font-size: 4rem;">🎥</span>
+                <h2>No hay videos disponibles</h2>
+                <p>Aún no se han cargado videos para este tema.</p>
+            </div>
+        {% endif %}
+    </main>
+
+    <!-- Modal para el Video -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVideo()">&times;</span>
+            <video id="mainVideo" controls>
+                Tu navegador no soporta el elemento de video.
+            </video>
+            <div id="videoTitle" style="color: white; padding: 1rem; font-weight: bold; background: #222;"></div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("videoModal");
+        const video = document.getElementById("mainVideo");
+        const vTitle = document.getElementById("videoTitle");
+
+        function openVideo(url, title) {
+            video.src = url;
+            vTitle.innerText = title;
+            modal.style.display = "flex";
+            video.play();
+        }
+
+        function closeVideo() {
+            modal.style.display = "none";
+            video.pause();
+            video.src = "";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeVideo();
+            }
+        }
+    </script>
+</body>
+</html>

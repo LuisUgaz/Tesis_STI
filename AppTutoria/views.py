@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from AppEvaluar.models import RecomendacionEstudiante
-from .models import Tema, ContenidoTema
+from .models import Tema, ContenidoTema, VideoTema
 
 @login_required
 def lista_temas(request):
@@ -68,4 +68,34 @@ def tema_detalle(request, slug):
         'tema': tema,
         'contenido': contenido,
         'seccion': seccion
+    })
+
+@login_required
+def video_list(request, slug):
+    """
+    Muestra la lista de videos asociados a un tema específico.
+    Valida que el estudiante tenga acceso al tema según sus recomendaciones.
+    """
+    # 1. Verificar rol de Estudiante
+    if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
+        raise PermissionDenied("Solo los estudiantes pueden acceder a los videos.")
+
+    # 2. Obtener el tema por slug
+    tema = get_object_or_404(Tema, slug=slug)
+
+    # 3. Verificar si el tema está recomendado para el estudiante
+    esta_recomendado = RecomendacionEstudiante.objects.filter(
+        usuario=request.user, 
+        tema=tema.nombre
+    ).exists()
+
+    if not esta_recomendado:
+        raise PermissionDenied("No tienes acceso a los videos de este tema aún.")
+
+    # 4. Obtener los videos asociados al tema
+    videos = VideoTema.objects.filter(tema=tema)
+
+    return render(request, 'AppTutoria/videos.html', {
+        'tema': tema,
+        'videos': videos
     })
