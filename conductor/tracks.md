@@ -77,3 +77,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU14 - Resolver ejercicios personalizados**
 *Link: [./tracks/user_resolve_custom_exercises_20260410/](./tracks/user_resolve_custom_exercises_20260410/)*
+
+---
+
+- [x] **Track: HU15 - Ajuste de dificultad adaptativa**
+*Link: [./tracks/user_adaptive_difficulty_20260410/](./tracks/user_adaptive_difficulty_20260410/)*

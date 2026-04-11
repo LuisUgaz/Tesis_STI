@@ -16,6 +16,18 @@ class Profile(models.Model):
     grado = models.CharField(max_length=10, blank=True, null=True)
     seccion = models.CharField(max_length=10, blank=True, null=True)
     rol = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Estudiante')
+    
+    DIFICULTAD_CHOICES = [
+        ('Básico', 'Básico'),
+        ('Intermedio', 'Intermedio'),
+        ('Avanzado', 'Avanzado'),
+    ]
+    nivel_dificultad_actual = models.CharField(
+        max_length=20, 
+        choices=DIFICULTAD_CHOICES, 
+        default='Básico',
+        help_text="Nivel de dificultad asignado automáticamente por el sistema"
+    )
 
     def __str__(self):
         return f"{self.nombres} {self.apellidos} ({self.user.username})"

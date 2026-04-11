@@ -7,7 +7,7 @@ from .models import (
     ResultadoDiagnostico, RecomendacionEstudiante,
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
-from .services import calcular_recomendacion
+from .services import calcular_recomendacion, ajustar_dificultad_estudiante
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
@@ -36,10 +36,18 @@ def iniciar_practica(request):
     # 2. Obtener el tema asociado
     tema = get_object_or_404(Tema, nombre=recomendacion.tema)
 
-    # 3. Filtrar ejercicios (por ahora solo por tema, HU futura hará ajuste de nivel dinámico)
-    # Seleccionamos un máximo de 5 ejercicios para la sesión de práctica
-    ejercicios = Ejercicio.objects.filter(tema=tema).prefetch_related('opciones').order_by('?')[:5]
+    # 3. Filtrar ejercicios por Tema y Nivel del Perfil (HU15)
+    nivel = request.user.profile.nivel_dificultad_actual
+    ejercicios = Ejercicio.objects.filter(
+        tema=tema, 
+        dificultad=nivel
+    ).prefetch_related('opciones').order_by('?')[:5]
 
+    if not ejercicios.exists():
+        messages.info(request, f"Aún no hay ejercicios de nivel {nivel} para el tema: {tema.nombre}")
+        # Fallback: Si no hay del nivel, mostrar cualquiera del tema para no bloquear al alumno
+        ejercicios = Ejercicio.objects.filter(tema=tema).prefetch_related('opciones').order_by('?')[:5]
+        
     if not ejercicios.exists():
         messages.info(request, f"Aún no hay ejercicios cargados para el tema: {tema.nombre}")
         return redirect('lista_temas')
@@ -74,6 +82,9 @@ def validar_respuesta(request):
         tiempo_empleado=int(tiempo),
         feedback_mostrado=opcion.retroalimentacion or ""
     )
+
+    # HU15: Intentar ajustar dificultad tras la respuesta
+    ajustar_dificultad_estudiante(request.user)
 
     return JsonResponse({
         'es_correcto': opcion.es_correcta,

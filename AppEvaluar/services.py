@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 from django.contrib.auth.models import User
-from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante
+from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio
 
 class SinResultadosError(Exception):
     """Excepción lanzada cuando un estudiante no tiene resultados de diagnóstico."""
@@ -78,4 +78,56 @@ def calcular_recomendacion(estudiante: User) -> Optional[Dict]:
             metrica_desempeno=mejor_recomendacion['metrica']
         )
 
+        # HU15: Ajuste de dificultad inicial basado en el diagnóstico
+        # Regla: 0-40 (Básico), 41-75 (Intermedio), 76-100 (Avanzado)
+        # Nota: Usamos la métrica del tema con menor desempeño para nivelar desde la base
+        metrica = mejor_recomendacion['metrica']
+        if metrica <= 40:
+            nuevo_nivel = 'Básico'
+        elif metrica <= 75:
+            nuevo_nivel = 'Intermedio'
+        else:
+            nuevo_nivel = 'Avanzado'
+
+        if hasattr(estudiante, 'profile'):
+            estudiante.profile.nivel_dificultad_actual = nuevo_nivel
+            estudiante.profile.save()
+
     return mejor_recomendacion
+
+def ajustar_dificultad_estudiante(estudiante: User):
+    """
+    Analiza los últimos 5 resultados de ejercicios para ajustar el nivel del estudiante.
+    Regla: >= 80% aciertos sube de nivel.
+    """
+    if not hasattr(estudiante, 'profile'):
+        return
+
+    # Obtener los últimos 5 resultados
+    ultimos_resultados = ResultadoEjercicio.objects.filter(
+        usuario=estudiante
+    ).order_by('-fecha_resolucion')[:5]
+
+    if ultimos_resultados.count() < 5:
+        # No hay suficiente historia para ajustar
+        return
+
+    # Calcular desempeño en la sesión
+    aciertos = sum(1 for r in ultimos_resultados if r.es_correcto)
+    porcentaje = (aciertos / 5) * 100
+
+    nivel_actual = estudiante.profile.nivel_dificultad_actual
+    nuevo_nivel = nivel_actual
+
+    if porcentaje >= 80:
+        # Subir de nivel
+        if nivel_actual == 'Básico':
+            nuevo_nivel = 'Intermedio'
+        elif nivel_actual == 'Intermedio':
+            nuevo_nivel = 'Avanzado'
+    
+    # Por ahora no bajamos nivel para evitar desmotivación, solo mantenemos o subimos.
+    
+    if nuevo_nivel != nivel_actual:
+        estudiante.profile.nivel_dificultad_actual = nuevo_nivel
+        estudiante.profile.save()
