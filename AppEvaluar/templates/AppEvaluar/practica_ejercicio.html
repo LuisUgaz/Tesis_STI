@@ -115,23 +115,54 @@
 
         .feedback-area {
             margin-top: 1.5rem;
-            padding: 1rem;
-            border-radius: 10px;
+            padding: 1.2rem;
+            border-radius: 12px;
             display: none;
+            border-left: 5px solid transparent;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .feedback-area.success {
             display: block;
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-color: var(--success-color);
         }
 
         .feedback-area.error {
             display: block;
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #ffebee;
+            color: #c62828;
+            border-color: var(--error-color);
+        }
+
+        .feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+
+        .feedback-tech {
+            margin-top: 0.8rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        .feedback-tech b {
+            color: var(--text-color);
+            display: block;
+            margin-bottom: 0.3rem;
         }
 
         .actions {
@@ -252,9 +283,31 @@
                 });
                 const data = await response.json();
 
-                const feedback = document.getElementById(`feedback-${ejercicioId}`);
-                feedback.innerText = data.feedback;
-                feedback.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
+                const feedbackArea = document.getElementById(`feedback-${ejercicioId}`);
+                
+                // Construir HTML del feedback (HU16)
+                let icon = data.es_correcto ? '✅' : '❌';
+                let title = data.es_correcto ? '¡Muy bien!' : '¡Sigue practicando!';
+                
+                let feedbackHtml = `
+                    <div class="feedback-header">
+                        <span>${icon}</span>
+                        <span>${title}</span>
+                    </div>
+                    <div class="feedback-main">${data.feedback}</div>
+                `;
+
+                if (data.explicacion_tecnica) {
+                    feedbackHtml += `
+                        <div class="feedback-tech">
+                            <b>💡 Explicación Técnica:</b>
+                            ${data.explicacion_tecnica}
+                        </div>
+                    `;
+                }
+
+                feedbackArea.innerHTML = feedbackHtml;
+                feedbackArea.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
                 
                 // Deshabilitar radios
                 card.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);

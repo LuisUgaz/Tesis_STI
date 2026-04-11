@@ -82,3 +82,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU15 - Ajuste de dificultad adaptativa**
 *Link: [./tracks/user_adaptive_difficulty_20260410/](./tracks/user_adaptive_difficulty_20260410/)*
+
+---
+
+- [x] **Track: HU16 - Retroalimentación inmediata**
+*Link: [./tracks/user_immediate_feedback_20260411/](./tracks/user_immediate_feedback_20260411/)*

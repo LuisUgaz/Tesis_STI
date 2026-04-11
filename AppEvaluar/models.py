@@ -74,6 +74,7 @@ class Ejercicio(models.Model):
     texto = models.TextField()
     imagen = models.ImageField(upload_to='ejercicios_imagenes/', blank=True, null=True)
     dificultad = models.CharField(max_length=20, choices=DIFICULTAD_CHOICES, default='Básico')
+    explicacion_tecnica = models.TextField(help_text="Explicación teórica general del ejercicio", blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

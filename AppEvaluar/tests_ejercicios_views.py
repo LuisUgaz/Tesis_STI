@@ -55,3 +55,30 @@ class EjercicioViewsTest(TestCase):
         resultado = ResultadoEjercicio.objects.get(usuario=self.user, ejercicio=self.ejercicio)
         self.assertTrue(resultado.es_correcto)
         self.assertEqual(resultado.tiempo_empleado, 10)
+
+    def test_validar_respuesta_feedback_mixto(self):
+        """Debería devolver tanto el feedback de la opción como la explicación técnica del ejercicio."""
+        # 1. Configurar ejercicio con explicación técnica
+        self.ejercicio.explicacion_tecnica = "La suma interna de ángulos es 180."
+        self.ejercicio.save()
+        
+        RecomendacionEstudiante.objects.create(usuario=self.user, tema=self.tema.nombre, metrica_desempeno=50)
+        self.client.login(username='estudiante1', password='password123')
+        
+        # 2. Enviar respuesta incorrecta
+        response = self.client.post(reverse('validar_respuesta'), {
+            'ejercicio_id': self.ejercicio.id,
+            'opcion_id': self.opcion_incorrecta.id,
+            'tiempo': 5
+        })
+        
+        # 3. Validar respuesta JSON
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['feedback'], "Mal.")
+        self.assertEqual(data['explicacion_tecnica'], "La suma interna de ángulos es 180.")
+        
+        # 4. Verificar persistencia (concatenación)
+        resultado = ResultadoEjercicio.objects.get(usuario=self.user, ejercicio=self.ejercicio)
+        self.assertIn("Mal.", resultado.feedback_mostrado)
+        self.assertIn("La suma interna de ángulos es 180.", resultado.feedback_mostrado)

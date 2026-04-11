@@ -74,13 +74,18 @@ def validar_respuesta(request):
     ejercicio = get_object_or_404(Ejercicio, id=ejercicio_id)
     opcion = get_object_or_404(OpcionEjercicio, id=opcion_id, ejercicio=ejercicio)
 
+    # Feedback combinado para persistencia (HU16)
+    feedback_especifico = opcion.retroalimentacion or ("¡Correcto!" if opcion.es_correcta else "Sigue intentándolo.")
+    explicacion_tecnica = ejercicio.explicacion_tecnica or ""
+    feedback_completo = f"{feedback_especifico} {explicacion_tecnica}".strip()
+
     # Persistir el resultado
     ResultadoEjercicio.objects.create(
         usuario=request.user,
         ejercicio=ejercicio,
         es_correcto=opcion.es_correcta,
         tiempo_empleado=int(tiempo),
-        feedback_mostrado=opcion.retroalimentacion or ""
+        feedback_mostrado=feedback_completo
     )
 
     # HU15: Intentar ajustar dificultad tras la respuesta
@@ -88,7 +93,8 @@ def validar_respuesta(request):
 
     return JsonResponse({
         'es_correcto': opcion.es_correcta,
-        'feedback': opcion.retroalimentacion or ("¡Correcto!" if opcion.es_correcta else "Sigue intentándolo.")
+        'feedback': feedback_especifico,
+        'explicacion_tecnica': explicacion_tecnica
     })
 
 @login_required
