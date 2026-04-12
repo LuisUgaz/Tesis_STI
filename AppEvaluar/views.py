@@ -8,6 +8,7 @@ from .models import (
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante
+from AppTutoria.services import registrar_progreso
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
@@ -86,6 +87,14 @@ def validar_respuesta(request):
         es_correcto=opcion.es_correcta,
         tiempo_empleado=int(tiempo),
         feedback_mostrado=feedback_completo
+    )
+
+    # Registrar progreso centralizado (HU17)
+    registrar_progreso(
+        usuario=request.user,
+        tema=ejercicio.tema,
+        tipo_actividad='Ejercicio',
+        referencia_id=ejercicio.id
     )
 
     # HU15: Intentar ajustar dificultad tras la respuesta
@@ -168,6 +177,18 @@ def rendir_examen(request, examen_id):
             examen=examen,
             puntaje=puntaje
         )
+
+        # Registrar progreso centralizado por tema (HU17)
+        temas_evaluados = preguntas.values_list('categoria', flat=True).distinct()
+        for nombre_tema in temas_evaluados:
+            tema_obj = Tema.objects.filter(nombre=nombre_tema).first()
+            if tema_obj:
+                registrar_progreso(
+                    usuario=request.user,
+                    tema=tema_obj,
+                    tipo_actividad='Examen',
+                    referencia_id=examen.id
+                )
 
         # Generar y persistir recomendación (HU08)
         try:

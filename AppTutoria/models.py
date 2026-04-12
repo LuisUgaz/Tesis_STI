@@ -48,3 +48,27 @@ class VisualizacionVideo(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} vio {self.video.titulo} ({self.contador} veces)"
+
+class ProgresoEstudiante(models.Model):
+    TIPO_ACTIVIDAD_CHOICES = [
+        ('Ejercicio', 'Ejercicio'),
+        ('Video', 'Video'),
+        ('Teoría', 'Teoría'),
+        ('Examen', 'Examen'),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progresos')
+    tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='progresos_estudiantes')
+    tipo_actividad = models.CharField(max_length=20, choices=TIPO_ACTIVIDAD_CHOICES)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    grado = models.CharField(max_length=10)
+    seccion = models.CharField(max_length=10)
+    referencia_id = models.PositiveIntegerField(null=True, blank=True, help_text="ID de la actividad específica (ejercicio, video, etc.)")
+
+    class Meta:
+        verbose_name = "Progreso del Estudiante"
+        verbose_name_plural = "Progresos de los Estudiantes"
+        ordering = ['-fecha_registro']
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.tema.nombre} - {self.tipo_actividad}"

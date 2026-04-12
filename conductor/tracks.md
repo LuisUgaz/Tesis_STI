@@ -87,3 +87,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU16 - Retroalimentación inmediata**
 *Link: [./tracks/user_immediate_feedback_20260411/](./tracks/user_immediate_feedback_20260411/)*
+
+---
+
+- [x] **Track: HU17 - Registro de progreso de aprendizaje**
+*Link: [./tracks/user_learning_progress_registration_20260411/](./tracks/user_learning_progress_registration_20260411/)*

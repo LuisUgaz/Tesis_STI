@@ -4,7 +4,8 @@ from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from AppEvaluar.models import RecomendacionEstudiante
-from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo
+from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
+from .services import registrar_progreso
 
 @login_required
 def lista_temas(request):
@@ -65,6 +66,12 @@ def tema_detalle(request, slug):
     contenido = None
     if seccion == 'teoria':
         contenido = get_object_or_404(ContenidoTema, tema=tema)
+        # Registrar progreso centralizado (HU17)
+        registrar_progreso(
+            usuario=request.user,
+            tema=tema,
+            tipo_actividad='Teoría'
+        )
     
     return render(request, 'AppTutoria/tema_detalle.html', {
         'tema': tema,
@@ -133,6 +140,14 @@ def registrar_visualizacion(request):
     if not created:
         visualizacion.contador += 1
         visualizacion.save()
+
+    # Registrar progreso centralizado (HU17)
+    registrar_progreso(
+        usuario=request.user,
+        tema=video.tema,
+        tipo_actividad='Video',
+        referencia_id=video.id
+    )
 
     return JsonResponse({
         'status': 'success',

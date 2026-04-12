@@ -161,6 +161,7 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **Resolución de Ejercicios Personalizados (HU14):** Sistema de práctica interactiva que selecciona ejercicios de opción múltiple basados en el tema recomendado para el estudiante, con visualización secuencial, barra de progreso y retroalimentación inmediata asíncrona.
 - **Ajuste de Dificultad Adaptativa (HU15):** Motor de personalización que asigna un nivel inicial (Básico, Intermedio, Avanzado) tras el diagnóstico y recalcula dinámicamente el desafío tras cada sesión de práctica, asegurando que los ejercicios cargados coincidan con el rendimiento actual del estudiante.
 - **Retroalimentación Inmediata (HU16):** Sistema de feedback detallado tras cada respuesta que combina la explicación específica de la opción seleccionada con un fundamento teórico general (Feedback Mixto), reforzado visualmente con iconografía de estado y tarjetas de ayuda.
+- **Registro de Progreso de Aprendizaje (HU17):** Sistema de persistencia centralizado que captura y almacena automáticamente cada interacción educativa (ejercicios, videos, teoría, exámenes) del estudiante, registrando el tema, la fecha y su periodo académico (grado/sección) actual para construir un historial de avance detallado.
 
 - **Registro de Usuarios (HU01):** Formulario para nuevos estudiantes con captura de datos acadÃ©micos (grado, secciÃ³n) y estilo visual gamificado.
 - **Inicio de SesiÃ³n (HU02):** Sistema de autenticaciÃ³n seguro con soporte para sesiones persistentes y redirecciÃ³n dinÃ¡mica.
