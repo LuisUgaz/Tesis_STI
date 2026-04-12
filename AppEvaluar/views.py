@@ -42,6 +42,16 @@ class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView
         if tema_id:
             queryset = queryset.filter(tema_id=tema_id)
         
+        # Filtro por fecha inicio
+        fecha_inicio = self.request.GET.get('fecha_inicio')
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_registro__date__gte=fecha_inicio)
+            
+        # Filtro por fecha fin
+        fecha_fin = self.request.GET.get('fecha_fin')
+        if fecha_fin:
+            queryset = queryset.filter(fecha_registro__date__lte=fecha_fin)
+        
         # Ordenamiento
         order = self.request.GET.get('order', 'desc')
         if order == 'asc':
@@ -55,6 +65,8 @@ class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView
         context = super().get_context_data(**kwargs)
         context['temas'] = Tema.objects.all()
         context['tema_seleccionado'] = self.request.GET.get('tema', '')
+        context['fecha_inicio'] = self.request.GET.get('fecha_inicio', '')
+        context['fecha_fin'] = self.request.GET.get('fecha_fin', '')
         context['orden_actual'] = self.request.GET.get('order', 'desc')
         return context
 

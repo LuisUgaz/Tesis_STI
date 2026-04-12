@@ -95,5 +95,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: HU18 - Consultar historial de resultados**
+- [ ] **Track: HU18 - Consultar historial de resultados**
 *Link: [./tracks/user_consult_results_history_20260412/](./tracks/user_consult_results_history_20260412/)*
+
+---
+
+- [x] **Track: HU19 - Filtrar historial de resultados**
+*Link: [./tracks/user_filter_results_history_20260412/](./tracks/user_filter_results_history_20260412/)*
+

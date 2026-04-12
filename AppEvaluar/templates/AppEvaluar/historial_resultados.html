@@ -43,7 +43,7 @@
         font-size: 0.9rem;
         color: #666;
     }
-    .filter-group select {
+    .filter-group select, .filter-group input {
         padding: 0.5rem;
         border-radius: 5px;
         border: 1px solid #ddd;
@@ -64,6 +64,17 @@
         text-decoration: none;
         border-radius: 5px;
         font-size: 0.9rem;
+    }
+    .alert-no-results {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border: 1px solid #ffeeba;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
     .table-container {
         overflow-x: auto;
@@ -108,9 +119,9 @@
         </a>
     </div>
 
-    <form method="get" class="filters-section">
+    <form method="get" class="filters-section" id="filter-form">
         <div class="filter-group">
-            <label for="tema">Filtrar por Tema:</label>
+            <label for="tema">Tema:</label>
             <select name="tema" id="tema">
                 <option value="">Todos los temas</option>
                 {% for tema in temas %}
@@ -122,16 +133,32 @@
         </div>
 
         <div class="filter-group">
-            <label for="order">Orden Cronológico:</label>
+            <label for="fecha_inicio">Desde:</label>
+            <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ fecha_inicio }}">
+        </div>
+
+        <div class="filter-group">
+            <label for="fecha_fin">Hasta:</label>
+            <input type="date" name="fecha_fin" id="fecha_fin" value="{{ fecha_fin }}">
+        </div>
+
+        <div class="filter-group">
+            <label for="order">Orden:</label>
             <select name="order" id="order">
-                <option value="desc" {% if orden_actual == 'desc' %}selected{% endif %}>Más reciente primero</option>
-                <option value="asc" {% if orden_actual == 'asc' %}selected{% endif %}>Más antiguo primero</option>
+                <option value="desc" {% if orden_actual == 'desc' %}selected{% endif %}>Reciente</option>
+                <option value="asc" {% if orden_actual == 'asc' %}selected{% endif %}>Antiguo</option>
             </select>
         </div>
 
-        <button type="submit" class="btn-filter">Aplicar Filtros</button>
+        <button type="submit" class="btn-filter">Filtrar</button>
         <a href="{% url 'historial_resultados' %}" class="btn-clear">Limpiar</a>
     </form>
+
+    {% if not progresos and tema_seleccionado or fecha_inicio or fecha_fin %}
+    <div class="alert-no-results">
+        <span>⚠️</span> No se encontraron resultados para los filtros aplicados.
+    </div>
+    {% endif %}
 
     <div class="table-container">
         <table>
