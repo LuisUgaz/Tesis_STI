@@ -5,8 +5,18 @@ from .forms import UserRegistrationForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
+from .models import MetricasEstudiante
+
+class StudentRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.profile.rol == 'Estudiante'
+    
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied("Solo los estudiantes pueden acceder a esta secciÃ³n.")
+        return super().handle_no_permission()
 
 class RegisterView(FormView):
     template_name = 'AppGestionUsuario/register.html'
@@ -53,3 +63,13 @@ class ProfileView(LoginRequiredMixin, DetailView):
             raise PermissionDenied("No tienes permiso para ver este perfil.")
         
         return user
+
+class MiProgresoView(LoginRequiredMixin, StudentRequiredMixin, DetailView):
+    model = MetricasEstudiante
+    template_name = 'AppGestionUsuario/mi_progreso.html'
+    context_object_name = 'metricas'
+
+    def get_object(self, queryset=None):
+        # Siempre obtener o crear las mÃ©tricas para el usuario actual
+        metricas, created = MetricasEstudiante.objects.get_or_create(usuario=self.request.user)
+        return metricas

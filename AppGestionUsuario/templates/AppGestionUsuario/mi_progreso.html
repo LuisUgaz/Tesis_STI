@@ -1,0 +1,213 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-blue: #4a90e2;
+        --success-green: #2ecc71;
+        --warning-orange: #f39c12;
+        --danger-red: #e74c3c;
+        --bg-light: #f8faff;
+        --card-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    .dashboard-container {
+        max-width: 1100px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-header h2 {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header p {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+    }
+
+    /* Resumen Cards */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .metric-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        transition: transform 0.3s ease;
+        border-bottom: 5px solid var(--primary-blue);
+    }
+
+    .metric-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .metric-card i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .metric-value {
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 0.5rem 0;
+    }
+
+    .metric-label {
+        color: #95a5a6;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+
+    /* SecciÃ³n de Temas */
+    .topics-section {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 25px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .topics-section h3 {
+        color: #2c3e50;
+        margin-bottom: 2rem;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .topic-item {
+        margin-bottom: 2rem;
+    }
+
+    .topic-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+        color: #34495e;
+    }
+
+    .progress-bar-bg {
+        background: #ecf0f1;
+        height: 15px;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s ease-in-out;
+    }
+
+    /* Estado VacÃ­o */
+    .empty-state {
+        text-align: center;
+        padding: 4rem;
+        background: white;
+        border-radius: 25px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #bdc3c7;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-action {
+        display: inline-block;
+        margin-top: 2rem;
+        padding: 1rem 2.5rem;
+        background: var(--primary-blue);
+        color: white;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+
+    .btn-action:hover {
+        background: #357abd;
+    }
+
+    /* Colores segÃºn precisiÃ³n */
+    .color-high { background-color: var(--success-green); }
+    .color-mid { background-color: var(--warning-orange); }
+    .color-low { background-color: var(--danger-red); }
+
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>Mi Progreso Académico</h2>
+        <p>¡Sigue así, @{{ user.username }}! Aquí tienes un resumen de tu evolución.</p>
+    </div>
+
+    {% if metricas.precision_general > 0 or metricas.rendimiento_academico > 0 %}
+        <div class="metrics-grid">
+            <div class="metric-card" style="border-color: var(--primary-blue);">
+                <span style="font-size: 3rem;">🎯</span>
+                <div class="metric-value">{{ metricas.precision_general|floatformat:1 }}%</div>
+                <div class="metric-label">Precisión General</div>
+            </div>
+            
+            <div class="metric-card" style="border-color: var(--success-green);">
+                <span style="font-size: 3rem;">🏆</span>
+                <div class="metric-value">{{ metricas.rendimiento_academico|floatformat:1 }}%</div>
+                <div class="metric-label">Rendimiento Académico</div>
+            </div>
+
+            <div class="metric-card" style="border-color: var(--warning-orange);">
+                <span style="font-size: 3rem;">⚡</span>
+                <div class="metric-value">{{ metricas.tiempo_respuesta_promedio|floatformat:1 }}s</div>
+                <div class="metric-label">Tiempo de Respuesta</div>
+            </div>
+        </div>
+
+        <div class="topics-section">
+            <h3>📏 Dominio por Temas de Geometría</h3>
+            
+            {% for tema, porcentaje in metricas.dominio_por_tema.items %}
+                <div class="topic-item">
+                    <div class="topic-info">
+                        <span>{{ tema }}</span>
+                        <span>{{ porcentaje|floatformat:0 }}%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill {% if porcentaje >= 80 %}color-high{% elif porcentaje >= 50 %}color-mid{% else %}color-low{% endif %}" 
+                             style="width: {{ porcentaje }}%;"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <p style="color: #7f8c8d;">Resuelve ejercicios para ver el dominio de cada tema.</p>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <span style="font-size: 5rem;">🚀</span>
+            <h3>¡Es momento de empezar!</h3>
+            <p>Aún no tienes métricas calculadas. Empieza resolviendo tu examen diagnóstico o practicando algunos ejercicios.</p>
+            <a href="{% url 'home' %}" class="btn-action">¡Comenzar Actividad!</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
