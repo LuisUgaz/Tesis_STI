@@ -8,6 +8,7 @@ from .models import (
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante
+from .services_metrics import actualizar_metricas_estudiante
 from AppTutoria.services import registrar_progreso
 from django.contrib import messages
 from django.utils import timezone
@@ -130,13 +131,16 @@ def validar_respuesta(request):
     feedback_completo = f"{feedback_especifico} {explicacion_tecnica}".strip()
 
     # Persistir el resultado
-    ResultadoEjercicio.objects.create(
+    resultado_ej = ResultadoEjercicio.objects.create(
         usuario=request.user,
         ejercicio=ejercicio,
         es_correcto=opcion.es_correcta,
         tiempo_empleado=int(tiempo),
         feedback_mostrado=feedback_completo
     )
+
+    # Actualizar mÃ©tricas acadÃ©micas (HU20)
+    actualizar_metricas_estudiante(request.user, actividad_reciente=resultado_ej)
 
     # Registrar progreso centralizado (HU17)
     registrar_progreso(
@@ -221,11 +225,14 @@ def rendir_examen(request, examen_id):
         puntaje = (total_correctas / total_preguntas * 100) if total_preguntas > 0 else 0
         
         # Persistir resultado (HU06)
-        ResultadoDiagnostico.objects.create(
+        resultado_diag = ResultadoDiagnostico.objects.create(
             estudiante=request.user,
             examen=examen,
             puntaje=puntaje
         )
+
+        # Actualizar mÃ©tricas acadÃ©micas (HU20)
+        actualizar_metricas_estudiante(request.user, actividad_reciente=resultado_diag)
 
         # Registrar progreso centralizado por tema (HU17)
         temas_evaluados = preguntas.values_list('categoria', flat=True).distinct()
