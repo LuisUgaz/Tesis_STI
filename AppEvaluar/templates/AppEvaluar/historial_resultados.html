@@ -1,0 +1,175 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<style>
+    .historial-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .historial-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .btn-back {
+        text-decoration: none;
+        color: #4a90e2;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .filters-section {
+        background-color: #fff;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .filter-group label {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    .filter-group select {
+        padding: 0.5rem;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+    .btn-filter {
+        padding: 0.5rem 1rem;
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .btn-clear {
+        padding: 0.5rem 1rem;
+        background-color: #eee;
+        color: #333;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 0.9rem;
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+    }
+    th, td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #4a90e2;
+        color: white;
+    }
+    tr:hover {
+        background-color: #f5f8ff;
+    }
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .badge-ejercicio { background-color: #e1f5fe; color: #01579b; }
+    .badge-video { background-color: #fff3e0; color: #e65100; }
+    .badge-teoria { background-color: #e8f5e9; color: #1b5e20; }
+    .badge-examen { background-color: #f3e5f5; color: #4a148c; }
+    
+    .resultado-correcto { color: #2e7d32; font-weight: bold; }
+    .resultado-incorrecto { color: #c62828; font-weight: bold; }
+</style>
+
+<div class="historial-container">
+    <div class="historial-header">
+        <h2>Mi Historial Académico</h2>
+        <a href="{% url 'profile' username=user.username %}" class="btn-back">
+            <span>&larr;</span> Regresar al Perfil
+        </a>
+    </div>
+
+    <form method="get" class="filters-section">
+        <div class="filter-group">
+            <label for="tema">Filtrar por Tema:</label>
+            <select name="tema" id="tema">
+                <option value="">Todos los temas</option>
+                {% for tema in temas %}
+                <option value="{{ tema.id }}" {% if tema_seleccionado == tema.id|stringformat:"s" %}selected{% endif %}>
+                    {{ tema.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="order">Orden Cronológico:</label>
+            <select name="order" id="order">
+                <option value="desc" {% if orden_actual == 'desc' %}selected{% endif %}>Más reciente primero</option>
+                <option value="asc" {% if orden_actual == 'asc' %}selected{% endif %}>Más antiguo primero</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-filter">Aplicar Filtros</button>
+        <a href="{% url 'historial_resultados' %}" class="btn-clear">Limpiar</a>
+    </form>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha y Hora</th>
+                    <th>Tema de Geometría</th>
+                    <th>Tipo de Actividad</th>
+                    <th>Resultado / Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for progreso in progresos %}
+                <tr>
+                    <td>{{ progreso.fecha_registro|date:"d/m/Y H:i" }}</td>
+                    <td><strong>{{ progreso.tema.nombre }}</strong></td>
+                    <td>
+                        <span class="badge badge-{{ progreso.tipo_actividad|lower }}">
+                            {{ progreso.tipo_actividad }}
+                        </span>
+                    </td>
+                    <td>
+                        {% with res=progreso.get_resultado_detalle %}
+                            <span class="{% if res == 'Correcto' %}resultado-correcto{% elif res == 'Incorrecto' %}resultado-incorrecto{% endif %}">
+                                {{ res }}
+                            </span>
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: #666;">
+                        Aún no tienes actividades registradas en tu historial.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

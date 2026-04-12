@@ -92,3 +92,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU17 - Registro de progreso de aprendizaje**
 *Link: [./tracks/user_learning_progress_registration_20260411/](./tracks/user_learning_progress_registration_20260411/)*
+
+---
+
+- [x] **Track: HU18 - Consultar historial de resultados**
+*Link: [./tracks/user_consult_results_history_20260412/](./tracks/user_consult_results_history_20260412/)*

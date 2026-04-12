@@ -48,6 +48,8 @@
                 return confirm("¿Estás seguro de que deseas cerrar tu sesión?");
             }
         </script>
+        <hr>
+        {% block content %}{% endblock %}
     {% else %}
         <p>No has iniciado sesión. <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
     {% endif %}

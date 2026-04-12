@@ -72,3 +72,27 @@ class ProgresoEstudiante(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} - {self.tema.nombre} - {self.tipo_actividad}"
+
+    def get_resultado_detalle(self):
+        """
+        Retorna el resultado detallado dependiendo del tipo de actividad.
+        """
+        from AppEvaluar.models import ResultadoEjercicio, ResultadoDiagnostico
+        
+        if self.tipo_actividad == 'Ejercicio' and self.referencia_id:
+            res = ResultadoEjercicio.objects.filter(usuario=self.usuario, ejercicio_id=self.referencia_id).order_by('-fecha_resolucion').first()
+            if res:
+                return "Correcto" if res.es_correcto else "Incorrecto"
+        
+        elif self.tipo_actividad == 'Examen' and self.referencia_id:
+            res = ResultadoDiagnostico.objects.filter(estudiante=self.usuario, examen_id=self.referencia_id).first()
+            if res:
+                return f"Puntaje: {res.puntaje}%"
+        
+        elif self.tipo_actividad == 'Video':
+            return "Visualizado"
+            
+        elif self.tipo_actividad == 'Teoría':
+            return "Completado"
+            
+        return "-"

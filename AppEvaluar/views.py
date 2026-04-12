@@ -14,12 +14,49 @@ from django.utils import timezone
 from datetime import timedelta
 from AppTutoria.models import Tema
 
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView
+from AppTutoria.models import Tema, ProgresoEstudiante
+
 def student_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
         if request.user.profile.rol != 'Estudiante':
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return _wrapped_view_func
+
+class StudentRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.profile.rol == 'Estudiante'
+
+class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView):
+    model = ProgresoEstudiante
+    template_name = 'AppEvaluar/historial_resultados.html'
+    context_object_name = 'progresos'
+
+    def get_queryset(self):
+        queryset = ProgresoEstudiante.objects.filter(usuario=self.request.user)
+        
+        # Filtro por tema
+        tema_id = self.request.GET.get('tema')
+        if tema_id:
+            queryset = queryset.filter(tema_id=tema_id)
+        
+        # Ordenamiento
+        order = self.request.GET.get('order', 'desc')
+        if order == 'asc':
+            queryset = queryset.order_by('fecha_registro')
+        else:
+            queryset = queryset.order_by('-fecha_registro')
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['temas'] = Tema.objects.all()
+        context['tema_seleccionado'] = self.request.GET.get('tema', '')
+        context['orden_actual'] = self.request.GET.get('order', 'desc')
+        return context
 
 @login_required
 @student_required

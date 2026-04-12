@@ -137,6 +137,29 @@
         .btn-back:hover {
             color: var(--accent-color);
         }
+
+        .btn-historial {
+            display: block;
+            margin-top: 1.5rem;
+            text-align: center;
+            padding: 0.8rem 1.5rem;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #d97d17;
+            transition: all 0.2s;
+        }
+        .btn-historial:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #d97d17;
+            background-color: #f7b03c;
+        }
+        .btn-historial:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #d97d17;
+        }
     </style>
 </head>
 <body>
@@ -172,6 +195,10 @@
                     <div class="info-value">{{ profile_user.profile.seccion|default:"-" }}</div>
                 </div>
             </div>
+
+            <a href="{% url 'historial_resultados' %}" target="_blank" class="btn-historial">
+                📜 Ver Historial Académico
+            </a>
             {% endif %}
         </div>
 
