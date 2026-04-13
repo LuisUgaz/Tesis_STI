@@ -7,7 +7,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
-from .models import MetricasEstudiante
+from .models import MetricasEstudiante, Insignia
 
 class StudentRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -63,6 +63,22 @@ class ProfileView(LoginRequiredMixin, DetailView):
             raise PermissionDenied("No tienes permiso para ver este perfil.")
         
         return user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.get_object()
+        
+        if user.profile.rol == 'Estudiante':
+            # Obtener todas las insignias y marcar cuáles ha ganado el usuario
+            logros_ids = set(user.profile.logros.values_list('insignia_id', flat=True))
+            insignias = Insignia.objects.all()
+            
+            for insignia in insignias:
+                insignia.ganada = insignia.id in logros_ids
+            
+            context['insignias'] = insignias
+            
+        return context
 
 class MiProgresoView(LoginRequiredMixin, StudentRequiredMixin, DetailView):
     model = MetricasEstudiante

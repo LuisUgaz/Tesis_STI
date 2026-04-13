@@ -40,6 +40,34 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.nombres} {self.apellidos} ({self.user.username})"
 
+class Insignia(models.Model):
+    RULE_TYPES = [
+        ('HITOS', 'Hitos de Actividad'),
+        ('DOMINIO', 'Dominio de Tema'),
+        ('CONSTANCIA', 'Constancia/Racha'),
+        ('PROGRESION', 'Progresión de Nivel'),
+    ]
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField()
+    icono_clase = models.CharField(max_length=50, help_text="Clase de FontAwesome o icono visual")
+    tipo_regla = models.CharField(max_length=20, choices=RULE_TYPES)
+    valor_requerido = models.IntegerField(default=1, help_text="Valor numérico para cumplir la regla (ej: 100 puntos, 5 ejercicios)")
+
+    def __str__(self):
+        return self.nombre
+
+class LogroEstudiante(models.Model):
+    perfil = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='logros')
+    insignia = models.ForeignKey(Insignia, on_delete=models.CASCADE)
+    fecha_obtencion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('perfil', 'insignia')
+        verbose_name_plural = "Logros de Estudiantes"
+
+    def __str__(self):
+        return f"{self.perfil.user.username} - {self.insignia.nombre}"
+
 class MetricasEstudiante(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='metricas')
     precision_general = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, help_text="Porcentaje de aciertos global")

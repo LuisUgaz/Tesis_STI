@@ -157,8 +157,8 @@ def validar_respuesta(request):
     # Capturar nivel previo para detectar cambio (HU23)
     nivel_previo = request.user.profile.nivel_estudiante
 
-    # Asignar puntos por actividad (HU22)
-    puntos_ganados = GamificationService.assign_points_exercise(
+    # Asignar puntos e insignias por actividad (HU22 y HU24)
+    puntos_ganados, nuevas_insignias = GamificationService.assign_points_exercise(
         request.user, 
         is_correct=opcion.es_correcta, 
         difficulty=ejercicio.dificultad
@@ -168,6 +168,11 @@ def validar_respuesta(request):
     request.user.profile.refresh_from_db()
     nivel_actual = request.user.profile.nivel_estudiante
 
+    # Formatear insignias para JSON
+    insignias_data = [
+        {'nombre': b.nombre, 'icono': b.icono_clase} for b in nuevas_insignias
+    ]
+
     return JsonResponse({
         'es_correcto': opcion.es_correcta,
         'feedback': feedback_especifico,
@@ -175,7 +180,8 @@ def validar_respuesta(request):
         'puntos_ganados': puntos_ganados,
         'total_puntos': request.user.profile.puntos_acumulados,
         'nivel_actual': nivel_actual,
-        'subio_nivel': nivel_actual > nivel_previo
+        'subio_nivel': nivel_actual > nivel_previo,
+        'nuevas_insignias': insignias_data
     })
 
 @login_required

@@ -123,3 +123,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU23 - Subida de nivel**
 *Link: [./tracks/user_level_up_20260413/](./tracks/user_level_up_20260413/)*
 
+---
+
+- [x] **Track: HU24 - Asignación automática de insignias**
+*Link: [./tracks/user_auto_badges_20260413/](./tracks/user_auto_badges_20260413/)*
+

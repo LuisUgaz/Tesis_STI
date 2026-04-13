@@ -380,9 +380,9 @@
                 feedbackArea.innerHTML = feedbackHtml;
                 feedbackArea.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
                 
-                // Mostrar notificación de puntos (HU22)
+                // Mostrar notificación de puntos, nivel e insignias (HU22, HU23, HU24)
                 if (data.puntos_ganados) {
-                    showToast(data.puntos_ganados, data.total_puntos, data.subio_nivel, data.nivel_actual);
+                    showToast(data.puntos_ganados, data.total_puntos, data.subio_nivel, data.nivel_actual, data.nuevas_insignias);
                 }
 
                 // Deshabilitar radios
@@ -396,10 +396,10 @@
             }
         }
 
-        function showToast(puntos, total, subioNivel = false, nuevoNivel = 1) {
+        function showToast(puntos, total, subioNivel = false, nuevoNivel = 1, insignias = []) {
             const container = document.getElementById('toast-container');
             
-            // Toast de puntos
+            // 1. Toast de puntos
             const toastPuntos = document.createElement('div');
             toastPuntos.className = 'toast';
             toastPuntos.innerHTML = `
@@ -418,7 +418,7 @@
                 totalDisplay.style.transform = 'scale(1)';
             }, 200);
 
-            // Toast de Nivel (HU23)
+            // 2. Toast de Nivel (HU23)
             if (subioNivel) {
                 const toastNivel = document.createElement('div');
                 toastNivel.className = 'toast level-up';
@@ -445,7 +445,30 @@
                 }, 5000);
             }
 
-            // Remover del DOM tras animación
+            // 3. Toasts de Insignias (HU24)
+            if (insignias && insignias.length > 0) {
+                insignias.forEach((badge, index) => {
+                    setTimeout(() => {
+                        const toastBadge = document.createElement('div');
+                        toastBadge.className = 'toast badge-earned';
+                        toastBadge.style.borderLeft = '5px solid #50e3c2';
+                        toastBadge.innerHTML = `
+                            <span style="font-size: 1.5rem;">🏆</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <b style="font-size: 1.1rem; color: #50e3c2;">¡NUEVA INSIGNIA!</b>
+                                <span>Ganaste: ${badge.nombre}</span>
+                            </div>
+                        `;
+                        container.appendChild(toastBadge);
+                        
+                        setTimeout(() => {
+                            toastBadge.remove();
+                        }, 6000);
+                    }, (index + 1) * 1000); // Escalonar si gana varias
+                });
+            }
+
+            // Remover toast de puntos tras animación
             setTimeout(() => {
                 toastPuntos.remove();
             }, 3000);

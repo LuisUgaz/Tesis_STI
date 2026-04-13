@@ -114,6 +114,59 @@
             border: 2px dashed var(--secondary-color);
         }
 
+        /* Estilos para Insignias (HU24) */
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid #eee;
+        }
+
+        .badge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 5px;
+        }
+
+        .badge-icon {
+            width: 50px;
+            height: 50px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: #ccc;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .badge-item.earned .badge-icon {
+            background: linear-gradient(135deg, #50e3c2, #4a90e2);
+            color: white;
+            border-color: #fff;
+            box-shadow: 0 4px 10px rgba(80, 227, 194, 0.3);
+            transform: scale(1.1);
+        }
+
+        .badge-name {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #666;
+            max-width: 80px;
+        }
+
+        .badge-item.earned .badge-name {
+            color: var(--primary-color);
+        }
+
         .academic-item {
             flex: 1;
             text-align: center;
@@ -200,6 +253,20 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="info-label">Insignias y Logros</div>
+            <div class="badges-grid">
+                {% for insignia in insignias %}
+                <div class="badge-item {% if insignia.ganada %}earned{% endif %}" title="{{ insignia.descripcion }}">
+                    <div class="badge-icon">
+                        <i class="fas {{ insignia.icono_clase }}"></i>
+                    </div>
+                    <div class="badge-name">{{ insignia.nombre }}</div>
+                </div>
+                {% empty %}
+                <p style="grid-column: 1/-1; text-align: center; color: #999; font-size: 0.9rem;">Pronto habrá insignias disponibles.</p>
+                {% endfor %}
             </div>
 
             <div class="info-label">Información Académica</div>
