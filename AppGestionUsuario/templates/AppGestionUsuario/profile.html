@@ -146,6 +146,12 @@
             color: #ccc;
             border: 2px solid #ddd;
             transition: all 0.3s ease;
+            cursor: help;
+        }
+
+        .badge-item:not(.earned) .badge-icon {
+            filter: grayscale(100%);
+            opacity: 0.6;
         }
 
         .badge-item.earned .badge-icon {
@@ -154,6 +160,84 @@
             border-color: #fff;
             box-shadow: 0 4px 10px rgba(80, 227, 194, 0.3);
             transform: scale(1.1);
+            cursor: pointer;
+        }
+
+        /* Estilos para el Modal (HU25) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .badge-detail-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #50e3c2, #4a90e2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 8px 20px rgba(80, 227, 194, 0.4);
+        }
+
+        .badge-detail-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .badge-detail-desc {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .badge-detail-date {
+            font-size: 0.85rem;
+            color: #999;
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            display: inline-block;
         }
 
         .badge-name {
@@ -258,7 +342,9 @@
             <div class="info-label">Insignias y Logros</div>
             <div class="badges-grid">
                 {% for insignia in insignias %}
-                <div class="badge-item {% if insignia.ganada %}earned{% endif %}" title="{{ insignia.descripcion }}">
+                <div class="badge-item {% if insignia.ganada %}earned{% endif %}" 
+                     title="{{ insignia.descripcion }}"
+                     data-date="{{ insignia.fecha_logro|date:'d/m/Y' }}">
                     <div class="badge-icon">
                         <i class="fas {{ insignia.icono_clase }}"></i>
                     </div>
@@ -291,5 +377,52 @@
             <a href="{% url 'home' %}" class="btn-back">← Volver al Inicio</a>
         </div>
     </div>
+
+    <!-- Modal de Detalle de Insignia (HU25) -->
+    <div id="badgeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="badge-detail-icon" id="modalIcon">
+                <i class="fas fa-medal"></i>
+            </div>
+            <div class="badge-detail-name" id="modalName">Nombre de Insignia</div>
+            <div class="badge-detail-desc" id="modalDesc">Descripción detallada del logro alcanzado por el estudiante.</div>
+            <div class="badge-detail-date" id="modalDate">Obtenida el: --/--/----</div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('badgeModal');
+        const closeModal = document.getElementById('closeModal');
+        
+        // Elementos del modal
+        const modalIcon = document.getElementById('modalIcon');
+        const modalName = document.getElementById('modalName');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalDate = document.getElementById('modalDate');
+
+        // Manejar clics en insignias
+        document.querySelectorAll('.badge-item.earned').forEach(item => {
+            item.addEventListener('click', function() {
+                const name = this.querySelector('.badge-name').innerText;
+                const desc = this.getAttribute('title');
+                const iconClass = this.querySelector('i').className;
+                const date = this.getAttribute('data-date') || 'Recientemente';
+
+                modalName.innerText = name;
+                modalDesc.innerText = desc;
+                modalIcon.innerHTML = `<i class="${iconClass}"></i>`;
+                modalDate.innerText = `Obtenida el: ${date}`;
+                
+                modal.style.display = 'flex';
+            });
+        });
+
+        // Cerrar modal
+        closeModal.onclick = () => modal.style.display = 'none';
+        window.onclick = (event) => {
+            if (event.target == modal) modal.style.display = 'none';
+        }
+    </script>
 </body>
 </html>

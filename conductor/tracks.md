@@ -125,6 +125,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: HU24 - Asignación automática de insignias**
+- [x] **Track: HU24 - AsignaciÃ³n automÃ¡tica de insignias**
 *Link: [./tracks/user_auto_badges_20260413/](./tracks/user_auto_badges_20260413/)*
+
+---
+
+- [x] **Track: HU25 - Visualizar insignias obtenidas**
+*Link: [./tracks/user_view_badges_20260413/](./tracks/user_view_badges_20260413/)*
 

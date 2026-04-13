@@ -69,12 +69,22 @@ class ProfileView(LoginRequiredMixin, DetailView):
         user = self.get_object()
         
         if user.profile.rol == 'Estudiante':
-            # Obtener todas las insignias y marcar cuáles ha ganado el usuario
-            logros_ids = set(user.profile.logros.values_list('insignia_id', flat=True))
-            insignias = Insignia.objects.all()
+            # Obtener logros del usuario indexados por ID de insignia para acceso rápido
+            logros_dict = {
+                l.insignia_id: l.fecha_obtencion 
+                for l in user.profile.logros.all()
+            }
+            
+            insignias = list(Insignia.objects.all())
             
             for insignia in insignias:
-                insignia.ganada = insignia.id in logros_ids
+                insignia.ganada = insignia.id in logros_dict
+                insignia.fecha_logro = logros_dict.get(insignia.id)
+            
+            # Ordenamiento: Ganadas primero (recientes primero), luego bloqueadas
+            insignias.sort(
+                key=lambda x: (not x.ganada, -(x.fecha_logro.timestamp() if x.fecha_logro else 0))
+            )
             
             context['insignias'] = insignias
             
