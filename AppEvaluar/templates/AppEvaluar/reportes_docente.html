@@ -52,9 +52,12 @@
                     <label class="form-label small fw-bold text-muted">FECHA FIN</label>
                     <input type="date" name="fecha_fin" class="form-control border-0 shadow-sm" value="{{ filtro_fecha_fin }}" style="border-radius: 10px;">
                 </div>
-                <div class="col-md-4 d-flex align-items-end gap-2">
+                <div class="col-md-5 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary flex-grow-1 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
                         🔍 APLICAR FILTROS
+                    </button>
+                    <button type="button" id="exportBtn" class="btn btn-success flex-grow-1 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
+                        📥 EXPORTAR EXCEL
                     </button>
                     <a href="{% url 'reportes_docente' %}" class="btn btn-outline-secondary shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
                         🔄 LIMPIAR
@@ -320,6 +323,16 @@
         document.getElementById('filterForm').addEventListener('submit', function(e) {
             e.preventDefault();
             updateDashboard();
+        });
+
+        // Lógica para exportar a Excel (HU28)
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            const form = document.getElementById('filterForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            
+            // Redirigir a la URL de exportación con los parámetros actuales
+            window.location.href = `{% url 'exportar_reporte_excel' %}?${params.toString()}`;
         });
     });
 </script>

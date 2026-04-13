@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implementar exportación de reportes académicos a formatos externos (PDF/Excel)**
+- [x] **Track: HU28 - Exportar reportes para docentes en formato Excel (.xlsx)**
   *Link: [./tracks/reports_export_20260327/](./tracks/reports_export_20260327/)*
 
 ---

@@ -10,7 +10,7 @@ class EjercicioIntegrationTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='alumno_final', password='password123')
-        self.profile = Profile.objects.create(user=self.user, rol='Estudiante')
+        self.profile = Profile.objects.create(user=self.user, rol='Estudiante', grado='2do', seccion='A')
         self.tema = Tema.objects.create(nombre="Triángulos", slug="triangulos")
         
         # Crear datos de prueba

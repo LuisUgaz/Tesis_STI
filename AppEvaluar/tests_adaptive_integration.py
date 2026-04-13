@@ -10,7 +10,7 @@ class AdaptiveIntegrationTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='alumno_pro', password='password123')
-        self.profile = Profile.objects.create(user=self.user, rol='Estudiante', nivel_dificultad_actual='Básico')
+        self.profile = Profile.objects.create(user=self.user, rol='Estudiante', nivel_dificultad_actual='Básico', grado='2do', seccion='A')
         self.tema = Tema.objects.create(nombre="Ángulos", slug="angulos")
         
         # 1. Crear examen diagnóstico

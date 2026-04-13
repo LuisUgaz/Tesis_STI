@@ -21,6 +21,8 @@ from AppTutoria.models import Tema
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView
 from AppTutoria.models import Tema, ProgresoEstudiante
+from .services_export import generar_excel_reporte_docente
+from django.http import HttpResponse
 
 def student_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
@@ -498,3 +500,28 @@ def ver_resultados(request, examen_id):
         'total_preguntas': total_preguntas,
         'resumen_temas': resumen_temas
     })
+
+class ExportarReporteExcelView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
+    def get(self, request, *args, **kwargs):
+        grado = request.GET.get('grado')
+        seccion = request.GET.get('seccion')
+        nombre = request.GET.get('nombre')
+        tema_id = request.GET.get('tema')
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
+
+        excel_file = generar_excel_reporte_docente(
+            grado=grado, 
+            seccion=seccion, 
+            nombre=nombre, 
+            tema_id=tema_id, 
+            fecha_inicio=fecha_inicio, 
+            fecha_fin=fecha_fin
+        )
+
+        response = HttpResponse(
+            excel_file.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=Reporte_Analitico_Aula.xlsx'
+        return response
