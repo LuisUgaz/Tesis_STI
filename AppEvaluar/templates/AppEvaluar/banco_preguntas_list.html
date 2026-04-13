@@ -1,0 +1,125 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold">📖 Gestión del Banco de Preguntas</h2>
+            <p class="text-muted small">Administre, edite y mantenga actualizados los ejercicios geométricos.</p>
+        </div>
+        <a href="{% url 'banco_preguntas_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
+            ➕ NUEVA PREGUNTA
+        </a>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #4a90e2 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">TOTAL EJERCICIOS</h6>
+                    <h2 class="mb-0 fw-bold">{{ ejercicios.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #50e3c2 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">NIVEL BÁSICO</h6>
+                    <h2 class="mb-0 fw-bold text-success">{{ ejercicios.filter.dificultad_Basico|default:"-" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #f5a623 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">NIVEL INTERMEDIO</h6>
+                    <h2 class="mb-0 fw-bold text-warning">{{ ejercicios.filter.dificultad_Intermedio|default:"-" }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #d0021b !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">NIVEL AVANZADO</h6>
+                    <h2 class="mb-0 fw-bold text-danger">{{ ejercicios.filter.dificultad_Avanzado|default:"-" }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Ejercicios -->
+    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4" style="width: 40%;">Enunciado</th>
+                            <th>Tema</th>
+                            <th>Dificultad</th>
+                            <th>Fecha Creación</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ejercicio in ejercicios %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-truncate" style="max-width: 400px;" title="{{ ejercicio.texto }}">
+                                    {{ ejercicio.texto }}
+                                </div>
+                                {% if ejercicio.imagen %}
+                                    <span class="badge bg-light text-dark border small mt-1">🖼️ Con imagen</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-primary border" style="border-radius: 8px;">
+                                    {{ ejercicio.tema.nombre }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if ejercicio.dificultad == 'Básico' %}bg-success{% elif ejercicio.dificultad == 'Intermedio' %}bg-warning text-dark{% else %}bg-danger{% endif %}" style="border-radius: 8px; min-width: 80px;">
+                                    {{ ejercicio.dificultad }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small text-muted">{{ ejercicio.fecha_creacion|date:"d/m/Y" }}</div>
+                                <div class="small text-muted">{{ ejercicio.fecha_creacion|date:"H:i" }}</div>
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'banco_preguntas_edit' pk=ejercicio.pk %}" class="btn btn-outline-primary btn-sm fw-bold px-3" style="border-radius: 8px;">
+                                    ✏️ Editar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-info-circle fs-2"></i>
+                                <p class="mt-2 mb-0">No hay ejercicios registrados en el banco.</p>
+                                <a href="{% url 'banco_preguntas_create' %}" class="btn btn-link">Comience registrando uno aquí</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table thead th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #6c757d;
+        padding: 1rem;
+    }
+    .table tbody td {
+        padding: 1rem;
+    }
+</style>
+{% endblock %}

@@ -19,7 +19,7 @@ from datetime import timedelta
 from AppTutoria.models import Tema
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 from AppTutoria.models import Tema, ProgresoEstudiante
 from .services_export import generar_excel_reporte_docente
@@ -507,7 +507,7 @@ class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateV
     model = Ejercicio
     form_class = EjercicioForm
     template_name = 'AppEvaluar/banco_preguntas_form.html'
-    success_url = reverse_lazy('reportes_docente')
+    success_url = reverse_lazy('banco_preguntas_list')
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -525,6 +525,38 @@ class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateV
             opciones.instance = self.object
             opciones.save()
             messages.success(self.request, "Pregunta registrada exitosamente en el banco.")
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+class BancoPreguntasListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
+    model = Ejercicio
+    template_name = 'AppEvaluar/banco_preguntas_list.html'
+    context_object_name = 'ejercicios'
+    ordering = ['-fecha_creacion']
+
+class BancoPreguntasUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
+    model = Ejercicio
+    form_class = EjercicioForm
+    template_name = 'AppEvaluar/banco_preguntas_edit.html'
+    success_url = reverse_lazy('banco_preguntas_list')
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['opciones'] = OpcionEjercicioFormSet(self.request.POST, instance=self.object)
+        else:
+            data['opciones'] = OpcionEjercicioFormSet(instance=self.object)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        opciones = context['opciones']
+        if opciones.is_valid():
+            self.object = form.save()
+            opciones.instance = self.object
+            opciones.save()
+            messages.success(self.request, "Pregunta actualizada correctamente.")
             return super().form_valid(form)
         else:
             return self.render_to_response(self.get_context_data(form=form))

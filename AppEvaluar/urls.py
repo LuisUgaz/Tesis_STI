@@ -10,5 +10,7 @@ urlpatterns = [
     path('reportes/', views.ReportesDocenteView.as_view(), name='reportes_docente'),
     path('reportes/data/', views.ReportesDataJSONView.as_view(), name='reportes_data_json'),
     path('reportes/exportar/', views.ExportarReporteExcelView.as_view(), name='exportar_reporte_excel'),
+    path('banco-preguntas/', views.BancoPreguntasListView.as_view(), name='banco_preguntas_list'),
     path('banco-preguntas/nuevo/', views.BancoPreguntasCreateView.as_view(), name='banco_preguntas_create'),
+    path('banco-preguntas/editar/<int:pk>/', views.BancoPreguntasUpdateView.as_view(), name='banco_preguntas_edit'),
 ]
