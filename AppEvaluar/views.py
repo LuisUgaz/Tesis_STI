@@ -19,10 +19,12 @@ from datetime import timedelta
 from AppTutoria.models import Tema
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView
+from django.views.generic import ListView, CreateView
+from django.urls import reverse_lazy
 from AppTutoria.models import Tema, ProgresoEstudiante
 from .services_export import generar_excel_reporte_docente
 from django.http import HttpResponse
+from .forms import EjercicioForm, OpcionEjercicioFormSet
 
 def student_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
@@ -500,6 +502,32 @@ def ver_resultados(request, examen_id):
         'total_preguntas': total_preguntas,
         'resumen_temas': resumen_temas
     })
+
+class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
+    model = Ejercicio
+    form_class = EjercicioForm
+    template_name = 'AppEvaluar/banco_preguntas_form.html'
+    success_url = reverse_lazy('reportes_docente')
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['opciones'] = OpcionEjercicioFormSet(self.request.POST)
+        else:
+            data['opciones'] = OpcionEjercicioFormSet()
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        opciones = context['opciones']
+        if opciones.is_valid():
+            self.object = form.save()
+            opciones.instance = self.object
+            opciones.save()
+            messages.success(self.request, "Pregunta registrada exitosamente en el banco.")
+            return super().form_valid(form)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
 
 class ExportarReporteExcelView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     def get(self, request, *args, **kwargs):

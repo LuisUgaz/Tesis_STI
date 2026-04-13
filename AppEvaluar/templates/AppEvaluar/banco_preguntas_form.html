@@ -1,0 +1,150 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h3 class="mb-0 fw-bold">➕ Registro de Nueva Pregunta</h3>
+                    <p class="text-muted small">Añada ejercicios personalizados al banco de problemas geométricos.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Sección General del Ejercicio -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold text-muted small">ENUNCIADO DEL PROBLEMA</label>
+                                {{ form.texto }}
+                                {% if form.texto.errors %}
+                                    <div class="text-danger small mt-1">{{ form.texto.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-muted small">IMAGEN (OPCIONAL)</label>
+                                {{ form.imagen }}
+                                {% if form.imagen.errors %}
+                                    <div class="text-danger small mt-1">{{ form.imagen.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">TEMA / CATEGORÍA</label>
+                                {{ form.tema }}
+                                {% if form.tema.errors %}
+                                    <div class="text-danger small mt-1">{{ form.tema.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">NIVEL DE DIFICULTAD</label>
+                                {{ form.dificultad }}
+                                {% if form.dificultad.errors %}
+                                    <div class="text-danger small mt-1">{{ form.dificultad.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">EXPLICACIÓN TEÓRICA (RETROALIMENTACIÓN GENERAL)</label>
+                            {{ form.explicacion_tecnica }}
+                            <div class="form-text small">Este texto se mostrará al estudiante después de resolver el ejercicio para fundamentar la respuesta.</div>
+                            {% if form.explicacion_tecnica.errors %}
+                                <div class="text-danger small mt-1">{{ form.explicacion_tecnica.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <hr class="my-5">
+
+                        <!-- Sección de Opciones -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">🎯 Opciones de Respuesta</h5>
+                            <span class="badge bg-info">Exactamente 5 opciones</span>
+                        </div>
+                        
+                        {{ opciones.management_form }}
+                        
+                        {% if opciones.non_form_errors %}
+                            <div class="alert alert-danger shadow-sm">{{ opciones.non_form_errors }}</div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            {% for form_opcion in opciones %}
+                            <div class="col-12">
+                                <div class="card bg-light border-0 shadow-none" style="border-radius: 12px;">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-7">
+                                                <label class="form-label fw-bold small">Opción {{ forloop.counter }}</label>
+                                                {{ form_opcion.texto }}
+                                                {% if form_opcion.texto.errors %}
+                                                    <div class="text-danger small mt-1">{{ form_opcion.texto.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">Retroalimentación específica</label>
+                                                {{ form_opcion.retroalimentacion }}
+                                            </div>
+                                            <div class="col-md-1 text-center">
+                                                <label class="form-label fw-bold small d-block">¿Correcta?</label>
+                                                <div class="form-check form-switch d-inline-block">
+                                                    {{ form_opcion.es_correcta }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{ form_opcion.id }}
+                                        {{ form_opcion.ejercicio }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-5 d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'reportes_docente' %}" class="btn btn-light px-4 fw-bold">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm" style="border-radius: 10px;">GUARDAR PREGUNTA</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e0e0e0;
+        box-shadow: none;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.1);
+    }
+    .form-check-input:checked {
+        background-color: #50e3c2;
+        border-color: #50e3c2;
+    }
+</style>
+
+<script>
+    // Asegurar que solo una opción pueda ser marcada como correcta (opcional pero recomendado)
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name$="-es_correcta"]');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                if (this.checked) {
+                    checkboxes.forEach(otherCb => {
+                        if (otherCb !== this) otherCb.checked = false;
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

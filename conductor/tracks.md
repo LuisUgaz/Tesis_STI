@@ -143,3 +143,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU27 - Filtrar reportes**
 *Link: [./tracks/teacher_filter_reports_20260413/](./tracks/teacher_filter_reports_20260413/)*
 
+---
+
+- [x] **Track: HU29 - Registrar preguntas en banco**
+*Link: [./tracks/teacher_register_questions_bank_20260413/](./tracks/teacher_register_questions_bank_20260413/)*
+

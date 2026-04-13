@@ -2,68 +2,82 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Inicio - Tesis STI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesis STI - Inteligencia en Geometría</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-brand { font-weight: bold; color: #4a90e2 !important; }
+        .btn-custom-blue { background-color: #4a90e2; color: white; border-radius: 8px; font-weight: 600; }
+        .btn-custom-teal { background-color: #50e3c2; color: white; border-radius: 8px; font-weight: 600; }
+        .btn-custom-orange { background-color: #f5a623; color: white; border-radius: 8px; font-weight: 600; }
+        .nav-link:hover { color: #4a90e2 !important; }
+    </style>
 </head>
 <body>
-    <h1>Bienvenido al Sistema Tutor Inteligente</h1>
-    {% if user.is_authenticated %}
-        <p>Hola, <strong>{{ user.username }}</strong>! Has iniciado sesión correctamente.</p>
-        
-        <div style="margin-bottom: 1rem;">
-            <a href="{% url 'profile' username=user.username %}" style="
-                text-decoration: none;
-                color: white;
-                background-color: #4a90e2;
-                padding: 0.5rem 1rem;
-                border-radius: 5px;
-                font-weight: bold;
-                margin-right: 0.5rem;
-            ">Ver mi Perfil</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">📐 Tesis STI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'lista_temas' %}">📚 Temas</a>
+                        </li>
+                        {% if user.profile.rol == 'Estudiante' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'mi_progreso' %}">📈 Mi Progreso</a>
+                            </li>
+                        {% elif user.profile.rol == 'Docente' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'reportes_docente' %}">📊 Reportes</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-primary fw-bold" href="{% url 'banco_preguntas_create' %}">➕ Nueva Pregunta</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <div class="dropdown me-3">
+                            <a class="btn btn-outline-secondary dropdown-toggle border-0" href="#" role="button" data-bs-toggle="dropdown">
+                                👤 {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-menu-item p-2 text-decoration-none text-dark d-block" href="{% url 'profile' username=user.username %}">Ver Perfil</a></li>
+                            </ul>
+                        </div>
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm fw-bold" style="border-radius: 8px;" onclick="return confirm('¿Cerrar sesión?')">Salir</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-sm px-4 fw-bold">Entrar</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
 
-            <a href="{% url 'lista_temas' %}" style="
-                text-decoration: none;
-                color: white;
-                background-color: #50e3c2;
-                padding: 0.5rem 1rem;
-                border-radius: 5px;
-                font-weight: bold;
-                margin-right: 0.5rem;
-            ">Mis Temas</a>
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" style="border-radius: 12px;">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
 
-            {% if user.profile.rol == 'Estudiante' %}
-            <a href="{% url 'mi_progreso' %}" style="
-                text-decoration: none;
-                color: white;
-                background-color: #f5a623;
-                padding: 0.5rem 1rem;
-                border-radius: 5px;
-                font-weight: bold;
-                margin-right: 0.5rem;
-            ">📈 Mi progreso</a>
-            {% endif %}
-
-            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit" onclick="return confirmarCierreSesion();" style="
-                padding: 0.5rem 1rem;
-                background-color: #d0021b;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-weight: bold;
-            ">Cerrar Sesión</button>
-        </form>
-
-        <script>
-            function confirmarCierreSesion() {
-                return confirm("¿Estás seguro de que deseas cerrar tu sesión?");
-            }
-        </script>
-        <hr>
         {% block content %}{% endblock %}
-    {% else %}
-        <p>No has iniciado sesión. <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
-    {% endif %}
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
