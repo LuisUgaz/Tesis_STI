@@ -10,6 +10,7 @@ from .models import (
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
 from AppTutoria.services import registrar_progreso
+from AppGestionUsuario.models import Profile, MetricasEstudiante
 import json
 from AppGestionUsuario.services_gamification import GamificationService
 from django.contrib import messages
@@ -61,16 +62,24 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['temas'] = Tema.objects.all()
         
         grado = self.request.GET.get('grado', '')
         seccion = self.request.GET.get('seccion', '')
         nombre = self.request.GET.get('nombre', '')
+        tema_id = self.request.GET.get('tema', '')
+        fecha_inicio = self.request.GET.get('fecha_inicio', '')
+        fecha_fin = self.request.GET.get('fecha_fin', '')
         
-        # 1. Obtener Resumen de Aula
-        summary = get_classroom_performance_summary(grado=grado, seccion=seccion)
+        # Obtener Resumen de Aula Inicial (Carga de pÃ¡gina)
+        summary = get_classroom_performance_summary(
+            grado=grado, seccion=seccion, 
+            fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, 
+            tema_id=tema_id
+        )
         context['summary'] = summary
         
-        # 2. Preparar datos para Chart.js
+        # Preparar datos para Chart.js
         labels = list(summary['desempeno_por_tema'].keys())
         data = list(summary['desempeno_por_tema'].values())
         
@@ -86,7 +95,7 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
             }]
         })
 
-        # 3. Listado de Estudiantes con sus mÃ©tricas (HU26)
+        # Listado de Estudiantes (HU26)
         from AppGestionUsuario.models import Profile
         estudiantes = Profile.objects.filter(rol='Estudiante').select_related('user').prefetch_related('user__metricas', 'logros')
         
@@ -101,11 +110,83 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         
         context['estudiantes'] = estudiantes.order_by('apellidos', 'nombres')
         
+        # Filtros para el template
         context['filtro_grado'] = grado
         context['filtro_seccion'] = seccion
         context['filtro_nombre'] = nombre
+        context['filtro_tema'] = tema_id
+        context['filtro_fecha_inicio'] = fecha_inicio
+        context['filtro_fecha_fin'] = fecha_fin
         
         return context
+
+class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
+    """
+    Endpoint JSON para obtener datos de reportes filtrados vía AJAX (HU27).
+    """
+    def get(self, request, *args, **kwargs):
+        grado = request.GET.get('grado')
+        seccion = request.GET.get('seccion')
+        nombre = request.GET.get('nombre')
+        tema_id = request.GET.get('tema')
+        fecha_inicio = request.GET.get('fecha_inicio')
+        fecha_fin = request.GET.get('fecha_fin')
+
+        # 1. Resumen de Aula
+        summary = get_classroom_performance_summary(
+            grado=grado, seccion=seccion, 
+            fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, 
+            tema_id=tema_id
+        )
+
+        # 2. Listado de Estudiantes
+        from AppGestionUsuario.models import Profile
+        estudiantes_qs = Profile.objects.filter(rol='Estudiante').select_related('user').prefetch_related('user__metricas', 'logros')
+        
+        if grado: estudiantes_qs = estudiantes_qs.filter(grado=grado)
+        if seccion: estudiantes_qs = estudiantes_qs.filter(seccion=seccion)
+        if nombre:
+            estudiantes_qs = estudiantes_qs.filter(user__username__icontains=nombre) | \
+                             estudiantes_qs.filter(nombres__icontains=nombre) | \
+                             estudiantes_qs.filter(apellidos__icontains=nombre)
+
+        estudiantes_data = []
+        for est in estudiantes_qs.order_by('apellidos', 'nombres'):
+            metricas = MetricasEstudiante.objects.filter(usuario=est.user).first()
+            estudiantes_data.append({
+                'nombre_completo': f"{est.nombres} {est.apellidos}",
+                'username': est.user.username,
+                'aula': f"{est.grado} {est.seccion}",
+                'xp': est.puntos_acumulados,
+                'nivel': est.nivel_estudiante,
+                'precision': float(metricas.precision_general) if metricas else 0,
+                'insignias_count': est.logros.count()
+            })
+
+        # 3. Datos de Actividad Reciente (Progresos)
+        progresos_qs = ProgresoEstudiante.objects.all().select_related('usuario', 'tema')
+        if grado: progresos_qs = progresos_qs.filter(grado=grado)
+        if seccion: progresos_qs = progresos_qs.filter(seccion=seccion)
+        
+        progresos_data = []
+        for p in progresos_qs.order_by('-fecha_registro')[:50]:
+            progresos_data.append({
+                'estudiante': p.usuario.get_full_name() or p.usuario.username,
+                'aula': f"{p.grado} {p.seccion}",
+                'tema': p.tema.nombre,
+                'actividad': p.tipo_actividad,
+                'fecha': p.fecha_registro.strftime("%d/%m %H:%i")
+            })
+
+        return JsonResponse({
+            'summary': summary,
+            'estudiantes': estudiantes_data,
+            'progresos': progresos_data,
+            'chart_data': {
+                'labels': list(summary['desempeno_por_tema'].keys()),
+                'values': list(summary['desempeno_por_tema'].values())
+            }
+        })
 
 class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView):
     model = ProgresoEstudiante

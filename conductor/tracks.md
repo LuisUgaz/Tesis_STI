@@ -138,3 +138,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU26 - Visualizar reportes de progreso**
 *Link: [./tracks/teacher_view_reports_20260413/](./tracks/teacher_view_reports_20260413/)*
 
+---
+
+- [x] **Track: HU27 - Filtrar reportes**
+*Link: [./tracks/teacher_filter_reports_20260413/](./tracks/teacher_filter_reports_20260413/)*
+

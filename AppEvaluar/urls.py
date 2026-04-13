@@ -8,4 +8,5 @@ urlpatterns = [
     path('practica/validar/', views.validar_respuesta, name='validar_respuesta'),
     path('historial/', views.HistorialResultadosView.as_view(), name='historial_resultados'),
     path('reportes/', views.ReportesDocenteView.as_view(), name='reportes_docente'),
+    path('reportes/data/', views.ReportesDataJSONView.as_view(), name='reportes_data_json'),
 ]

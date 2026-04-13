@@ -10,7 +10,7 @@
     <!-- Filtros -->
     <div class="card shadow-sm mb-4 border-0" style="border-radius: 15px; background: #f8f9fa;">
         <div class="card-body">
-            <form method="GET" class="row g-3">
+            <form id="filterForm" method="GET" class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label small fw-bold text-muted">BUSCAR ESTUDIANTE</label>
                     <input type="text" name="nombre" class="form-control border-0 shadow-sm" placeholder="Nombre o usuario..." value="{{ filtro_nombre }}" style="border-radius: 10px;">
@@ -35,13 +35,28 @@
                         <option value="C" {% if filtro_seccion == 'C' %}selected{% endif %}>Sección C</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">TEMA ESPECÍFICO</label>
+                    <select name="tema" class="form-select border-0 shadow-sm" style="border-radius: 10px;">
+                        <option value="">Todos los temas</option>
+                        {% for t in temas %}
+                            <option value="{{ t.id }}" {% if filtro_tema == t.id|stringformat:"i" %}selected{% endif %}>{{ t.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">FECHA INICIO</label>
+                    <input type="date" name="fecha_inicio" class="form-control border-0 shadow-sm" value="{{ filtro_fecha_inicio }}" style="border-radius: 10px;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">FECHA FIN</label>
+                    <input type="date" name="fecha_fin" class="form-control border-0 shadow-sm" value="{{ filtro_fecha_fin }}" style="border-radius: 10px;">
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
                         🔍 APLICAR FILTROS
                     </button>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <a href="{% url 'reportes_docente' %}" class="btn btn-outline-secondary w-100 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
+                    <a href="{% url 'reportes_docente' %}" class="btn btn-outline-secondary shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
                         🔄 LIMPIAR
                     </a>
                 </div>
@@ -55,7 +70,7 @@
             <div class="card shadow-sm border-0 bg-white" style="border-radius: 15px; border-left: 5px solid #4a90e2 !important;">
                 <div class="card-body">
                     <h6 class="text-muted small fw-bold">TOTAL ESTUDIANTES</h6>
-                    <h2 class="mb-0 fw-bold">{{ summary.total_estudiantes }}</h2>
+                    <h2 id="summary-total" class="mb-0 fw-bold">{{ summary.total_estudiantes }}</h2>
                     <div class="small text-primary mt-2">En el periodo seleccionado</div>
                 </div>
             </div>
@@ -64,9 +79,9 @@
             <div class="card shadow-sm border-0 bg-white" style="border-radius: 15px; border-left: 5px solid #50e3c2 !important;">
                 <div class="card-body">
                     <h6 class="text-muted small fw-bold">PRECISIÓN PROMEDIO</h6>
-                    <h2 class="mb-0 fw-bold">{{ summary.precision_promedio }}%</h2>
+                    <h2 id="summary-precision" class="mb-0 fw-bold">{{ summary.precision_promedio }}%</h2>
                     <div class="progress mt-2" style="height: 6px;">
-                        <div class="progress-bar" style="width: {{ summary.precision_promedio }}%; background-color: #50e3c2;"></div>
+                        <div id="precision-bar" class="progress-bar" style="width: {{ summary.precision_promedio }}%; background-color: #50e3c2;"></div>
                     </div>
                 </div>
             </div>
@@ -75,7 +90,7 @@
             <div class="card shadow-sm border-0 bg-white" style="border-radius: 15px; border-left: 5px solid #f5a623 !important;">
                 <div class="card-body">
                     <h6 class="text-muted small fw-bold">PUNTOS (XP) PROMEDIO</h6>
-                    <h2 class="mb-0 fw-bold">{{ summary.puntos_promedio }}</h2>
+                    <h2 id="summary-puntos" class="mb-0 fw-bold">{{ summary.puntos_promedio }}</h2>
                     <div class="small text-warning mt-2">🏅 Nivel de compromiso alto</div>
                 </div>
             </div>
@@ -90,15 +105,8 @@
                     <h5 class="mb-0 fw-bold">Dominio por Temas</h5>
                     <p class="small text-muted">Desempeño promedio en ejercicios del aula</p>
                 </div>
-                <div class="card-body">
-                    {% if summary.desempeno_por_tema %}
-                        <canvas id="topicChart" height="300"></canvas>
-                    {% else %}
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-chart-pie fa-3x mb-3"></i>
-                            <p>No hay datos suficientes para generar el gráfico.</p>
-                        </div>
-                    {% endif %}
+                <div class="card-body" id="chart-container">
+                    <canvas id="topicChart" height="300"></canvas>
                 </div>
             </div>
         </div>
@@ -121,7 +129,7 @@
                                     <th class="border-0">Actividad</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="progresos-table-body">
                                 {% for progreso in progresos %}
                                 <tr>
                                     <td>
@@ -170,7 +178,7 @@
                                     <th class="text-center">Insignias</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="estudiantes-table-body">
                                 {% for est in estudiantes %}
                                 <tr>
                                     <td class="ps-4">
@@ -217,31 +225,102 @@
 <!-- Scripts Analíticos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {% if summary.desempeno_por_tema %}
+    let myChart = null;
+
+    function initChart(data) {
         const ctx = document.getElementById('topicChart').getContext('2d');
-        const chartData = {{ chart_data_json|safe }};
+        if (myChart) myChart.destroy();
         
-        new Chart(ctx, {
+        myChart = new Chart(ctx, {
             type: 'radar',
-            data: chartData,
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Dominio Promedio (%)',
+                    data: data.values,
+                    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                    borderColor: 'rgba(74, 144, 226, 1)',
+                    borderWidth: 2
+                }]
+            },
             options: {
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: { stepSize: 20 }
-                    }
-                },
-                plugins: {
-                    legend: { display: false }
-                },
-                elements: {
-                    line: { tension: 0.2 }
-                }
+                scales: { r: { beginAtZero: true, max: 100 } },
+                plugins: { legend: { display: false } }
             }
         });
-        {% endif %}
+    }
+
+    async function updateDashboard() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        try {
+            const response = await fetch(`{% url 'reportes_data_json' %}?${params.toString()}`);
+            const data = await response.json();
+            
+            // 1. Actualizar Resumen
+            document.getElementById('summary-total').innerText = data.summary.total_estudiantes;
+            document.getElementById('summary-precision').innerText = data.summary.precision_promedio + '%';
+            document.getElementById('precision-bar').style.width = data.summary.precision_promedio + '%';
+            document.getElementById('summary-puntos').innerText = data.summary.puntos_promedio;
+            
+            // 2. Actualizar Gráfico
+            if (data.chart_data.labels.length > 0) {
+                document.getElementById('chart-container').innerHTML = '<canvas id="topicChart" height="300"></canvas>';
+                initChart(data.chart_data);
+            } else {
+                document.getElementById('chart-container').innerHTML = '<div class="text-center py-5 text-muted"><p>Sin datos para el gráfico.</p></div>';
+            }
+            
+            // 3. Actualizar Tabla Estudiantes
+            const estBody = document.getElementById('estudiantes-table-body');
+            estBody.innerHTML = data.estudiantes.length > 0 ? '' : '<tr><td colspan="6" class="text-center py-5 text-muted">Sin resultados.</td></tr>';
+            data.estudiantes.forEach(est => {
+                estBody.innerHTML += `
+                    <tr>
+                        <td class="ps-4"><div class="fw-bold text-primary">${est.nombre_completo}</div><div class="small text-muted">@${est.username}</div></td>
+                        <td>${est.aula}</td>
+                        <td><span class="fw-bold">${est.xp}</span></td>
+                        <td><span class="badge bg-warning text-dark">⭐ Nivel ${est.nivel}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span>${est.precision}%</span>
+                                <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
+                                    <div class="progress-bar" style="width: ${est.precision}%; background-color: #50e3c2;"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center"><span class="badge bg-info">🏆 ${est.insignias_count}</span></td>
+                    </tr>`;
+            });
+
+            // 4. Actualizar Progresos
+            const progBody = document.getElementById('progresos-table-body');
+            progBody.innerHTML = data.progresos.length > 0 ? '' : '<tr><td colspan="4" class="text-center py-5 text-muted">Sin actividad.</td></tr>';
+            data.progresos.forEach(p => {
+                progBody.innerHTML += `
+                    <tr>
+                        <td><div class="fw-bold">${p.estudiante}</div><div class="small text-muted">${p.fecha}</div></td>
+                        <td><span class="badge bg-light text-dark border">${p.aula}</span></td>
+                        <td>${p.tema}</td>
+                        <td><span class="badge bg-info">${p.actividad}</span></td>
+                    </tr>`;
+            });
+
+        } catch (error) {
+            console.error("Error al actualizar:", error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const initialData = {{ chart_data_json|safe }};
+        initChart({labels: initialData.labels, values: initialData.datasets[0].data});
+        
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateDashboard();
+        });
     });
 </script>
 {% endblock %}

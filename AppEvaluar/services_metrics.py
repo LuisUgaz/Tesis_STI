@@ -45,10 +45,9 @@ def actualizar_metricas_estudiante(usuario, actividad_reciente=None):
         metricas.save()
         return metricas
 
-def get_classroom_performance_summary(grado=None, seccion=None):
+def get_classroom_performance_summary(grado=None, seccion=None, fecha_inicio=None, fecha_fin=None, tema_id=None):
     """
-    Calcula mÃ©tricas agregadas para un aula (grado y secciÃ³n).
-    Retorna un diccionario con promedios y desempeÃ±o por tema.
+    Calcula mÃ©tricas agregadas para un aula (grado y secciÃ³n) con filtros de fecha y tema.
     """
     from AppGestionUsuario.models import Profile, MetricasEstudiante
     
@@ -70,32 +69,44 @@ def get_classroom_performance_summary(grado=None, seccion=None):
             'desempeno_por_tema': {}
         }
 
-    # 2. Promedio de PrecisiÃ³n General
-    metricas = MetricasEstudiante.objects.filter(usuario_id__in=user_ids)
-    avg_precision = metricas.aggregate(models.Avg('precision_general'))['precision_general__avg'] or 0
+    # 2. Filtrar resultados de ejercicios segÃºn fechas y tema
+    resultados = ResultadoEjercicio.objects.filter(usuario_id__in=user_ids)
+    if fecha_inicio:
+        resultados = resultados.filter(fecha_resolucion__date__gte=fecha_inicio)
+    if fecha_fin:
+        resultados = resultados.filter(fecha_resolucion__date__lte=fecha_fin)
+    if tema_id:
+        resultados = resultados.filter(ejercicio__tema_id=tema_id)
+
+    # 3. Promedio de PrecisiÃ³n en el periodo/tema
+    avg_precision = 0
+    if resultados.exists():
+        aciertos = resultados.filter(es_correcto=True).count()
+        avg_precision = (Decimal(aciertos) / Decimal(resultados.count())) * 100
     
-    # 3. Promedio de Puntos (XP)
+    # 4. Promedio de Puntos (XP) de los estudiantes filtrados
     avg_puntos = profiles.aggregate(models.Avg('puntos_acumulados'))['puntos_acumulados__avg'] or 0
     
-    # 4. DesempeÃ±o Agregado por Tema
-    desempeno_agregado = {}
-    temas_count = {}
+    # 5. DesempeÃ±o Agregado por Tema
+    # Si se filtrÃ³ por tema_id, solo devolveremos ese tema en el desglose
+    desempeno_por_tema = {}
     
-    for m in metricas:
-        if m.dominio_por_tema:
-            for tema, valor in m.dominio_por_tema.items():
-                desempeno_agregado[tema] = desempeno_agregado.get(tema, 0) + valor
-                temas_count[tema] = temas_count.get(tema, 0) + 1
-                
-    # Calcular promedios por tema
-    resumen_temas = {
-        tema: round(float(desempeno_agregado[tema]) / temas_count[tema], 2)
-        for tema in desempeno_agregado
-    }
+    if tema_id:
+        from AppTutoria.models import Tema
+        t_obj = Tema.objects.get(id=tema_id)
+        desempeno_por_tema[t_obj.nombre] = round(float(avg_precision), 2)
+    else:
+        # AgregaciÃ³n general por todos los temas basada en los resultados filtrados por fecha
+        temas_ids = resultados.values_list('ejercicio__tema_id', flat=True).distinct()
+        for t_id in temas_ids:
+            res_tema = resultados.filter(ejercicio__tema_id=t_id)
+            aciertos_t = res_tema.filter(es_correcto=True).count()
+            t_nombre = res_tema.first().ejercicio.tema.nombre
+            desempeno_por_tema[t_nombre] = round((float(aciertos_t) / res_tema.count()) * 100, 2)
     
     return {
         'total_estudiantes': total_estudiantes,
         'precision_promedio': round(float(avg_precision), 2),
         'puntos_promedio': round(float(avg_puntos), 2),
-        'desempeno_por_tema': resumen_temas
+        'desempeno_por_tema': desempeno_por_tema
     }
