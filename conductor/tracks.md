@@ -163,3 +163,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU32 - Clasificar preguntas por tema y nivel**
 *Link: [./tracks/teacher_classify_questions_bank_20260413/](./tracks/teacher_classify_questions_bank_20260413/)*
 
+---
+
+- [x] **Track: HU33 - Registrar videos recomendados**
+*Link: [./tracks/teacher_register_videos_20260413/](./tracks/teacher_register_videos_20260413/)*
+

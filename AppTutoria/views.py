@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -6,6 +6,37 @@ from django.views.decorators.http import require_POST
 from AppEvaluar.models import RecomendacionEstudiante
 from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
 from .services import registrar_progreso
+
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.contrib import messages
+from .forms import VideoTemaForm
+
+class TeacherRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and hasattr(self.request.user, 'profile') and self.request.user.profile.rol == 'Docente'
+
+class VideoTemaListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
+    model = VideoTema
+    template_name = 'AppTutoria/video_gestion_list.html'
+    context_object_name = 'videos'
+    ordering = ['tema', 'orden']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['temas'] = Tema.objects.all()
+        return context
+
+class VideoTemaCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
+    model = VideoTema
+    form_class = VideoTemaForm
+    template_name = 'AppTutoria/video_registro_form.html'
+    success_url = reverse_lazy('video_gestion_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Video recomendado registrado exitosamente.")
+        return super().form_valid(form)
 
 @login_required
 def lista_temas(request):

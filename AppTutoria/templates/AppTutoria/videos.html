@@ -130,13 +130,14 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.7;
+            opacity: 0.8;
         }
 
         .play-overlay {
             position: absolute;
             font-size: 3rem;
             opacity: 0.9;
+            pointer-events: none;
         }
 
         .duration-badge {
@@ -219,7 +220,22 @@
             font-weight: bold;
         }
 
-        video { width: 100%; display: block; }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-container iframe, 
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -262,7 +278,9 @@
                 {% for video in videos %}
                     <div class="video-card">
                         <div class="video-thumbnail">
-                            {% if video.miniatura %}
+                            {% if video.url_miniatura %}
+                                <img src="{{ video.url_miniatura }}" alt="{{ video.titulo }}">
+                            {% elif video.miniatura %}
                                 <img src="{{ video.miniatura.url }}" alt="{{ video.titulo }}">
                             {% else %}
                                 <div style="background: #2c3e50; width: 100%; height: 100%;"></div>
@@ -275,9 +293,16 @@
                         <div class="video-info">
                             <h3>{{ video.titulo }}</h3>
                             <p>{{ video.descripcion|default:"Sin descripción disponible." }}</p>
-                            <button class="btn-play" onclick="openVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}', '{{ video.id }}')">
-                                Ver Video
-                            </button>
+                            
+                            {% if video.url_video %}
+                                <button class="btn-play" onclick="openYoutube('{{ video.url_video }}', '{{ video.titulo }}', '{{ video.id }}')">
+                                    Ver Video
+                                </button>
+                            {% else %}
+                                <button class="btn-play" onclick="openLocal('{{ video.archivo_video.url }}', '{{ video.titulo }}', '{{ video.id }}')">
+                                    Ver Video
+                                </button>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
@@ -295,59 +320,68 @@
     <div id="videoModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeVideo()">&times;</span>
-            <video id="mainVideo" controls>
-                Tu navegador no soporta el elemento de video.
-            </video>
+            <div class="video-container" id="player-container">
+                <!-- El reproductor se inyectará aquí -->
+            </div>
             <div id="videoTitle" style="color: white; padding: 1rem; font-weight: bold; background: #222;"></div>
         </div>
     </div>
 
     <script>
         const modal = document.getElementById("videoModal");
-        const video = document.getElementById("mainVideo");
+        const playerContainer = document.getElementById("player-container");
         const vTitle = document.getElementById("videoTitle");
         let currentVideoId = null;
 
-        function openVideo(url, title, videoId) {
+        function extraerID(url) {
+            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        function openYoutube(url, title, videoId) {
             currentVideoId = videoId;
-            video.src = url;
+            const youtubeId = extraerID(url);
+            playerContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
             vTitle.innerText = title;
             modal.style.display = "flex";
-            video.play();
+            // Para YouTube no podemos detectar onended fácilmente sin el API de IFrame,
+            // así que registramos la vista al abrir (o podemos implementar el API luego).
+            registrarVista(videoId);
+        }
+
+        function openLocal(url, title, videoId) {
+            currentVideoId = videoId;
+            playerContainer.innerHTML = `<video id="mainVideo" controls autoplay src="${url}"></video>`;
+            const video = document.getElementById("mainVideo");
+            video.onended = () => registrarVista(videoId);
+            vTitle.innerText = title;
+            modal.style.display = "flex";
         }
 
         function closeVideo() {
             modal.style.display = "none";
-            video.pause();
-            video.src = "";
+            playerContainer.innerHTML = "";
             currentVideoId = null;
         }
 
-        video.onended = function() {
-            console.log("Video finalizado. Registrando visualización...");
-            if (currentVideoId) {
-                const formData = new FormData();
-                formData.append('video_id', currentVideoId);
-                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        function registrarVista(videoId) {
+            console.log("Registrando visualización para video:", videoId);
+            const formData = new FormData();
+            formData.append('video_id', videoId);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
-                fetch("{% url 'registrar_visualizacion' %}", {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Registro exitoso:", data);
-                })
-                .catch(error => {
-                    console.error("Error al registrar visualización:", error);
-                });
-            }
-        };
+            fetch("{% url 'registrar_visualizacion' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log("Registro exitoso:", data))
+            .catch(error => console.error("Error al registrar visualización:", error));
+        }
 
         window.onclick = function(event) {
-            if (event.target == modal) {
-                closeVideo();
-            }
+            if (event.target == modal) closeVideo();
         }
     </script>
 </body>

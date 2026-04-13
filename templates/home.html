@@ -37,7 +37,13 @@
                                 <a class="nav-link" href="{% url 'reportes_docente' %}">📊 Reportes</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-primary fw-bold" href="{% url 'banco_preguntas_create' %}">➕ Nueva Pregunta</a>
+                                <a class="nav-link" href="{% url 'banco_preguntas_list' %}">📖 Banco</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'video_gestion_list' %}">🎬 Videos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-primary fw-bold" href="{% url 'banco_preguntas_create' %}">➕ Pregunta</a>
                             </li>
                         {% endif %}
                     {% endif %}

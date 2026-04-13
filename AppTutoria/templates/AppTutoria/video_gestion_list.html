@@ -1,0 +1,87 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold">🎬 Gestión de Videos Recomendados</h2>
+            <p class="text-muted small">Administre el contenido audiovisual de apoyo para los estudiantes.</p>
+        </div>
+        <a href="{% url 'video_registro_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
+            ➕ REGISTRAR VIDEO
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4" style="width: 150px;">Miniatura</th>
+                            <th>Título / Descripción</th>
+                            <th>Tema</th>
+                            <th>Duración</th>
+                            <th class="text-center">Orden</th>
+                            <th class="text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in videos %}
+                        <tr>
+                            <td class="ps-4">
+                                {% if video.url_miniatura %}
+                                    <img src="{{ video.url_miniatura }}" alt="Thumbnail" class="img-fluid rounded shadow-sm" style="width: 120px; height: 68px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width: 120px; height: 68px;">
+                                        <i class="bi bi-play-circle fs-4"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ video.titulo }}</div>
+                                <div class="text-muted small text-truncate" style="max-width: 300px;">{{ video.descripcion|default:"Sin descripción" }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-primary border" style="border-radius: 8px;">
+                                    {{ video.tema.nombre }}
+                                </span>
+                            </td>
+                            <td>{{ video.duracion|default:"-" }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-dark rounded-pill">{{ video.orden }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success" style="border-radius: 8px;">Activo</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-camera-video fs-2"></i>
+                                <p class="mt-2 mb-0">No hay videos registrados aún.</p>
+                                <a href="{% url 'video_registro_create' %}" class="btn btn-link text-decoration-none">Registrar el primer video</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table thead th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #6c757d;
+        padding: 1rem;
+    }
+    .table tbody td {
+        padding: 1rem;
+    }
+</style>
+{% endblock %}

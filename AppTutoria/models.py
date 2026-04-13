@@ -21,8 +21,14 @@ class ContenidoTema(models.Model):
 class VideoTema(models.Model):
     tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='videos')
     titulo = models.CharField(max_length=200)
-    archivo_video = models.FileField(upload_to='videos_temas/', help_text="Archivo de video (MP4 preferible)")
-    miniatura = models.ImageField(upload_to='videos_thumbnails/', help_text="Imagen de previsualización", blank=True, null=True)
+    # Soporte híbrido: Archivo local o URL externa
+    archivo_video = models.FileField(upload_to='videos_temas/', help_text="Archivo de video (MP4 preferible)", blank=True, null=True)
+    url_video = models.URLField(max_length=500, help_text="URL de video externo (YouTube)", blank=True, null=True)
+    
+    # Miniatura: Imagen local o URL externa
+    miniatura = models.ImageField(upload_to='videos_thumbnails/', help_text="Imagen de previsualización local", blank=True, null=True)
+    url_miniatura = models.URLField(max_length=500, help_text="URL de miniatura externa (YouTube)", blank=True, null=True)
+    
     descripcion = models.TextField(blank=True, null=True, help_text="Descripción breve del video")
     duracion = models.CharField(max_length=20, help_text="Ej: 5:30 min", blank=True, null=True)
     orden = models.PositiveIntegerField(default=1, help_text="Orden de visualización")
