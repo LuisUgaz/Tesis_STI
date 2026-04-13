@@ -23,3 +23,15 @@ class ProfileGamificationTest(TestCase):
         self.profile.save()
         updated_profile = Profile.objects.get(id=self.profile.id)
         self.assertEqual(updated_profile.puntos_acumulados, 50)
+
+    def test_profile_nivel_estudiante_default(self):
+        """Prueba que el perfil tenga el campo nivel_estudiante y que su valor por defecto sea 1"""
+        self.assertTrue(hasattr(self.profile, 'nivel_estudiante'), "El perfil debería tener el campo 'nivel_estudiante'")
+        self.assertEqual(self.profile.nivel_estudiante, 1, "El nivel inicial debería ser 1")
+
+    def test_profile_nivel_estudiante_update(self):
+        """Prueba que se pueda actualizar el nivel del estudiante"""
+        self.profile.nivel_estudiante = 2
+        self.profile.save()
+        updated_profile = Profile.objects.get(id=self.profile.id)
+        self.assertEqual(updated_profile.nivel_estudiante, 2)

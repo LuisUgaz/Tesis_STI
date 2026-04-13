@@ -62,3 +62,34 @@ class GamificationServiceTest(TestCase):
         GamificationService.assign_points_theory(self.user) # 5
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 20)
+
+    def test_level_up_on_threshold(self):
+        """Prueba que el nivel suba al alcanzar el umbral de 100 puntos"""
+        # Sumar 100 puntos exactamente
+        for _ in range(10):
+            GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Básico')
+        
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.puntos_acumulados, 100)
+        self.assertEqual(self.profile.nivel_estudiante, 2, "El nivel debería haber subido a 2")
+
+    def test_no_level_up_before_threshold(self):
+        """Prueba que el nivel no suba antes de alcanzar los 100 puntos"""
+        # Sumar 90 puntos
+        for _ in range(9):
+            GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Básico')
+            
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.puntos_acumulados, 90)
+        self.assertEqual(self.profile.nivel_estudiante, 1, "El nivel debería seguir siendo 1")
+
+    def test_multiple_level_ups(self):
+        """Prueba subidas de nivel consecutivas"""
+        # Sumar 210 puntos (Debería ser nivel 3)
+        for _ in range(7):
+            GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Avanzado') # 7 * 30 = 210
+            
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.puntos_acumulados, 210)
+        self.assertEqual(self.profile.nivel_estudiante, 3, "El nivel debería haber subido a 3")
+

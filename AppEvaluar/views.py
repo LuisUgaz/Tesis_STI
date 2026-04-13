@@ -154,6 +154,9 @@ def validar_respuesta(request):
     # HU15: Intentar ajustar dificultad tras la respuesta
     ajustar_dificultad_estudiante(request.user)
 
+    # Capturar nivel previo para detectar cambio (HU23)
+    nivel_previo = request.user.profile.nivel_estudiante
+
     # Asignar puntos por actividad (HU22)
     puntos_ganados = GamificationService.assign_points_exercise(
         request.user, 
@@ -161,15 +164,18 @@ def validar_respuesta(request):
         difficulty=ejercicio.dificultad
     )
 
-    # Refrescar perfil para obtener puntos actualizados
+    # Refrescar perfil para obtener puntos y nivel actualizados
     request.user.profile.refresh_from_db()
+    nivel_actual = request.user.profile.nivel_estudiante
 
     return JsonResponse({
         'es_correcto': opcion.es_correcta,
         'feedback': feedback_especifico,
         'explicacion_tecnica': explicacion_tecnica,
         'puntos_ganados': puntos_ganados,
-        'total_puntos': request.user.profile.puntos_acumulados
+        'total_puntos': request.user.profile.puntos_acumulados,
+        'nivel_actual': nivel_actual,
+        'subio_nivel': nivel_actual > nivel_previo
     })
 
 @login_required

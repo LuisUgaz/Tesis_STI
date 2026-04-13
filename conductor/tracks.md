@@ -118,3 +118,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU22 - AsignaciÃ³n de puntos por actividad**
 *Link: [./tracks/user_assign_points_20260412/](./tracks/user_assign_points_20260412/)*
 
+---
+
+- [x] **Track: HU23 - Subida de nivel**
+*Link: [./tracks/user_level_up_20260413/](./tracks/user_level_up_20260413/)*
+

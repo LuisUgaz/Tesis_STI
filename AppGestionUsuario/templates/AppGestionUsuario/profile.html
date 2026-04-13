@@ -185,11 +185,19 @@
 
             {% if profile_user.profile.rol == 'Estudiante' %}
             <div class="info-label">Recompensas</div>
-            <div class="academic-info" style="border-color: var(--accent-color); background-color: #fff9f0;">
-                <div class="academic-item">
-                    <div class="info-label">Puntos de Experiencia</div>
-                    <div class="info-value" style="color: var(--accent-color); font-size: 1.5rem;">
-                        🏅 {{ profile_user.profile.puntos_acumulados }} XP
+            <div class="academic-info" style="border-color: var(--accent-color); background-color: #fff9f0; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-around; width: 100%;">
+                    <div class="academic-item">
+                        <div class="info-label">Nivel Actual</div>
+                        <div class="info-value" style="color: #f5a623; font-size: 1.5rem; font-weight: bold;">
+                            ⭐ Nivel {{ profile_user.profile.nivel_estudiante }}
+                        </div>
+                    </div>
+                    <div class="academic-item">
+                        <div class="info-label">Puntos de Experiencia</div>
+                        <div class="info-value" style="color: var(--accent-color); font-size: 1.5rem;">
+                            🏅 {{ profile_user.profile.puntos_acumulados }} XP
+                        </div>
                     </div>
                 </div>
             </div>

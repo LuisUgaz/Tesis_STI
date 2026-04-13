@@ -32,6 +32,10 @@ class Profile(models.Model):
         default=0, 
         help_text="Puntos de experiencia acumulados por el estudiante"
     )
+    nivel_estudiante = models.PositiveIntegerField(
+        default=1,
+        help_text="Nivel de progresión del estudiante basado en XP"
+    )
 
     def __str__(self):
         return f"{self.nombres} {self.apellidos} ({self.user.username})"
