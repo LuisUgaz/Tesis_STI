@@ -7,4 +7,5 @@ urlpatterns = [
     path('practica/iniciar/', views.iniciar_practica, name='iniciar_practica'),
     path('practica/validar/', views.validar_respuesta, name='validar_respuesta'),
     path('historial/', views.HistorialResultadosView.as_view(), name='historial_resultados'),
+    path('reportes/', views.ReportesDocenteView.as_view(), name='reportes_docente'),
 ]

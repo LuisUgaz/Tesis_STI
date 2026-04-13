@@ -1,0 +1,247 @@
+{% extends "home.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">📊 Panel Analítico para Docentes</h2>
+        <div class="text-muted">Colegio Pedro Abel Labarthe Durand</div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4 border-0" style="border-radius: 15px; background: #f8f9fa;">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">BUSCAR ESTUDIANTE</label>
+                    <input type="text" name="nombre" class="form-control border-0 shadow-sm" placeholder="Nombre o usuario..." value="{{ filtro_nombre }}" style="border-radius: 10px;">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">GRADO</label>
+                    <select name="grado" class="form-select border-0 shadow-sm" style="border-radius: 10px;">
+                        <option value="">Todos</option>
+                        <option value="1ro" {% if filtro_grado == '1ro' %}selected{% endif %}>1ro Secundaria</option>
+                        <option value="2do" {% if filtro_grado == '2do' %}selected{% endif %}>2do Secundaria</option>
+                        <option value="3ro" {% if filtro_grado == '3ro' %}selected{% endif %}>3ro Secundaria</option>
+                        <option value="4to" {% if filtro_grado == '4to' %}selected{% endif %}>4to Secundaria</option>
+                        <option value="5to" {% if filtro_grado == '5to' %}selected{% endif %}>5to Secundaria</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">SECCIÓN</label>
+                    <select name="seccion" class="form-select border-0 shadow-sm" style="border-radius: 10px;">
+                        <option value="">Todas</option>
+                        <option value="A" {% if filtro_seccion == 'A' %}selected{% endif %}>Sección A</option>
+                        <option value="B" {% if filtro_seccion == 'B' %}selected{% endif %}>Sección B</option>
+                        <option value="C" {% if filtro_seccion == 'C' %}selected{% endif %}>Sección C</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
+                        🔍 APLICAR FILTROS
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{% url 'reportes_docente' %}" class="btn btn-outline-secondary w-100 shadow-sm fw-bold" style="border-radius: 10px; height: 38px;">
+                        🔄 LIMPIAR
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen de Métricas (HTML/CSS) -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-white" style="border-radius: 15px; border-left: 5px solid #4a90e2 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">TOTAL ESTUDIANTES</h6>
+                    <h2 class="mb-0 fw-bold">{{ summary.total_estudiantes }}</h2>
+                    <div class="small text-primary mt-2">En el periodo seleccionado</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-white" style="border-radius: 15px; border-left: 5px solid #50e3c2 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">PRECISIÓN PROMEDIO</h6>
+                    <h2 class="mb-0 fw-bold">{{ summary.precision_promedio }}%</h2>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar" style="width: {{ summary.precision_promedio }}%; background-color: #50e3c2;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-white" style="border-radius: 15px; border-left: 5px solid #f5a623 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold">PUNTOS (XP) PROMEDIO</h6>
+                    <h2 class="mb-0 fw-bold">{{ summary.puntos_promedio }}</h2>
+                    <div class="small text-warning mt-2">🏅 Nivel de compromiso alto</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfico Analítico (Chart.js) -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100" style="border-radius: 15px;">
+                <div class="card-header bg-white border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">Dominio por Temas</h5>
+                    <p class="small text-muted">Desempeño promedio en ejercicios del aula</p>
+                </div>
+                <div class="card-body">
+                    {% if summary.desempeno_por_tema %}
+                        <canvas id="topicChart" height="300"></canvas>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                            <p>No hay datos suficientes para generar el gráfico.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimos Progresos -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100" style="border-radius: 15px;">
+                <div class="card-header bg-white border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">Actividad Reciente</h5>
+                    <p class="small text-muted">Últimas 50 interacciones de los estudiantes</p>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th class="border-0">Estudiante</th>
+                                    <th class="border-0">Aula</th>
+                                    <th class="border-0">Tema</th>
+                                    <th class="border-0">Actividad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for progreso in progresos %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ progreso.usuario.get_full_name|default:progreso.usuario.username }}</div>
+                                        <div class="small text-muted">{{ progreso.fecha_registro|date:"d/m H:i" }}</div>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">{{ progreso.grado }} {{ progreso.seccion }}</span></td>
+                                    <td>{{ progreso.tema.nombre }}</td>
+                                    <td>
+                                        <span class="badge {% if progreso.tipo_actividad == 'Examen' %}bg-danger{% elif progreso.tipo_actividad == 'Ejercicio' %}bg-success{% else %}bg-info{% endif %}" style="border-radius: 8px;">
+                                            {{ progreso.tipo_actividad }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">Sin registros recientes.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado Detallado de Estudiantes (HU26) -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="card-header bg-white border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">Listado Detallado de Estudiantes</h5>
+                    <p class="small text-muted">Métricas individuales y logros alcanzados</p>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Estudiante</th>
+                                    <th>Grado/Secc</th>
+                                    <th>XP (Puntos)</th>
+                                    <th>Nivel</th>
+                                    <th>Precisión</th>
+                                    <th class="text-center">Insignias</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for est in estudiantes %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-primary">{{ est.nombres }} {{ est.apellidos }}</div>
+                                        <div class="small text-muted">@{{ est.user.username }}</div>
+                                    </td>
+                                    <td>{{ est.grado }} {{ est.seccion }}</td>
+                                    <td><span class="fw-bold">{{ est.puntos_acumulados }}</span></td>
+                                    <td><span class="badge bg-warning text-dark">⭐ Nivel {{ est.nivel_estudiante }}</span></td>
+                                    <td>
+                                        {% with metricas=est.user.metricas.first %}
+                                            {% if metricas %}
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span>{{ metricas.precision_general|floatformat:1 }}%</span>
+                                                    <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
+                                                        <div class="progress-bar" style="width: {{ metricas.precision_general }}%; background-color: #50e3c2;"></div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small">Sin datos</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info" style="font-size: 0.9rem;">
+                                            🏆 {{ est.logros.count }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">No se encontraron estudiantes con los filtros aplicados.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts Analíticos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if summary.desempeno_por_tema %}
+        const ctx = document.getElementById('topicChart').getContext('2d');
+        const chartData = {{ chart_data_json|safe }};
+        
+        new Chart(ctx, {
+            type: 'radar',
+            data: chartData,
+            options: {
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { stepSize: 20 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                elements: {
+                    line: { tension: 0.2 }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

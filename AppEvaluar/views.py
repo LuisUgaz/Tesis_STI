@@ -8,8 +8,9 @@ from .models import (
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante
-from .services_metrics import actualizar_metricas_estudiante
+from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
 from AppTutoria.services import registrar_progreso
+import json
 from AppGestionUsuario.services_gamification import GamificationService
 from django.contrib import messages
 from django.utils import timezone
@@ -30,6 +31,81 @@ def student_required(view_func):
 class StudentRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_authenticated and self.request.user.profile.rol == 'Estudiante'
+
+class TeacherRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.profile.rol == 'Docente'
+
+class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
+    model = ProgresoEstudiante
+    template_name = 'AppEvaluar/reportes_docente.html'
+    context_object_name = 'progresos'
+
+    def get_queryset(self):
+        queryset = ProgresoEstudiante.objects.all()
+        
+        grado = self.request.GET.get('grado')
+        seccion = self.request.GET.get('seccion')
+        nombre = self.request.GET.get('nombre')
+        
+        if grado:
+            queryset = queryset.filter(grado=grado)
+        if seccion:
+            queryset = queryset.filter(seccion=seccion)
+        if nombre:
+            queryset = queryset.filter(usuario__username__icontains=nombre) | \
+                       queryset.filter(usuario__first_name__icontains=nombre) | \
+                       queryset.filter(usuario__last_name__icontains=nombre)
+            
+        return queryset.select_related('usuario', 'tema').order_by('-fecha_registro')[:50]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        grado = self.request.GET.get('grado', '')
+        seccion = self.request.GET.get('seccion', '')
+        nombre = self.request.GET.get('nombre', '')
+        
+        # 1. Obtener Resumen de Aula
+        summary = get_classroom_performance_summary(grado=grado, seccion=seccion)
+        context['summary'] = summary
+        
+        # 2. Preparar datos para Chart.js
+        labels = list(summary['desempeno_por_tema'].keys())
+        data = list(summary['desempeno_por_tema'].values())
+        
+        context['chart_data_json'] = json.dumps({
+            'labels': labels,
+            'datasets': [{
+                'label': 'Dominio Promedio (%)',
+                'data': data,
+                'backgroundColor': 'rgba(74, 144, 226, 0.2)',
+                'borderColor': 'rgba(74, 144, 226, 1)',
+                'borderWidth': 2,
+                'pointBackgroundColor': 'rgba(74, 144, 226, 1)'
+            }]
+        })
+
+        # 3. Listado de Estudiantes con sus mÃ©tricas (HU26)
+        from AppGestionUsuario.models import Profile
+        estudiantes = Profile.objects.filter(rol='Estudiante').select_related('user').prefetch_related('user__metricas', 'logros')
+        
+        if grado:
+            estudiantes = estudiantes.filter(grado=grado)
+        if seccion:
+            estudiantes = estudiantes.filter(seccion=seccion)
+        if nombre:
+            estudiantes = estudiantes.filter(user__username__icontains=nombre) | \
+                          estudiantes.filter(nombres__icontains=nombre) | \
+                          estudiantes.filter(apellidos__icontains=nombre)
+        
+        context['estudiantes'] = estudiantes.order_by('apellidos', 'nombres')
+        
+        context['filtro_grado'] = grado
+        context['filtro_seccion'] = seccion
+        context['filtro_nombre'] = nombre
+        
+        return context
 
 class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView):
     model = ProgresoEstudiante

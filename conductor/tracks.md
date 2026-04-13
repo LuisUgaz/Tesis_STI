@@ -133,3 +133,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU25 - Visualizar insignias obtenidas**
 *Link: [./tracks/user_view_badges_20260413/](./tracks/user_view_badges_20260413/)*
 
+---
+
+- [x] **Track: HU26 - Visualizar reportes de progreso**
+*Link: [./tracks/teacher_view_reports_20260413/](./tracks/teacher_view_reports_20260413/)*
+

@@ -44,3 +44,58 @@ def actualizar_metricas_estudiante(usuario, actividad_reciente=None):
             
         metricas.save()
         return metricas
+
+def get_classroom_performance_summary(grado=None, seccion=None):
+    """
+    Calcula mÃ©tricas agregadas para un aula (grado y secciÃ³n).
+    Retorna un diccionario con promedios y desempeÃ±o por tema.
+    """
+    from AppGestionUsuario.models import Profile, MetricasEstudiante
+    
+    # 1. Filtrar perfiles por grado y secciÃ³n
+    profiles = Profile.objects.filter(rol='Estudiante')
+    if grado:
+        profiles = profiles.filter(grado=grado)
+    if seccion:
+        profiles = profiles.filter(seccion=seccion)
+    
+    user_ids = profiles.values_list('user_id', flat=True)
+    total_estudiantes = profiles.count()
+    
+    if total_estudiantes == 0:
+        return {
+            'total_estudiantes': 0,
+            'precision_promedio': 0,
+            'puntos_promedio': 0,
+            'desempeno_por_tema': {}
+        }
+
+    # 2. Promedio de PrecisiÃ³n General
+    metricas = MetricasEstudiante.objects.filter(usuario_id__in=user_ids)
+    avg_precision = metricas.aggregate(models.Avg('precision_general'))['precision_general__avg'] or 0
+    
+    # 3. Promedio de Puntos (XP)
+    avg_puntos = profiles.aggregate(models.Avg('puntos_acumulados'))['puntos_acumulados__avg'] or 0
+    
+    # 4. DesempeÃ±o Agregado por Tema
+    desempeno_agregado = {}
+    temas_count = {}
+    
+    for m in metricas:
+        if m.dominio_por_tema:
+            for tema, valor in m.dominio_por_tema.items():
+                desempeno_agregado[tema] = desempeno_agregado.get(tema, 0) + valor
+                temas_count[tema] = temas_count.get(tema, 0) + 1
+                
+    # Calcular promedios por tema
+    resumen_temas = {
+        tema: round(float(desempeno_agregado[tema]) / temas_count[tema], 2)
+        for tema in desempeno_agregado
+    }
+    
+    return {
+        'total_estudiantes': total_estudiantes,
+        'precision_promedio': round(float(avg_precision), 2),
+        'puntos_promedio': round(float(avg_puntos), 2),
+        'desempeno_por_tema': resumen_temas
+    }
