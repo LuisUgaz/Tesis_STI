@@ -17,11 +17,12 @@
         <div class="col-md-3">
             <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #4a90e2 !important;">
                 <div class="card-body">
-                    <h6 class="text-muted small fw-bold">TOTAL EJERCICIOS</h6>
+                    <h6 class="text-muted small fw-bold">TOTAL EJERCICIOS ACTIVOS</h6>
                     <h2 class="mb-0 fw-bold">{{ ejercicios.count }}</h2>
                 </div>
             </div>
         </div>
+        <!-- Los filtros de dificultad en el queryset ya aplican el es_activo=True -->
         <div class="col-md-3">
             <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #50e3c2 !important;">
                 <div class="card-body">
@@ -88,22 +89,62 @@
                                 <div class="small text-muted">{{ ejercicio.fecha_creacion|date:"H:i" }}</div>
                             </td>
                             <td class="text-center">
-                                <a href="{% url 'banco_preguntas_edit' pk=ejercicio.pk %}" class="btn btn-outline-primary btn-sm fw-bold px-3" style="border-radius: 8px;">
-                                    ✏️ Editar
-                                </a>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'banco_preguntas_edit' pk=ejercicio.pk %}" class="btn btn-outline-primary btn-sm fw-bold px-3" style="border-radius: 8px 0 0 8px;">
+                                        ✏️ Editar
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger btn-sm fw-bold px-3" 
+                                            style="border-radius: 0 8px 8px 0;"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal"
+                                            data-id="{{ ejercicio.id }}"
+                                            data-texto="{{ ejercicio.texto|truncatechars:100 }}">
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="bi bi-info-circle fs-2"></i>
-                                <p class="mt-2 mb-0">No hay ejercicios registrados en el banco.</p>
+                                <p class="mt-2 mb-0">No hay ejercicios activos registrados en el banco.</p>
                                 <a href="{% url 'banco_preguntas_create' %}" class="btn btn-link">Comience registrando uno aquí</a>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminación Lógica -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 15px;">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="deleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4">
+                <p>¿Estás seguro de que deseas eliminar esta pregunta del banco?</p>
+                <div class="p-3 bg-light rounded mb-3">
+                    <small class="text-muted d-block mb-1 fw-bold">PREGUNTA:</small>
+                    <span id="modal-pregunta-texto" class="small italic"></span>
+                </div>
+                <div class="alert alert-warning border-0 small" style="border-radius: 10px;">
+                    <strong>Nota:</strong> Esta acción ocultará la pregunta para nuevas prácticas, pero mantendrá los resultados históricos de los estudiantes que ya la resolvieron.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal" style="border-radius: 10px;">CANCELAR</button>
+                <form id="delete-form" method="POST" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger fw-bold shadow-sm" style="border-radius: 10px;">CONFIRMAR ELIMINACIÓN</button>
+                </form>
             </div>
         </div>
     </div>
@@ -122,4 +163,22 @@
         padding: 1rem;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const texto = button.getAttribute('data-texto');
+            
+            const modalTexto = deleteModal.querySelector('#modal-pregunta-texto');
+            const form = deleteModal.querySelector('#delete-form');
+            
+            modalTexto.textContent = texto;
+            // Construir la URL dinámicamente para el formulario
+            form.action = `/evaluar/banco-preguntas/eliminar/${id}/`;
+        });
+    });
+</script>
 {% endblock %}

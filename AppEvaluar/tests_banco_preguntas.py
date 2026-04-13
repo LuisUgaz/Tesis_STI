@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from AppGestionUsuario.models import Profile
 from AppTutoria.models import Tema
-from AppEvaluar.models import Ejercicio, OpcionEjercicio
+from AppEvaluar.models import Ejercicio, OpcionEjercicio, RecomendacionEstudiante
 
 class BancoPreguntasTests(TestCase):
     def setUp(self):
@@ -21,6 +21,71 @@ class BancoPreguntasTests(TestCase):
         except:
             self.url_create = '/evaluar/banco-preguntas/nuevo/'
             self.url_list = '/evaluar/banco-preguntas/'
+
+    def test_eliminacion_logica_ejercicio(self):
+        """Debe marcar un ejercicio como inactivo en lugar de borrarlo físicamente."""
+        ejercicio = Ejercicio.objects.create(tema=self.tema, texto="Para eliminar", dificultad="Básico")
+        try:
+            url_delete = reverse('banco_preguntas_delete', kwargs={'pk': ejercicio.pk})
+        except:
+            url_delete = f'/evaluar/banco-preguntas/eliminar/{ejercicio.pk}/'
+
+        self.client.login(username='docente1', password='password123')
+        
+        # Al ser un POST (o DELETE simulado con POST para CBV DeleteView con confirmación)
+        response = self.client.post(url_delete)
+        self.assertEqual(response.status_code, 302) # Redirección tras éxito
+
+        ejercicio.refresh_from_db()
+        self.assertFalse(ejercicio.es_activo)
+        # Verificar que el registro sigue existiendo en DB
+        self.assertTrue(Ejercicio.objects.filter(id=ejercicio.id).exists())
+
+    def test_preguntas_inactivas_no_aparecen_en_listado_docente(self):
+        """El listado de gestión debe mostrar solo ejercicios activos por defecto."""
+        Ejercicio.objects.create(tema=self.tema, texto="Activo", es_activo=True)
+        Ejercicio.objects.create(tema=self.tema, texto="Inactivo", es_activo=False)
+
+        self.client.login(username='docente1', password='password123')
+        response = self.client.get(self.url_list)
+        
+        self.assertContains(response, "Activo")
+        self.assertNotContains(response, "Inactivo")
+
+    def test_preguntas_inactivas_no_aparecen_en_practica_estudiante(self):
+        """Los estudiantes no deben recibir preguntas inactivas en sus sesiones de práctica."""
+        # 1. Preparar recomendación para el estudiante
+        RecomendacionEstudiante.objects.create(
+            usuario=self.estudiante_user, 
+            tema=self.tema.nombre, 
+            metrica_desempeno=50
+        )
+        
+        # 2. Crear una activa y una inactiva
+        Ejercicio.objects.create(tema=self.tema, texto="Pregunta Activa", es_activo=True, dificultad="Básico")
+        Ejercicio.objects.create(tema=self.tema, texto="Pregunta Inactiva", es_activo=False, dificultad="Básico")
+
+        self.client.login(username='estudiante1', password='password123')
+        url_practica = reverse('iniciar_practica')
+        
+        response = self.client.get(url_practica)
+        self.assertContains(response, "Pregunta Activa")
+        self.assertNotContains(response, "Pregunta Inactiva")
+
+    def test_acceso_eliminacion_restringido_a_docentes(self):
+        """Un estudiante no debe poder eliminar (desactivar) preguntas."""
+        ejercicio = Ejercicio.objects.create(tema=self.tema, texto="Prohibido borrar", dificultad="Básico")
+        try:
+            url_delete = reverse('banco_preguntas_delete', kwargs={'pk': ejercicio.pk})
+        except:
+            url_delete = f'/evaluar/banco-preguntas/eliminar/{ejercicio.pk}/'
+
+        self.client.login(username='estudiante1', password='password123')
+        response = self.client.post(url_delete)
+        self.assertEqual(response.status_code, 403)
+        
+        ejercicio.refresh_from_db()
+        self.assertTrue(ejercicio.es_activo)
 
     def test_acceso_restringido_a_docentes(self):
         """Solo los docentes deben poder acceder al formulario de creación de preguntas."""

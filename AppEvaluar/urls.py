@@ -13,4 +13,5 @@ urlpatterns = [
     path('banco-preguntas/', views.BancoPreguntasListView.as_view(), name='banco_preguntas_list'),
     path('banco-preguntas/nuevo/', views.BancoPreguntasCreateView.as_view(), name='banco_preguntas_create'),
     path('banco-preguntas/editar/<int:pk>/', views.BancoPreguntasUpdateView.as_view(), name='banco_preguntas_edit'),
+    path('banco-preguntas/eliminar/<int:pk>/', views.BancoPreguntasDeleteView.as_view(), name='banco_preguntas_delete'),
 ]

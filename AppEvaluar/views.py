@@ -253,13 +253,14 @@ def iniciar_practica(request):
     nivel = request.user.profile.nivel_dificultad_actual
     ejercicios = Ejercicio.objects.filter(
         tema=tema, 
-        dificultad=nivel
+        dificultad=nivel,
+        es_activo=True
     ).prefetch_related('opciones').order_by('?')[:5]
 
     if not ejercicios.exists():
         messages.info(request, f"Aún no hay ejercicios de nivel {nivel} para el tema: {tema.nombre}")
         # Fallback: Si no hay del nivel, mostrar cualquiera del tema para no bloquear al alumno
-        ejercicios = Ejercicio.objects.filter(tema=tema).prefetch_related('opciones').order_by('?')[:5]
+        ejercicios = Ejercicio.objects.filter(tema=tema, es_activo=True).prefetch_related('opciones').order_by('?')[:5]
         
     if not ejercicios.exists():
         messages.info(request, f"Aún no hay ejercicios cargados para el tema: {tema.nombre}")
@@ -535,6 +536,10 @@ class BancoPreguntasListView(LoginRequiredMixin, TeacherRequiredMixin, ListView)
     context_object_name = 'ejercicios'
     ordering = ['-fecha_creacion']
 
+    def get_queryset(self):
+        # Por defecto solo mostramos las activas
+        return Ejercicio.objects.filter(es_activo=True).select_related('tema')
+
 class BancoPreguntasUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
     model = Ejercicio
     form_class = EjercicioForm
@@ -560,6 +565,23 @@ class BancoPreguntasUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateV
             return super().form_valid(form)
         else:
             return self.render_to_response(self.get_context_data(form=form))
+
+class BancoPreguntasDeleteView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
+    """
+    Vista para eliminación lógica (Soft Delete) de ejercicios.
+    Usamos UpdateView para cambiar el estado 'es_activo' sin borrar físicamente.
+    """
+    model = Ejercicio
+    fields = [] # No necesitamos campos del formulario, solo la acción POST
+    template_name = 'AppEvaluar/banco_preguntas_list.html' # Fallback
+    success_url = reverse_lazy('banco_preguntas_list')
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.es_activo = False
+        self.object.save()
+        messages.success(request, "Pregunta eliminada (desactivada) exitosamente del banco.")
+        return redirect(self.get_success_url())
 
 class ExportarReporteExcelView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     def get(self, request, *args, **kwargs):
