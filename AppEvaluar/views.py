@@ -538,7 +538,28 @@ class BancoPreguntasListView(LoginRequiredMixin, TeacherRequiredMixin, ListView)
 
     def get_queryset(self):
         # Por defecto solo mostramos las activas
-        return Ejercicio.objects.filter(es_activo=True).select_related('tema')
+        queryset = Ejercicio.objects.filter(es_activo=True).select_related('tema')
+        
+        # Aplicar filtros si existen en GET
+        tema_id = self.request.GET.get('tema')
+        dificultad = self.request.GET.get('dificultad')
+        
+        if tema_id:
+            queryset = queryset.filter(tema_id=tema_id)
+        if dificultad:
+            queryset = queryset.filter(dificultad=dificultad)
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasar los temas y niveles para los selectores del frontend
+        context['temas'] = Tema.objects.all()
+        context['dificultades'] = [d[0] for d in Ejercicio.DIFICULTAD_CHOICES]
+        # Mantener valores seleccionados para el sticky de filtros
+        context['filtro_tema'] = self.request.GET.get('tema', '')
+        context['filtro_dificultad'] = self.request.GET.get('dificultad', '')
+        return context
 
 class BancoPreguntasUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
     model = Ejercicio

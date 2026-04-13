@@ -158,3 +158,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU31 - Eliminar preguntas del banco**
 *Link: [./tracks/teacher_delete_questions_bank_20260413/](./tracks/teacher_delete_questions_bank_20260413/)*
 
+---
+
+- [x] **Track: HU32 - Clasificar preguntas por tema y nivel**
+*Link: [./tracks/teacher_classify_questions_bank_20260413/](./tracks/teacher_classify_questions_bank_20260413/)*
+

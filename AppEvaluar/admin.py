@@ -12,9 +12,18 @@ class OpcionInline(admin.TabularInline):
     extra = 3
 
 class PreguntaAdmin(admin.ModelAdmin):
-    list_display = ('texto', 'examen', 'tipo', 'categoria')
-    list_filter = ('examen', 'tipo', 'categoria')
+    list_display = ('texto', 'examen', 'tipo', 'tema', 'dificultad')
+    list_filter = ('examen', 'tipo', 'tema', 'dificultad')
     inlines = [OpcionInline]
+    fieldsets = (
+        (None, {
+            'fields': ('examen', 'texto', 'tipo')
+        }),
+        ('Clasificación Académica', {
+            'fields': ('tema', 'dificultad'),
+            'description': 'Especifique el tema y nivel para la selección adaptativa.'
+        }),
+    )
 
 class PreguntaInline(admin.StackedInline):
     model = Pregunta

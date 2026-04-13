@@ -18,11 +18,18 @@ class Pregunta(models.Model):
         ('OPCION_MULTIPLE', 'Opción Múltiple'),
         ('TEXTO_CORTO', 'Respuesta Corta'),
     ]
+    
+    DIFICULTAD_CHOICES = [
+        ('Básico', 'Básico'),
+        ('Intermedio', 'Intermedio'),
+        ('Avanzado', 'Avanzado'),
+    ]
 
     examen = models.ForeignKey(ExamenDiagnostico, on_delete=models.CASCADE, related_name='preguntas')
     texto = models.TextField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='OPCION_MULTIPLE')
-    categoria = models.CharField(max_length=100, help_text="Ej: Triángulos, Ángulos, etc.")
+    tema = models.ForeignKey(Tema, on_delete=models.SET_NULL, null=True, related_name='preguntas_diagnostico')
+    dificultad = models.CharField(max_length=20, choices=DIFICULTAD_CHOICES, default='Básico')
 
     def __str__(self):
         return self.texto

@@ -12,38 +12,70 @@
         </a>
     </div>
 
+    <!-- Barra de Filtros -->
+    <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px;">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Filtrar por Tema</label>
+                    <select name="tema" class="form-select" style="border-radius: 10px;">
+                        <option value="">Todos los temas</option>
+                        {% for tema in temas %}
+                            <option value="{{ tema.id }}" {% if filtro_tema == tema.id|stringformat:"i" %}selected{% endif %}>
+                                {{ tema.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Nivel de Dificultad</label>
+                    <select name="dificultad" class="form-select" style="border-radius: 10px;">
+                        <option value="">Todas las dificultades</option>
+                        {% for dif in dificultades %}
+                            <option value="{{ dif }}" {% if filtro_dificultad == dif %}selected{% endif %}>
+                                {{ dif }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark fw-bold w-100" style="border-radius: 10px;">
+                        🔍 BUSCAR
+                    </button>
+                    <a href="{% url 'banco_preguntas_list' %}" class="btn btn-outline-secondary fw-bold w-100" style="border-radius: 10px;">
+                        🔄 LIMPIAR
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Estadísticas Rápidas -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #4a90e2 !important;">
                 <div class="card-body">
-                    <h6 class="text-muted small fw-bold">TOTAL EJERCICIOS ACTIVOS</h6>
+                    <h6 class="text-muted small fw-bold">TOTAL ACTIVOS</h6>
                     <h2 class="mb-0 fw-bold">{{ ejercicios.count }}</h2>
                 </div>
             </div>
         </div>
-        <!-- Los filtros de dificultad en el queryset ya aplican el es_activo=True -->
         <div class="col-md-3">
             <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #50e3c2 !important;">
                 <div class="card-body">
-                    <h6 class="text-muted small fw-bold">NIVEL BÁSICO</h6>
-                    <h2 class="mb-0 fw-bold text-success">{{ ejercicios.filter.dificultad_Basico|default:"-" }}</h2>
+                    <h6 class="text-muted small fw-bold">EN VISTA ACTUAL</h6>
+                    <h2 class="mb-0 fw-bold text-success">{{ ejercicios|length }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #f5a623 !important;">
-                <div class="card-body">
-                    <h6 class="text-muted small fw-bold">NIVEL INTERMEDIO</h6>
-                    <h2 class="mb-0 fw-bold text-warning">{{ ejercicios.filter.dificultad_Intermedio|default:"-" }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #d0021b !important;">
-                <div class="card-body">
-                    <h6 class="text-muted small fw-bold">NIVEL AVANZADO</h6>
-                    <h2 class="mb-0 fw-bold text-danger">{{ ejercicios.filter.dificultad_Avanzado|default:"-" }}</h2>
+        <!-- Estos valores son estáticos por ahora o requerirían anotaciones en el queryset -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px;">
+                <div class="card-body d-flex align-items-center">
+                    <p class="mb-0 text-muted small">
+                        <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                        Utilice los filtros superiores para organizar el banco por criterios específicos.
+                    </p>
                 </div>
             </div>
         </div>
@@ -109,8 +141,8 @@
                         <tr>
                             <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="bi bi-info-circle fs-2"></i>
-                                <p class="mt-2 mb-0">No hay ejercicios activos registrados en el banco.</p>
-                                <a href="{% url 'banco_preguntas_create' %}" class="btn btn-link">Comience registrando uno aquí</a>
+                                <p class="mt-2 mb-0">No se encontraron ejercicios que coincidan con los filtros.</p>
+                                <a href="{% url 'banco_preguntas_list' %}" class="btn btn-link text-decoration-none">Ver todos los ejercicios</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -136,7 +168,7 @@
                     <span id="modal-pregunta-texto" class="small italic"></span>
                 </div>
                 <div class="alert alert-warning border-0 small" style="border-radius: 10px;">
-                    <strong>Nota:</strong> Esta acción ocultará la pregunta para nuevas prácticas, pero mantendrá los resultados históricos de los estudiantes que ya la resolvieron.
+                    <strong>Nota:</strong> Esta acción ocultará la pregunta para nuevas prácticas, pero mantendrá los resultados históricos de los estudiantes.
                 </div>
             </div>
             <div class="modal-footer border-0 pb-4 px-4">
@@ -162,6 +194,10 @@
     .table tbody td {
         padding: 1rem;
     }
+    .form-select:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.1);
+    }
 </style>
 
 <script>
@@ -176,7 +212,6 @@
             const form = deleteModal.querySelector('#delete-form');
             
             modalTexto.textContent = texto;
-            // Construir la URL dinámicamente para el formulario
             form.action = `/evaluar/banco-preguntas/eliminar/${id}/`;
         });
     });
