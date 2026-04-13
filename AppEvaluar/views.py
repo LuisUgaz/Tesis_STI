@@ -10,6 +10,7 @@ from .models import (
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante
 from .services_metrics import actualizar_metricas_estudiante
 from AppTutoria.services import registrar_progreso
+from AppGestionUsuario.services_gamification import GamificationService
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
@@ -153,10 +154,22 @@ def validar_respuesta(request):
     # HU15: Intentar ajustar dificultad tras la respuesta
     ajustar_dificultad_estudiante(request.user)
 
+    # Asignar puntos por actividad (HU22)
+    puntos_ganados = GamificationService.assign_points_exercise(
+        request.user, 
+        is_correct=opcion.es_correcta, 
+        difficulty=ejercicio.dificultad
+    )
+
+    # Refrescar perfil para obtener puntos actualizados
+    request.user.profile.refresh_from_db()
+
     return JsonResponse({
         'es_correcto': opcion.es_correcta,
         'feedback': feedback_especifico,
-        'explicacion_tecnica': explicacion_tecnica
+        'explicacion_tecnica': explicacion_tecnica,
+        'puntos_ganados': puntos_ganados,
+        'total_puntos': request.user.profile.puntos_acumulados
     })
 
 @login_required

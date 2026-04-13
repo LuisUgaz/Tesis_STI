@@ -184,6 +184,16 @@
             </div>
 
             {% if profile_user.profile.rol == 'Estudiante' %}
+            <div class="info-label">Recompensas</div>
+            <div class="academic-info" style="border-color: var(--accent-color); background-color: #fff9f0;">
+                <div class="academic-item">
+                    <div class="info-label">Puntos de Experiencia</div>
+                    <div class="info-value" style="color: var(--accent-color); font-size: 1.5rem;">
+                        🏅 {{ profile_user.profile.puntos_acumulados }} XP
+                    </div>
+                </div>
+            </div>
+
             <div class="info-label">Información Académica</div>
             <div class="academic-info">
                 <div class="academic-item">

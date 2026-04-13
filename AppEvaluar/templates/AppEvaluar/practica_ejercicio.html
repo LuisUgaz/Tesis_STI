@@ -192,13 +192,68 @@
         }
 
         .finish-screen.active { display: block; }
+
+        /* Estilos para Notificaciones Toast (HU22) */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+            border-left: 5px solid var(--success-color);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .points-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .total-points-display {
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
+    <div id="toast-container"></div>
     <div class="container">
         <div id="practica-ui">
             <div class="header">
-                <span id="step-info">Pregunta 1 de {{ total }}</span>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <span id="step-info">Pregunta 1 de {{ total }}</span>
+                    <div class="total-points-display">
+                        <span title="Tus puntos totales">✨ <span id="current-total-points">{{ user.profile.puntos_acumulados }}</span> pts</span>
+                    </div>
+                </div>
                 <div class="progress-container">
                     <div class="progress-bar" id="progress-bar"></div>
                 </div>
@@ -309,6 +364,11 @@
                 feedbackArea.innerHTML = feedbackHtml;
                 feedbackArea.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
                 
+                // Mostrar notificación de puntos (HU22)
+                if (data.puntos_ganados) {
+                    showToast(data.puntos_ganados, data.total_puntos);
+                }
+
                 // Deshabilitar radios
                 card.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
                 card.querySelector('.btn-validar').style.display = 'none';
@@ -318,6 +378,32 @@
                 console.error("Error al validar:", error);
                 alert("Hubo un error al procesar tu respuesta.");
             }
+        }
+
+        function showToast(puntos, total) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <span>¡Ganaste</span>
+                <span class="points-badge">+${puntos} pts</span>
+                <span>!</span>
+            `;
+            container.appendChild(toast);
+
+            // Actualizar contador total con pequeña animación
+            const totalDisplay = document.getElementById('current-total-points');
+            totalDisplay.innerText = total;
+            totalDisplay.style.transform = 'scale(1.2)';
+            totalDisplay.style.transition = 'transform 0.2s ease';
+            setTimeout(() => {
+                totalDisplay.style.transform = 'scale(1)';
+            }, 200);
+
+            // Remover del DOM tras animación
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
 
         function siguiente() {

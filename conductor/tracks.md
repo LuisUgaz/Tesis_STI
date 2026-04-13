@@ -113,3 +113,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU21 - Visualizar mÃ©tricas de desempeÃ±o**
 *Link: [./tracks/user_visualize_metrics_20260412/](./tracks/user_visualize_metrics_20260412/)*
 
+---
+
+- [x] **Track: HU22 - AsignaciÃ³n de puntos por actividad**
+*Link: [./tracks/user_assign_points_20260412/](./tracks/user_assign_points_20260412/)*
+

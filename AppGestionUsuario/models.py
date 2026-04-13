@@ -28,6 +28,10 @@ class Profile(models.Model):
         default='Básico',
         help_text="Nivel de dificultad asignado automáticamente por el sistema"
     )
+    puntos_acumulados = models.PositiveIntegerField(
+        default=0, 
+        help_text="Puntos de experiencia acumulados por el estudiante"
+    )
 
     def __str__(self):
         return f"{self.nombres} {self.apellidos} ({self.user.username})"
