@@ -1,0 +1,16 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container mt-2">
+    <div class="card shadow-sm border-0 p-4" style="border-radius: 15px;">
+        <div class="pagina-contenido">
+            {{ pagina.contenido_html|safe }}
+        </div>
+    </div>
+</div>
+
+<style>
+    .pagina-contenido { line-height: 1.6; color: #333; }
+    .pagina-contenido h1, .pagina-contenido h2, .pagina-contenido h3 { color: #2c3e50; margin-top: 1.5rem; }
+</style>
+{% endblock %}

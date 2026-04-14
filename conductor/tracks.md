@@ -183,3 +183,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU36 - Gestionar usuarios**
 *Link: [./tracks/user_manage_users_20260414/](./tracks/user_manage_users_20260414/)*
 
+---
+
+- [x] **Track: HU37 - Gestionar contenidos del sistema**
+*Link: [./tracks/user_manage_general_content_20260414/](./tracks/user_manage_general_content_20260414/)*

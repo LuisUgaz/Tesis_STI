@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Profile
+from .models import Profile, ConfiguracionGlobal, PaginaEstatica
 from django.core.exceptions import ValidationError
 
 class UserRegistrationForm(forms.Form):
@@ -126,3 +126,23 @@ class AdminUserForm(forms.ModelForm):
             profile.seccion = self.cleaned_data['seccion']
             profile.save()
         return user
+
+class ConfiguracionGlobalForm(forms.ModelForm):
+    class Meta:
+        model = ConfiguracionGlobal
+        fields = ['nombre_sistema', 'email_contacto', 'texto_footer']
+        widgets = {
+            'nombre_sistema': forms.TextInput(attrs={'class': 'form-control'}),
+            'email_contacto': forms.EmailInput(attrs={'class': 'form-control'}),
+            'texto_footer': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class PaginaEstaticaForm(forms.ModelForm):
+    class Meta:
+        model = PaginaEstatica
+        fields = ['titulo', 'slug', 'contenido_html']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control'}),
+            'contenido_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        }

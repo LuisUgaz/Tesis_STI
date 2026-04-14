@@ -1,0 +1,90 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="fas fa-edit me-2 text-primary"></i>Gestión de Contenidos</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+                <li class="breadcrumb-item active">Gestión de Contenidos</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row g-4">
+        <!-- Configuración Global -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100" style="border-radius: 15px;">
+                <div class="card-header bg-primary text-white py-3" style="border-radius: 15px 15px 0 0;">
+                    <h5 class="card-title mb-0 fw-bold"><i class="fas fa-cog me-2"></i>Configuración Global</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item border-0 px-0">
+                            <small class="text-muted d-block">Nombre del Sistema</small>
+                            <span class="fw-bold text-dark">{{ config.nombre_sistema }}</span>
+                        </li>
+                        <li class="list-group-item border-0 px-0">
+                            <small class="text-muted d-block">Email de Contacto</small>
+                            <span class="fw-bold text-dark">{{ config.email_contacto }}</span>
+                        </li>
+                    </ul>
+                    <div class="mt-auto">
+                        <a href="{% url 'admin_config_edit' %}" class="btn btn-primary w-100 shadow-sm">
+                            <i class="fas fa-pencil-alt me-1"></i> Editar Configuración
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Páginas Estáticas -->
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="card-header bg-dark text-white py-3" style="border-radius: 15px 15px 0 0;">
+                    <h5 class="card-title mb-0 fw-bold"><i class="fas fa-file-alt me-2"></i>Páginas del Sistema</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Título</th>
+                                <th>Identificador (Slug)</th>
+                                <th>Última Actualización</th>
+                                <th class="text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pagina in paginas %}
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">{{ pagina.titulo }}</td>
+                                <td><code class="bg-light px-2 py-1 rounded text-primary">{{ pagina.slug }}</code></td>
+                                <td>{{ pagina.ultima_actualizacion|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'admin_pagina_edit' pagina.pk %}" class="btn btn-sm btn-outline-dark" title="Editar Contenido">
+                                        <i class="fas fa-edit me-1"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    No hay páginas registradas aún.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card { transition: transform 0.2s ease; }
+    .card:hover { transform: translateY(-5px); }
+    .list-group-item { background: transparent; }
+</style>
+{% endblock %}

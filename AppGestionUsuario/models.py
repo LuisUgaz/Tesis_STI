@@ -78,3 +78,35 @@ class MetricasEstudiante(models.Model):
 
     def __str__(self):
         return f"MÃ©tricas de {self.usuario.username}"
+
+class ConfiguracionGlobal(models.Model):
+    nombre_sistema = models.CharField(max_length=200, default="Tesis STI")
+    email_contacto = models.EmailField(default="luisugaz63@gmail.com")
+    texto_footer = models.TextField(default="© 2026 Tesis STI - Inteligencia en Geometría", blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Configuración Global"
+        verbose_name_plural = "Configuraciones Globales"
+
+    def __str__(self):
+        return f"Configuración Global - {self.nombre_sistema}"
+
+    def save(self, *args, **kwargs):
+        # Garantizar Singleton: si ya existe uno, actualizarlo
+        if not self.pk and ConfiguracionGlobal.objects.exists():
+            # Debería haber solo uno
+            return
+        return super(ConfiguracionGlobal, self).save(*args, **kwargs)
+
+class PaginaEstatica(models.Model):
+    titulo = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
+    contenido_html = models.TextField(blank=True, null=True)
+    ultima_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Página Estática"
+        verbose_name_plural = "Páginas Estáticas"
+
+    def __str__(self):
+        return f"Página: {self.titulo}"

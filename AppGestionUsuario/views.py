@@ -4,13 +4,13 @@ from django.views import View
 from django.views.generic import FormView, DetailView, ListView, CreateView, UpdateView
 from django.db.models import Q
 from django.urls import reverse_lazy
-from .forms import UserRegistrationForm, ContactoForm, AdminUserForm
+from .forms import UserRegistrationForm, ContactoForm, AdminUserForm, ConfiguracionGlobalForm, PaginaEstaticaForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
-from .models import MetricasEstudiante, Insignia, Profile
+from .models import MetricasEstudiante, Insignia, Profile, ConfiguracionGlobal, PaginaEstatica
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -144,12 +144,16 @@ class ContactoView(LoginRequiredMixin, View):
                 cuerpo_completo += f"Contexto: ID del Tema: {tema_id}\n"
             if ejercicio_id:
                 cuerpo_completo += f"Contexto: ID del Ejercicio: {ejercicio_id}\n"
+            
+            # Obtener el email de destino de la configuración global
+            config, _ = ConfiguracionGlobal.objects.get_or_create()
+            email_destino = config.email_contacto
                 
             send_mail(
                 asunto,
                 cuerpo_completo,
                 settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@tesis-sti.com',
-                [settings.DOCENTE_EMAIL_DESTINO],
+                [email_destino],
                 fail_silently=False,
             )
             
@@ -234,3 +238,50 @@ class UserToggleStatusView(AdminRequiredMixin, View):
             'status': 'active' if user.is_active else 'inactive',
             'username': user.username
         })
+
+class AdminContentDashboardView(AdminRequiredMixin, ListView):
+    model = PaginaEstatica
+    template_name = 'AppGestionUsuario/admin_content_dashboard.html'
+    context_object_name = 'paginas'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config, created = ConfiguracionGlobal.objects.get_or_create()
+        context['config'] = config
+        return context
+
+class AdminConfigUpdateView(AdminRequiredMixin, UpdateView):
+    model = ConfiguracionGlobal
+    form_class = ConfiguracionGlobalForm
+    template_name = 'AppGestionUsuario/admin_config_form.html'
+    success_url = reverse_lazy('admin_content_dashboard')
+
+    def get_object(self, queryset=None):
+        config, created = ConfiguracionGlobal.objects.get_or_create()
+        return config
+
+    def form_valid(self, form):
+        messages.success(self.request, "Configuración global actualizada correctamente.")
+        return super().form_valid(form)
+
+class AdminPaginaUpdateView(AdminRequiredMixin, UpdateView):
+    model = PaginaEstatica
+    form_class = PaginaEstaticaForm
+    template_name = 'AppGestionUsuario/admin_pagina_form.html'
+    success_url = reverse_lazy('admin_content_dashboard')
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Página '{self.object.titulo}' actualizada correctamente.")
+        return super().form_valid(form)
+
+class HomeView(LoginRequiredMixin, DetailView):
+    model = PaginaEstatica
+    template_name = 'home_content.html'
+    context_object_name = 'pagina'
+
+    def get_object(self, queryset=None):
+        pagina, created = PaginaEstatica.objects.get_or_create(
+            slug='inicio',
+            defaults={'titulo': 'Inicio', 'contenido_html': '<h3>Bienvenido al Tutor Inteligente de Geometría</h3><p>Explora los temas y mejora tus habilidades.</p>'}
+        )
+        return pagina

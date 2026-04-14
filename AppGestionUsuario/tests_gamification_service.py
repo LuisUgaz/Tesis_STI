@@ -15,42 +15,42 @@ class GamificationServiceTest(TestCase):
 
     def test_assign_points_exercise_success_basic(self):
         """Prueba asignación de puntos por acierto en ejercicio nivel Básico"""
-        puntos = GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Básico')
+        puntos, insignias = GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Básico')
         self.assertEqual(puntos, 10)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 10)
 
     def test_assign_points_exercise_success_intermediate(self):
         """Prueba asignación de puntos por acierto en ejercicio nivel Intermedio"""
-        puntos = GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Intermedio')
+        puntos, insignias = GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Intermedio')
         self.assertEqual(puntos, 20)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 20)
 
     def test_assign_points_exercise_success_advanced(self):
         """Prueba asignación de puntos por acierto en ejercicio nivel Avanzado"""
-        puntos = GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Avanzado')
+        puntos, insignias = GamificationService.assign_points_exercise(self.user, is_correct=True, difficulty='Avanzado')
         self.assertEqual(puntos, 30)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 30)
 
     def test_assign_points_exercise_fail(self):
         """Prueba asignación de puntos mínimos por intento fallido"""
-        puntos = GamificationService.assign_points_exercise(self.user, is_correct=False, difficulty='Avanzado')
+        puntos, insignias = GamificationService.assign_points_exercise(self.user, is_correct=False, difficulty='Avanzado')
         self.assertEqual(puntos, 2)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 2)
 
     def test_assign_points_video(self):
         """Prueba asignación de puntos por ver un video"""
-        puntos = GamificationService.assign_points_video(self.user)
+        puntos, insignias = GamificationService.assign_points_video(self.user)
         self.assertEqual(puntos, 5)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 5)
 
     def test_assign_points_theory(self):
         """Prueba asignación de puntos por completar teoría"""
-        puntos = GamificationService.assign_points_theory(self.user)
+        puntos, insignias = GamificationService.assign_points_theory(self.user)
         self.assertEqual(puntos, 5)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 5)
