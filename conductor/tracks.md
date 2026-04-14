@@ -173,3 +173,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU34 - Eliminar videos recomendados**
 *Link: [./tracks/teacher_delete_recommended_videos_20260413/](./tracks/teacher_delete_recommended_videos_20260413/)*
 
+---
+
+- [x] **Track: HU35 - Enviar consulta al docente**
+*Link: [./tracks/user_send_consultation_20260414/](./tracks/user_send_consultation_20260414/)*
+

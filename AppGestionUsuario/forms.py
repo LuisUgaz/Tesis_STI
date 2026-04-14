@@ -61,3 +61,9 @@ class UserRegistrationForm(forms.Form):
             rol='Estudiante'
         )
         return user
+
+class ContactoForm(forms.Form):
+    asunto = forms.CharField(max_length=200, label="Asunto")
+    mensaje = forms.CharField(widget=forms.Textarea, label="Mensaje")
+    tema_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+    ejercicio_id = forms.IntegerField(required=False, widget=forms.HiddenInput())

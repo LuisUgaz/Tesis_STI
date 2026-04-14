@@ -1,13 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views import View
 from django.views.generic import FormView, DetailView
 from django.urls import reverse_lazy
-from .forms import UserRegistrationForm
+from .forms import UserRegistrationForm, ContactoForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from .models import MetricasEstudiante, Insignia
+from django.core.mail import send_mail
+from django.conf import settings
 
 class StudentRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -99,3 +102,47 @@ class MiProgresoView(LoginRequiredMixin, StudentRequiredMixin, DetailView):
         # Siempre obtener o crear las mÃ©tricas para el usuario actual
         metricas, created = MetricasEstudiante.objects.get_or_create(usuario=self.request.user)
         return metricas
+
+class ContactoView(LoginRequiredMixin, View):
+    template_name = 'AppGestionUsuario/contacto.html'
+
+    def get(self, request, *args, **kwargs):
+        initial = {
+            'tema_id': request.GET.get('tema_id'),
+            'ejercicio_id': request.GET.get('ejercicio_id')
+        }
+        form = ContactoForm(initial=initial)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = ContactoForm(request.POST)
+        if form.is_valid():
+            asunto = form.cleaned_data['asunto']
+            mensaje_cuerpo = form.cleaned_data['mensaje']
+            tema_id = form.cleaned_data.get('tema_id')
+            ejercicio_id = form.cleaned_data.get('ejercicio_id')
+            
+            # Cuerpo detallado
+            cuerpo_completo = (
+                f"Consulta enviada por: {request.user.get_full_name()} ({request.user.username})\n"
+                f"Correo del estudiante: {request.user.email}\n\n"
+                f"Mensaje:\n{mensaje_cuerpo}\n\n"
+            )
+            
+            if tema_id:
+                cuerpo_completo += f"Contexto: ID del Tema: {tema_id}\n"
+            if ejercicio_id:
+                cuerpo_completo += f"Contexto: ID del Ejercicio: {ejercicio_id}\n"
+                
+            send_mail(
+                asunto,
+                cuerpo_completo,
+                settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@tesis-sti.com',
+                [settings.DOCENTE_EMAIL_DESTINO],
+                fail_silently=False,
+            )
+            
+            messages.success(request, "Su consulta ha sido enviada correctamente al docente.")
+            return redirect('home')
+            
+        return render(request, self.template_name, {'form': form})

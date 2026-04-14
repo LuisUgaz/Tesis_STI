@@ -131,3 +131,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración de Email para consultas al docente
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Solo para desarrollo
+DOCENTE_EMAIL_DESTINO = 'luisugaz63@gmail.com'

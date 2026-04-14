@@ -15,6 +15,7 @@ Esta es la pila tecnológica oficial seleccionada para el desarrollo y despliegu
 - **JavaScript (Vanilla):** Lógica del lado del cliente para interactividad en ejercicios y gamificación.
 - **Chart.js:** Librería para la visualización de métricas y reportes analíticos mediante gráficos interactivos.
 - **SVG (Scalable Vector Graphics):** Para la visualización de figuras geométricas nítidas y escalables.
+- **SMTP / Django Mail:** Motor de mensajería para el envío de consultas de estudiantes directamente al correo electrónico de los docentes.
 
 ## 4. Otros Servicios y Herramientas
 - **WebSockets:** Para comunicación bidireccional en tiempo real entre el servidor y el cliente.

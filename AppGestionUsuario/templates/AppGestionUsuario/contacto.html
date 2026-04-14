@@ -1,0 +1,63 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow" style="border-radius: 20px; border: 4px solid #4a90e2;">
+            <div class="card-body p-4">
+                <h2 class="text-center fw-bold mb-4" style="color: #4a90e2;">📨 Contactar al Docente</h2>
+                <p class="text-center text-muted mb-4">
+                    ¿Tienes dudas sobre algún tema o ejercicio? Envíanos tu consulta y te responderemos a la brevedad.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                        {% if field.is_hidden %}
+                            {{ field }}
+                        {% else %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                                {{ field.errors }}
+                                <div class="form-control-wrapper">
+                                    {% if field.name == 'mensaje' %}
+                                        <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" rows="5" placeholder="Escribe tu consulta aquí..." required></textarea>
+                                    {% else %}
+                                        <input type="text" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="Asunto de la consulta" required>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary fw-bold p-2" style="border-radius: 10px; background: linear-gradient(135deg, #4a90e2, #50e3c2); border: none;">
+                            🚀 ENVIAR CONSULTA
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary fw-bold" style="border-radius: 10px;">
+                            CANCELAR
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+    }
+    label { color: #555; }
+</style>
+{% endblock %}
