@@ -23,7 +23,7 @@
                             <th>Tema</th>
                             <th>Duración</th>
                             <th class="text-center">Orden</th>
-                            <th class="text-center">Estado</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -32,6 +32,8 @@
                             <td class="ps-4">
                                 {% if video.url_miniatura %}
                                     <img src="{{ video.url_miniatura }}" alt="Thumbnail" class="img-fluid rounded shadow-sm" style="width: 120px; height: 68px; object-fit: cover;">
+                                {% elif video.miniatura %}
+                                    <img src="{{ video.miniatura.url }}" alt="Thumbnail" class="img-fluid rounded shadow-sm" style="width: 120px; height: 68px; object-fit: cover;">
                                 {% else %}
                                     <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width: 120px; height: 68px;">
                                         <i class="bi bi-play-circle fs-4"></i>
@@ -52,7 +54,11 @@
                                 <span class="badge bg-dark rounded-pill">{{ video.orden }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-success" style="border-radius: 8px;">Activo</span>
+                                <button type="button" class="btn btn-outline-danger btn-sm border-0" 
+                                        onclick="confirmarEliminacion('{{ video.pk }}', '{{ video.titulo|escapejs }}', '{% url 'video_registro_delete' video.pk %}')"
+                                        title="Eliminar Video">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
                             </td>
                         </tr>
                         {% empty %}
@@ -70,6 +76,38 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteVideoModal" tabindex="-1" aria-labelledby="deleteVideoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none;">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="deleteVideoModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4">
+                ¿Está seguro de que desea eliminar el video <span id="videoTitleToDelete" class="fw-bold text-danger"></span>? 
+                Esta acción lo retirará del catálogo visible para los estudiantes.
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal" style="border-radius: 10px;">CANCELAR</button>
+                <form id="deleteVideoForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger fw-bold" style="border-radius: 10px;">ELIMINAR VIDEO</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmarEliminacion(id, titulo, url) {
+        document.getElementById('videoTitleToDelete').innerText = '"' + titulo + '"';
+        document.getElementById('deleteVideoForm').action = url;
+        var myModal = new bootstrap.Modal(document.getElementById('deleteVideoModal'));
+        myModal.show();
+    }
+</script>
 
 <style>
     .table thead th {

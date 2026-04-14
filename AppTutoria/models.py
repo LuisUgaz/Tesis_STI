@@ -32,6 +32,7 @@ class VideoTema(models.Model):
     descripcion = models.TextField(blank=True, null=True, help_text="Descripción breve del video")
     duracion = models.CharField(max_length=20, help_text="Ej: 5:30 min", blank=True, null=True)
     orden = models.PositiveIntegerField(default=1, help_text="Orden de visualización")
+    es_activo = models.BooleanField(default=True, help_text="Indica si el video está activo en el catálogo")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:

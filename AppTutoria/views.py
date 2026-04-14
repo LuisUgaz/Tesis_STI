@@ -23,6 +23,12 @@ class VideoTemaListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     context_object_name = 'videos'
     ordering = ['tema', 'orden']
 
+    def get_queryset(self):
+        """
+        Retorna solo los videos activos para la gestión del docente.
+        """
+        return VideoTema.objects.filter(es_activo=True).order_by('tema', 'orden')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['temas'] = Tema.objects.all()
@@ -37,6 +43,26 @@ class VideoTemaCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
     def form_valid(self, form):
         messages.success(self.request, "Video recomendado registrado exitosamente.")
         return super().form_valid(form)
+
+class VideoTemaDeleteView(LoginRequiredMixin, TeacherRequiredMixin, DeleteView):
+    model = VideoTema
+    success_url = reverse_lazy('video_gestion_list')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Sobrescribe el método post para realizar un borrado lógico.
+        """
+        video = self.get_object()
+        video.es_activo = False
+        video.save()
+        messages.success(request, f"El video '{video.titulo}' ha sido eliminado exitosamente.")
+        return redirect(self.success_url)
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Sobrescribe delete para redirigir a post (Django DeleteView usa delete internamente).
+        """
+        return self.post(request, *args, **kwargs)
 
 @login_required
 def lista_temas(request):
@@ -132,8 +158,8 @@ def video_list(request, slug):
     if not esta_recomendado:
         raise PermissionDenied("No tienes acceso a los videos de este tema aún.")
 
-    # 4. Obtener los videos asociados al tema
-    videos = VideoTema.objects.filter(tema=tema)
+    # 4. Obtener los videos asociados al tema (solo activos)
+    videos = VideoTema.objects.filter(tema=tema, es_activo=True)
 
     return render(request, 'AppTutoria/videos.html', {
         'tema': tema,

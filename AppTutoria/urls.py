@@ -9,4 +9,5 @@ urlpatterns = [
     # Gestión de videos (Docente)
     path('gestion/videos/', views.VideoTemaListView.as_view(), name='video_gestion_list'),
     path('gestion/videos/nuevo/', views.VideoTemaCreateView.as_view(), name='video_registro_create'),
+    path('gestion/videos/<int:pk>/eliminar/', views.VideoTemaDeleteView.as_view(), name='video_registro_delete'),
     ]
