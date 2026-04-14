@@ -4,7 +4,7 @@ from django.views import View
 from django.views.generic import FormView, DetailView, ListView, CreateView, UpdateView
 from django.db.models import Q
 from django.urls import reverse_lazy
-from .forms import UserRegistrationForm, ContactoForm, AdminUserForm, ConfiguracionGlobalForm, PaginaEstaticaForm
+from .forms import UserRegistrationForm, ContactoForm, AdminUserForm, ConfiguracionGlobalForm, PaginaEstaticaForm, InsigniaForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
@@ -285,3 +285,36 @@ class HomeView(LoginRequiredMixin, DetailView):
             defaults={'titulo': 'Inicio', 'contenido_html': '<h3>Bienvenido al Tutor Inteligente de Geometría</h3><p>Explora los temas y mejora tus habilidades.</p>'}
         )
         return pagina
+
+class BadgeManagementListView(AdminRequiredMixin, ListView):
+    model = Insignia
+    template_name = 'AppGestionUsuario/admin_badge_list.html'
+    context_object_name = 'badges'
+
+class BadgeManagementCreateView(AdminRequiredMixin, CreateView):
+    model = Insignia
+    form_class = InsigniaForm
+    template_name = 'AppGestionUsuario/admin_badge_form.html'
+    success_url = reverse_lazy('admin_badge_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Insignia '{form.cleaned_data['nombre']}' creada correctamente.")
+        return super().form_valid(form)
+
+class BadgeManagementUpdateView(AdminRequiredMixin, UpdateView):
+    model = Insignia
+    form_class = InsigniaForm
+    template_name = 'AppGestionUsuario/admin_badge_form.html'
+    success_url = reverse_lazy('admin_badge_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Insignia '{form.cleaned_data['nombre']}' actualizada correctamente.")
+        return super().form_valid(form)
+
+class BadgeManagementDeleteView(AdminRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        badge = get_object_or_404(Insignia, pk=pk)
+        nombre = badge.nombre
+        badge.delete()
+        messages.success(request, f"Insignia '{nombre}' eliminada correctamente.")
+        return redirect('admin_badge_list')

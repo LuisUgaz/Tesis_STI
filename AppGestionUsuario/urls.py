@@ -3,7 +3,8 @@ from .views import (
     RegisterView, CustomLoginView, ProfileView, MiProgresoView, 
     ContactoView, UserManagementListView, UserManagementCreateView, 
     UserManagementUpdateView, UserToggleStatusView,
-    AdminContentDashboardView, AdminConfigUpdateView, AdminPaginaUpdateView
+    AdminContentDashboardView, AdminConfigUpdateView, AdminPaginaUpdateView,
+    BadgeManagementListView, BadgeManagementCreateView, BadgeManagementUpdateView, BadgeManagementDeleteView
 )
 
 urlpatterns = [
@@ -21,4 +22,10 @@ urlpatterns = [
     path('admin/contenidos/', AdminContentDashboardView.as_view(), name='admin_content_dashboard'),
     path('admin/contenidos/configuracion/', AdminConfigUpdateView.as_view(), name='admin_config_edit'),
     path('admin/contenidos/pagina/<int:pk>/editar/', AdminPaginaUpdateView.as_view(), name='admin_pagina_edit'),
+
+    # Gestión de insignias
+    path('admin/insignias/', BadgeManagementListView.as_view(), name='admin_badge_list'),
+    path('admin/insignias/nueva/', BadgeManagementCreateView.as_view(), name='admin_badge_create'),
+    path('admin/insignias/editar/<int:pk>/', BadgeManagementUpdateView.as_view(), name='admin_badge_update'),
+    path('admin/insignias/eliminar/<int:pk>/', BadgeManagementDeleteView.as_view(), name='admin_badge_delete'),
 ]

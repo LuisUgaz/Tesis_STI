@@ -187,3 +187,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU37 - Gestionar contenidos del sistema**
 *Link: [./tracks/user_manage_general_content_20260414/](./tracks/user_manage_general_content_20260414/)*
+
+---
+
+- [x] **Track: HU38 - Gestionar insignias**
+*Link: [./tracks/user_manage_badges_20260414/](./tracks/user_manage_badges_20260414/)*

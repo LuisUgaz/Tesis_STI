@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Profile, ConfiguracionGlobal, PaginaEstatica
+from .models import Profile, ConfiguracionGlobal, PaginaEstatica, Insignia
 from django.core.exceptions import ValidationError
 
 class UserRegistrationForm(forms.Form):
@@ -145,4 +145,23 @@ class PaginaEstaticaForm(forms.ModelForm):
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
             'slug': forms.TextInput(attrs={'class': 'form-control'}),
             'contenido_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        }
+
+class InsigniaForm(forms.ModelForm):
+    class Meta:
+        model = Insignia
+        fields = ['nombre', 'descripcion', 'icono_clase', 'tipo_regla', 'valor_requerido']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Maestro de Triángulos'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe cómo se obtiene esta insignia...'}),
+            'icono_clase': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: fas fa-medal'}),
+            'tipo_regla': forms.Select(attrs={'class': 'form-select'}),
+            'valor_requerido': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+        }
+        labels = {
+            'nombre': 'Nombre de la Insignia',
+            'descripcion': 'Descripción',
+            'icono_clase': 'Clase de Icono (FontAwesome)',
+            'tipo_regla': 'Tipo de Regla de Asignación',
+            'valor_requerido': 'Valor Requerido (Hito)',
         }
