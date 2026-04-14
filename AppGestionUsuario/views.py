@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.views import View
-from django.views.generic import FormView, DetailView
+from django.views.generic import FormView, DetailView, ListView, CreateView, UpdateView
+from django.db.models import Q
 from django.urls import reverse_lazy
-from .forms import UserRegistrationForm, ContactoForm
+from .forms import UserRegistrationForm, ContactoForm, AdminUserForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
-from .models import MetricasEstudiante, Insignia
+from .models import MetricasEstudiante, Insignia, Profile
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -19,6 +21,15 @@ class StudentRequiredMixin(UserPassesTestMixin):
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
             raise PermissionDenied("Solo los estudiantes pueden acceder a esta secciÃ³n.")
+        return super().handle_no_permission()
+
+class AdminRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.profile.rol == 'Administrador'
+    
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied("Acceso restringido: Solo los administradores pueden acceder a esta secciÃ³n.")
         return super().handle_no_permission()
 
 class RegisterView(FormView):
@@ -146,3 +157,80 @@ class ContactoView(LoginRequiredMixin, View):
             return redirect('home')
             
         return render(request, self.template_name, {'form': form})
+
+class UserManagementListView(AdminRequiredMixin, ListView):
+    model = User
+    template_name = 'AppGestionUsuario/admin_user_list.html'
+    context_object_name = 'users'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = User.objects.select_related('profile').all().order_by('-date_joined')
+        
+        # Filtros
+        q = self.request.GET.get('q')
+        rol = self.request.GET.get('rol')
+        grado = self.request.GET.get('grado')
+        seccion = self.request.GET.get('seccion')
+        estado = self.request.GET.get('estado')
+
+        if q:
+            queryset = queryset.filter(
+                Q(username__icontains=q) |
+                Q(profile__nombres__icontains=q) |
+                Q(profile__apellidos__icontains=q)
+            )
+        
+        if rol:
+            queryset = queryset.filter(profile__rol=rol)
+        
+        if grado:
+            queryset = queryset.filter(profile__grado=grado)
+            
+        if seccion:
+            queryset = queryset.filter(profile__seccion=seccion)
+            
+        if estado:
+            is_active = estado == 'activo'
+            queryset = queryset.filter(is_active=is_active)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasar opciones para los filtros
+        context['roles'] = [choice[0] for choice in Profile.ROLE_CHOICES]
+        # Grados y secciones únicos del sistema
+        context['grados'] = Profile.objects.exclude(grado=None).values_list('grado', flat=True).distinct()
+        context['secciones'] = Profile.objects.exclude(seccion=None).values_list('seccion', flat=True).distinct()
+        return context
+
+class UserManagementCreateView(AdminRequiredMixin, CreateView):
+    model = User
+    form_class = AdminUserForm
+    template_name = 'AppGestionUsuario/admin_user_form.html'
+    success_url = reverse_lazy('admin_user_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Usuario {form.cleaned_data['username']} creado correctamente.")
+        return super().form_valid(form)
+
+class UserManagementUpdateView(AdminRequiredMixin, UpdateView):
+    model = User
+    form_class = AdminUserForm
+    template_name = 'AppGestionUsuario/admin_user_form.html'
+    success_url = reverse_lazy('admin_user_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Usuario {form.cleaned_data['username']} actualizado correctamente.")
+        return super().form_valid(form)
+
+class UserToggleStatusView(AdminRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        user = get_object_or_404(User, pk=pk)
+        user.is_active = not user.is_active
+        user.save()
+        return JsonResponse({
+            'status': 'active' if user.is_active else 'inactive',
+            'username': user.username
+        })

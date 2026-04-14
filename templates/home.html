@@ -45,6 +45,10 @@
                             <li class="nav-item">
                                 <a class="nav-link text-primary fw-bold" href="{% url 'banco_preguntas_create' %}">➕ Pregunta</a>
                             </li>
+                        {% elif user.profile.rol == 'Administrador' %}
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" href="{% url 'admin_user_list' %}">⚙️ Usuarios</a>
+                            </li>
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link text-success fw-bold" href="{% url 'contacto' %}">💬 Contactar Docente</a>

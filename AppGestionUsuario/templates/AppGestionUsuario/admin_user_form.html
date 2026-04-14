@@ -1,0 +1,154 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 px-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow border-0" style="border-radius: 20px;">
+            <div class="card-header bg-white border-0 pt-4 pb-0 text-center">
+                <h3 class="fw-bold text-primary">
+                    {% if form.instance.pk %}
+                        <i class="fas fa-user-edit me-2"></i>Editar Usuario
+                    {% else %}
+                        <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+                    {% endif %}
+                </h3>
+                <p class="text-muted small">Complete los campos para gestionar la cuenta.</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <!-- Datos de Usuario -->
+                        <div class="col-12 mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Información de Cuenta</label>
+                            <hr class="mt-0 mb-3 opacity-10">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label small">{{ form.username.label }}</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}<div class="text-danger extra-small mt-1">{{ form.username.errors }}</div>{% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label small">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger extra-small mt-1">{{ form.email.errors }}</div>{% endif %}
+                        </div>
+
+                        <!-- Datos Personales -->
+                        <div class="col-12 mt-2 mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Datos Personales</label>
+                            <hr class="mt-0 mb-3 opacity-10">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nombres.id_for_label }}" class="form-label small">{{ form.nombres.label }}</label>
+                            {{ form.nombres }}
+                            {% if form.nombres.errors %}<div class="text-danger extra-small mt-1">{{ form.nombres.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.apellidos.id_for_label }}" class="form-label small">{{ form.apellidos.label }}</label>
+                            {{ form.apellidos }}
+                            {% if form.apellidos.errors %}<div class="text-danger extra-small mt-1">{{ form.apellidos.errors }}</div>{% endif %}
+                        </div>
+
+                        <!-- Roles y Perfil -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.rol.id_for_label }}" class="form-label small">{{ form.rol.label }}</label>
+                            {{ form.rol }}
+                            {% if form.rol.errors %}<div class="text-danger extra-small mt-1">{{ form.rol.errors }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch mt-4 pt-2">
+                                {{ form.is_active }}
+                                <label class="form-check-label small" for="{{ form.is_active.id_for_label }}">Usuario Activo</label>
+                            </div>
+                        </div>
+
+                        <!-- Contexto Escolar (Solo visible si es Estudiante via JS) -->
+                        <div id="student-fields" class="row pe-0">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.grado.id_for_label }}" class="form-label small">{{ form.grado.label }}</label>
+                                {{ form.grado }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.seccion.id_for_label }}" class="form-label small">{{ form.seccion.label }}</label>
+                                {{ form.seccion }}
+                            </div>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="col-12 mt-2 mb-3">
+                            <label class="form-label small fw-bold text-uppercase">Seguridad</label>
+                            <hr class="mt-0 mb-3 opacity-10">
+                        </div>
+
+                        <div class="col-12 mb-4">
+                            <label for="{{ form.password_temporal.id_for_label }}" class="form-label small">{{ form.password_temporal.label }}</label>
+                            {{ form.password_temporal }}
+                            <div class="form-text extra-small">Si se completa, cambiará la contraseña del usuario.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary fw-bold py-2 shadow-sm">
+                            <i class="fas fa-save me-2"></i>GUARDAR CAMBIOS
+                        </button>
+                        <a href="{% url 'admin_user_list' %}" class="btn btn-light text-muted fw-bold">
+                            CANCELAR
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rolSelect = document.querySelector('select[name="rol"]');
+        const studentFields = document.getElementById('student-fields');
+        
+        function toggleStudentFields() {
+            if (rolSelect.value === 'Estudiante') {
+                studentFields.style.display = 'flex';
+            } else {
+                studentFields.style.display = 'none';
+            }
+        }
+        
+        rolSelect.addEventListener('change', toggleStudentFields);
+        toggleStudentFields(); // Ejecutar al inicio
+        
+        // Aplicar clases de Bootstrap a los inputs
+        const inputs = document.querySelectorAll('input:not([type="checkbox"]), select');
+        inputs.forEach(input => {
+            if (!input.classList.contains('form-check-input')) {
+                input.classList.add('form-control', 'form-control-sm');
+                if (input.tagName === 'SELECT') input.classList.replace('form-control', 'form-select');
+            }
+        });
+        
+        document.querySelector('input[type="checkbox"]').classList.add('form-check-input');
+    });
+</script>
+
+<style>
+    .extra-small { font-size: 0.75rem; }
+    .opacity-10 { opacity: 0.1; }
+    .form-control:focus, .form-select:focus { 
+        border-color: #4a90e2; 
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.1); 
+    }
+</style>
+{% endblock %}

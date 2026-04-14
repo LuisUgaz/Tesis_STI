@@ -67,3 +67,62 @@ class ContactoForm(forms.Form):
     mensaje = forms.CharField(widget=forms.Textarea, label="Mensaje")
     tema_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     ejercicio_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
+class AdminUserForm(forms.ModelForm):
+    nombres = forms.CharField(max_length=100, label="Nombres")
+    apellidos = forms.CharField(max_length=100, label="Apellidos")
+    rol = forms.ChoiceField(choices=Profile.ROLE_CHOICES, label="Rol")
+    grado = forms.CharField(max_length=10, required=False, label="Grado (Estudiantes)")
+    seccion = forms.CharField(max_length=10, required=False, label="Sección (Estudiantes)")
+    password_temporal = forms.CharField(
+        required=False, 
+        widget=forms.PasswordInput(attrs={'placeholder': 'Opcional (si se deja vacío no se cambiará)'}),
+        label="Password Temporal"
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'is_active']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            try:
+                profile = self.instance.profile
+                self.fields['nombres'].initial = profile.nombres
+                self.fields['apellidos'].initial = profile.apellidos
+                self.fields['rol'].initial = profile.rol
+                self.fields['grado'].initial = profile.grado
+                self.fields['seccion'].initial = profile.seccion
+            except Profile.DoesNotExist:
+                pass
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise ValidationError("El correo electrónico es obligatorio.")
+        
+        qs = User.objects.filter(email=email)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+            
+        if qs.exists():
+            raise ValidationError("Este correo electrónico ya está en uso por otro usuario.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get('password_temporal')
+        if password:
+            user.set_password(password)
+        
+        if commit:
+            user.save()
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.nombres = self.cleaned_data['nombres']
+            profile.apellidos = self.cleaned_data['apellidos']
+            profile.rol = self.cleaned_data['rol']
+            profile.grado = self.cleaned_data['grado']
+            profile.seccion = self.cleaned_data['seccion']
+            profile.save()
+        return user

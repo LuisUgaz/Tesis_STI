@@ -178,3 +178,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: HU35 - Enviar consulta al docente**
 *Link: [./tracks/user_send_consultation_20260414/](./tracks/user_send_consultation_20260414/)*
 
+---
+
+- [x] **Track: HU36 - Gestionar usuarios**
+*Link: [./tracks/user_manage_users_20260414/](./tracks/user_manage_users_20260414/)*
+
