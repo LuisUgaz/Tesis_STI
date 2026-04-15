@@ -1,0 +1,102 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold">🔎 Revisión de Preguntas Detectadas</h2>
+            <p class="text-muted small">Verifica que la IA haya extraído correctamente las preguntas antes de guardarlas en el banco.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'importar_banco' %}" class="btn btn-outline-secondary fw-bold" style="border-radius: 10px;">
+                ❌ CANCELAR
+            </a>
+            <button type="submit" form="form-confirmar" class="btn btn-success shadow-sm fw-bold px-4" style="border-radius: 10px;">
+                ✅ GUARDAR EN EL BANCO
+            </button>
+        </div>
+    </div>
+
+    <form id="form-confirmar" method="POST" action="{% url 'confirmar_importacion' %}">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0" style="border-radius: 15px;">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4" style="width: 50px;">Incluir</th>
+                                <th style="width: 40%;">Pregunta</th>
+                                <th>Opciones</th>
+                                <th>Correcta</th>
+                                <th>Tema sugerido</th>
+                                <th>Dificultad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pregunta in preguntas %}
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" name="incluir_{{ forloop.index0 }}" class="form-check-input" checked style="width: 20px; height: 20px;">
+                                    <input type="hidden" name="enunciado_{{ forloop.index0 }}" value="{{ pregunta.enunciado }}">
+                                    <input type="hidden" name="correcta_{{ forloop.index0 }}" value="{{ pregunta.correcta }}">
+                                    <input type="hidden" name="tema_{{ forloop.index0 }}" value="{{ pregunta.tema }}">
+                                    <input type="hidden" name="dificultad_{{ forloop.index0 }}" value="{{ pregunta.dificultad }}">
+                                    <input type="hidden" name="explicacion_{{ forloop.index0 }}" value="{{ pregunta.explicacion }}">
+                                    {% for opcion in pregunta.opciones %}
+                                        <input type="hidden" name="opcion_{{ forloop.parentloop.index0 }}_{{ forloop.index0 }}" value="{{ opcion }}">
+                                    {% endfor %}
+                                    <input type="hidden" name="total_opciones_{{ forloop.index0 }}" value="{{ pregunta.opciones|length }}">
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ pregunta.enunciado }}</div>
+                                    <small class="text-muted italic">{{ pregunta.explicacion }}</small>
+                                </td>
+                                <td>
+                                    <ul class="small mb-0 list-unstyled">
+                                        {% for opcion in pregunta.opciones %}
+                                        <li>• {{ opcion }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success small">{{ pregunta.correcta }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-primary border small">{{ pregunta.tema }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if pregunta.dificultad == 'Básico' %}bg-success{% elif pregunta.dificultad == 'Intermedio' %}bg-warning text-dark{% else %}bg-danger{% endif %} small">
+                                        {{ pregunta.dificultad }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    No se detectaron preguntas en el documento. Por favor, revisa el formato e intenta nuevamente.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="total_preguntas" value="{{ preguntas|length }}">
+    </form>
+</div>
+
+<style>
+    .table thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #6c757d;
+        padding: 1rem;
+    }
+    .table tbody td {
+        padding: 1rem;
+    }
+</style>
+{% endblock %}

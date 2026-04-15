@@ -192,3 +192,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU38 - Gestionar insignias**
 *Link: [./tracks/user_manage_badges_20260414/](./tracks/user_manage_badges_20260414/)*
+
+---
+
+- [x] **Track: HU39 - Gestionar exámenes por tema**
+*Link: [./tracks/teacher_manage_exams_by_topic_20260414/](./tracks/teacher_manage_exams_by_topic_20260414/)*

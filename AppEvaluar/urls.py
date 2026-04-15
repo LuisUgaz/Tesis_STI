@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'evaluar'
+
 urlpatterns = [
     path('rendir/<int:examen_id>/', views.rendir_examen, name='rendir_examen'),
     path('resultados/<int:examen_id>/', views.ver_resultados, name='ver_resultados'),
@@ -12,6 +14,13 @@ urlpatterns = [
     path('reportes/exportar/', views.ExportarReporteExcelView.as_view(), name='exportar_reporte_excel'),
     path('banco-preguntas/', views.BancoPreguntasListView.as_view(), name='banco_preguntas_list'),
     path('banco-preguntas/nuevo/', views.BancoPreguntasCreateView.as_view(), name='banco_preguntas_create'),
+    path('banco-preguntas/importar/', views.ImportarBancoPreguntasView.as_view(), name='importar_banco'),
+    path('banco-preguntas/confirmar/', views.ConfirmarImportacionView.as_view(), name='confirmar_importacion'),
     path('banco-preguntas/editar/<int:pk>/', views.BancoPreguntasUpdateView.as_view(), name='banco_preguntas_edit'),
     path('banco-preguntas/eliminar/<int:pk>/', views.BancoPreguntasDeleteView.as_view(), name='banco_preguntas_delete'),
+    
+    # Gestión de Exámenes por Tema (HU39)
+    path('examenes/', views.ExamenDashboardView.as_view(), name='examen_dashboard'),
+    path('examenes/nuevo/', views.ExamenCreateView.as_view(), name='examen_create'),
+    path('examenes/eliminar/<int:pk>/', views.ExamenDeleteView.as_view(), name='examen_delete'),
 ]

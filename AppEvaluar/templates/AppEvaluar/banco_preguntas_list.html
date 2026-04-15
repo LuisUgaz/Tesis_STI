@@ -7,9 +7,14 @@
             <h2 class="mb-0 fw-bold">📖 Gestión del Banco de Preguntas</h2>
             <p class="text-muted small">Administre, edite y mantenga actualizados los ejercicios geométricos.</p>
         </div>
-        <a href="{% url 'banco_preguntas_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
-            ➕ NUEVA PREGUNTA
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'importar_banco' %}" class="btn btn-outline-primary shadow-sm fw-bold d-flex align-items-center gap-2" style="border-radius: 10px;">
+                🤖 IMPORTACIÓN INTELIGENTE
+            </a>
+            <a href="{% url 'banco_preguntas_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
+                ➕ NUEVA PREGUNTA
+            </a>
+        </div>
     </div>
 
     <!-- Barra de Filtros -->

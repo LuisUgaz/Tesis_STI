@@ -13,6 +13,16 @@ class ExamenDiagnostico(models.Model):
     def __str__(self):
         return self.nombre
 
+class Examen(models.Model):
+    nombre = models.CharField(max_length=200, unique=True)
+    tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='examenes')
+    cantidad_preguntas = models.IntegerField()
+    tiempo_limite = models.IntegerField(help_text="Tiempo límite en minutos")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nombre
+
 class Pregunta(models.Model):
     TIPO_CHOICES = [
         ('OPCION_MULTIPLE', 'Opción Múltiple'),
@@ -25,7 +35,8 @@ class Pregunta(models.Model):
         ('Avanzado', 'Avanzado'),
     ]
 
-    examen = models.ForeignKey(ExamenDiagnostico, on_delete=models.CASCADE, related_name='preguntas')
+    examen = models.ForeignKey(ExamenDiagnostico, on_delete=models.CASCADE, related_name='preguntas', null=True, blank=True)
+    examen_tema = models.ForeignKey(Examen, on_delete=models.SET_NULL, null=True, blank=True, related_name='preguntas')
     texto = models.TextField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='OPCION_MULTIPLE')
     tema = models.ForeignKey(Tema, on_delete=models.SET_NULL, null=True, related_name='preguntas_diagnostico')

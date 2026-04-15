@@ -1,0 +1,52 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0" style="border-radius: 20px;">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <span class="display-4">🤖</span>
+                        <h2 class="fw-bold mt-2">Importación Inteligente</h2>
+                        <p class="text-muted">Sube un archivo PDF o Word con tu banco de preguntas y la IA se encargará de estructurarlas.</p>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" class="mt-4">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="archivo" class="form-label fw-bold">Archivo (PDF o DOCX)</label>
+                            <input type="file" name="archivo" id="archivo" class="form-control form-control-lg" accept=".pdf,.docx" required style="border-radius: 12px;">
+                            <div class="form-text mt-2">
+                                <i class="bi bi-info-circle"></i> Asegúrate de que las preguntas tengan opciones claras (A, B, C, D o similares).
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold" style="border-radius: 12px; background-color: #4a90e2; border-color: #4a90e2;">
+                                🚀 PROCESAR DOCUMENTO
+                            </button>
+                            <a href="{% url 'banco_preguntas_list' %}" class="btn btn-link text-muted">Volver al banco de preguntas</a>
+                        </div>
+                    </form>
+
+                    {% if error %}
+                    <div class="alert alert-danger mt-4 border-0" style="border-radius: 12px;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <div class="card border-0 bg-light p-3" style="border-radius: 15px;">
+                    <small class="text-muted">
+                        <strong>¿Cómo funciona?</strong> El sistema extrae el texto del documento y utiliza inteligencia artificial para identificar enunciados, opciones y temas sugeridos. Luego podrás revisar y confirmar antes de guardar.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

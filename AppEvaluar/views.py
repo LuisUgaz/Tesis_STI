@@ -3,14 +3,15 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
 from .models import (
-    ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, 
+    ExamenDiagnostico, Examen, Pregunta, Opcion, RespuestaUsuario, 
     ResultadoDiagnostico, RecomendacionEstudiante,
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
-from .services import calcular_recomendacion, ajustar_dificultad_estudiante
+from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
 from AppTutoria.services import registrar_progreso
 from AppGestionUsuario.models import Profile, MetricasEstudiante
+from django.db.models import Count, Q
 import json
 from AppGestionUsuario.services_gamification import GamificationService
 from django.contrib import messages
@@ -25,6 +26,9 @@ from AppTutoria.models import Tema, ProgresoEstudiante
 from .services_export import generar_excel_reporte_docente
 from django.http import HttpResponse
 from .forms import EjercicioForm, OpcionEjercicioFormSet
+from django.db import transaction
+from .utils_import import extraer_texto_pdf, extraer_texto_docx, analizar_preguntas_con_gemini
+from django.views import View
 
 def student_required(view_func):
     def _wrapped_view_func(request, *args, **kwargs):
@@ -39,7 +43,59 @@ class StudentRequiredMixin(UserPassesTestMixin):
 
 class TeacherRequiredMixin(UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.profile.rol == 'Docente'
+        # Permitir tanto si tiene el rol de Docente en el perfil como si es is_staff (admin)
+        return self.request.user.is_authenticated and (
+            (hasattr(self.request.user, 'profile') and self.request.user.profile.rol == 'Docente') or 
+            self.request.user.is_staff
+        )
+
+class ExamenDashboardView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
+    model = Examen
+    template_name = 'AppEvaluar/examen_dashboard.html'
+    context_object_name = 'examenes'
+    ordering = ['-fecha_creacion']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Resumen de preguntas disponibles por tema
+        # Preguntas que NO tienen examen diagnóstico ni examen de tema
+        temas_con_conteo = Tema.objects.annotate(
+            preguntas_disponibles=Count(
+                'preguntas_diagnostico',
+                filter=Q(preguntas_diagnostico__examen__isnull=True, 
+                         preguntas_diagnostico__examen_tema__isnull=True)
+            )
+        )
+        context['temas_indicadores'] = temas_con_conteo
+        return context
+
+class ExamenCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
+    model = Examen
+    fields = ['nombre', 'tema', 'cantidad_preguntas', 'tiempo_limite']
+    template_name = 'AppEvaluar/examen_form.html'
+    success_url = reverse_lazy('evaluar:examen_dashboard')
+
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                # Primero guardamos el examen (sin preguntas aún)
+                self.object = form.save()
+                # Luego asignamos las preguntas aleatorias
+                asignar_preguntas_aleatorias(self.object)
+                messages.success(self.request, f"Examen '{self.object.nombre}' creado y preguntas asignadas correctamente.")
+                return super().form_valid(form)
+        except ValueError as e:
+            # Si falla la asignación (por falta de preguntas), cancelamos la creación
+            form.add_error('cantidad_preguntas', str(e))
+            return self.form_invalid(form)
+
+class ExamenDeleteView(LoginRequiredMixin, TeacherRequiredMixin, View):
+    def post(self, request, pk):
+        examen = get_object_or_404(Examen, pk=pk)
+        nombre = examen.nombre
+        examen.delete()
+        messages.success(request, f"Examen '{nombre}' eliminado. Las preguntas asociadas han sido liberadas.")
+        return redirect('evaluar:examen_dashboard')
 
 class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     model = ProgresoEstudiante
@@ -628,3 +684,72 @@ class ExportarReporteExcelView(LoginRequiredMixin, TeacherRequiredMixin, ListVie
         )
         response['Content-Disposition'] = 'attachment; filename=Reporte_Analitico_Aula.xlsx'
         return response
+
+class ImportarBancoPreguntasView(LoginRequiredMixin, TeacherRequiredMixin, View):
+    def get(self, request):
+        return render(request, 'AppEvaluar/importar_banco.html')
+
+    def post(self, request):
+        archivo = request.FILES.get('archivo')
+        
+        if not archivo:
+            return render(request, 'AppEvaluar/importar_banco.html', {'error': 'No se subió ningún archivo.'})
+
+        extension = archivo.name.split('.')[-1].lower()
+        texto = ""
+        if extension == 'pdf':
+            texto = extraer_texto_pdf(archivo)
+        elif extension == 'docx':
+            texto = extraer_texto_docx(archivo)
+        else:
+            return render(request, 'AppEvaluar/importar_banco.html', {'error': 'Formato no soportado. Usa PDF o DOCX.'})
+
+        if not texto.strip():
+            return render(request, 'AppEvaluar/importar_banco.html', {'error': 'No se pudo extraer texto del archivo.'})
+
+        resultado = analizar_preguntas_con_gemini(texto)
+        
+        if "error" in resultado:
+            return render(request, 'AppEvaluar/importar_banco.html', {'error': resultado['error']})
+
+        return render(request, 'AppEvaluar/confirmar_importacion.html', {'preguntas': resultado['preguntas']})
+
+class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
+    def post(self, request):
+        total_preguntas = int(request.POST.get('total_preguntas', 0))
+        preguntas_guardadas = 0
+        
+        with transaction.atomic():
+            for i in range(total_preguntas):
+                if request.POST.get(f'incluir_{i}'):
+                    enunciado = request.POST.get(f'enunciado_{i}')
+                    tema_nombre = request.POST.get(f'tema_{i}')
+                    dificultad = request.POST.get(f'dificultad_{i}')
+                    explicacion = request.POST.get(f'explicacion_{i}')
+                    correcta_texto = request.POST.get(f'correcta_{i}')
+                    
+                    # Obtener o crear tema
+                    tema, _ = Tema.objects.get_or_create(nombre=tema_nombre)
+                    
+                    # Crear Ejercicio
+                    ejercicio = Ejercicio.objects.create(
+                        tema=tema,
+                        texto=enunciado,
+                        dificultad=dificultad,
+                        explicacion_tecnica=explicacion
+                    )
+                    
+                    # Crear Opciones
+                    # Buscamos todas las claves que empiecen con opcion_{i}_
+                    opciones_encontradas = [k for k in request.POST.keys() if k.startswith(f'opcion_{i}_')]
+                    for k in opciones_encontradas:
+                        opcion_texto = request.POST.get(k)
+                        OpcionEjercicio.objects.create(
+                            ejercicio=ejercicio,
+                            texto=opcion_texto,
+                            es_correcta=(opcion_texto == correcta_texto)
+                        )
+                    preguntas_guardadas += 1
+        
+        messages.success(request, f"Se han importado exitosamente {preguntas_guardadas} preguntas al banco.")
+        return redirect('banco_preguntas_list')

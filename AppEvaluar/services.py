@@ -1,10 +1,38 @@
 from typing import Dict, Optional
 from django.contrib.auth.models import User
-from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio
+from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio, Examen, Pregunta
 
 class SinResultadosError(Exception):
     """Excepción lanzada cuando un estudiante no tiene resultados de diagnóstico."""
     pass
+
+def asignar_preguntas_aleatorias(examen: Examen):
+    """Busca preguntas disponibles para el tema del examen y las asigna aleatoriamente.
+    
+    Args:
+        examen: El objeto Examen al cual se le asignarán las preguntas.
+        
+    Raises:
+        ValueError: Si no existen suficientes preguntas disponibles para el tema.
+    """
+    # Filtrar preguntas: mismo tema, sin examen diagnóstico y sin examen de tema previo.
+    preguntas_disponibles = Pregunta.objects.filter(
+        tema=examen.tema,
+        examen__isnull=True,
+        examen_tema__isnull=True
+    ).order_by('?') # Orden aleatorio
+    
+    if preguntas_disponibles.count() < examen.cantidad_preguntas:
+        raise ValueError(
+            f"No hay suficientes preguntas disponibles para el tema {examen.tema.nombre}. "
+            f"Se requieren {examen.cantidad_preguntas} y solo hay {preguntas_disponibles.count()}."
+        )
+    
+    # Tomar la cantidad necesaria y asignarlas
+    seleccionadas = preguntas_disponibles[:examen.cantidad_preguntas]
+    for pregunta in seleccionadas:
+        pregunta.examen_tema = examen
+        pregunta.save()
 
 def calcular_recomendacion(estudiante: User) -> Optional[Dict]:
     """Calcula el tema que el estudiante debe reforzar basado en sus respuestas.

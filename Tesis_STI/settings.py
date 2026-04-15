@@ -177,3 +177,5 @@ JAZMIN_SETTINGS = {
 JAZMIN_UI_LOGS = {
     "theme": "flatly",
 }
+
+GEMINI_API_KEY = 'AIzaSyB5agRah-CAGfCFTLlLXF7iKL-J-D2oC4E'

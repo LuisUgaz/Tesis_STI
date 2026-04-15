@@ -1,0 +1,72 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Dashboard de Exámenes por Tema</h2>
+        <a href="{% url 'evaluar:examen_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Crear Nuevo Examen
+        </a>
+    </div>
+
+    <!-- Indicadores de Preguntas Disponibles -->
+    <div class="row mb-4">
+        {% for tema in temas_indicadores %}
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-left-info">
+                <div class="card-body">
+                    <h6 class="text-info font-weight-bold text-uppercase mb-1">{{ tema.nombre }}</h6>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ tema.preguntas_disponibles }} disponibles</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Listado de Exámenes -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Exámenes Registrados</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tema</th>
+                            <th>Preguntas</th>
+                            <th>Tiempo (min)</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for examen in examenes %}
+                        <tr>
+                            <td>{{ examen.nombre }}</td>
+                            <td>{{ examen.tema.nombre }}</td>
+                            <td>{{ examen.cantidad_preguntas }}</td>
+                            <td>{{ examen.tiempo_limite }}</td>
+                            <td>{{ examen.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <form action="{% url 'evaluar:examen_delete' examen.id %}" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de eliminar este examen? Las preguntas volverán a estar disponibles.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No hay exámenes registrados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
