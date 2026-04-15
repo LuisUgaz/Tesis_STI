@@ -1,16 +1,131 @@
 {% extends 'home.html' %}
 
 {% block content %}
-<div class="container mt-2">
-    <div class="card shadow-sm border-0 p-4" style="border-radius: 15px;">
-        <div class="pagina-contenido">
-            {{ pagina.contenido_html|safe }}
+<div class="container mt-4">
+    <!-- Hero Section de Bienvenida -->
+    <div class="card shadow-lg border-0 mb-5 overflow-hidden" style="border-radius: 25px; background: white;">
+        <div class="row g-0">
+            <div class="col-md-8 p-5">
+                <h1 class="display-5 fw-bold mb-3">
+                    ¡Hola, <span class="{% if user.profile.rol == 'Estudiante' %}role-student{% elif user.profile.rol == 'Docente' %}role-teacher{% else %}role-admin{% endif %}">{{ user.profile.nombres }}</span>! 👋
+                </h1>
+                
+                <p class="lead text-muted mb-4">
+                    {% if user.profile.rol == 'Estudiante' %}
+                        Bienvenido a tu tutor inteligente. Aquí podrás dominar la geometría a tu propio ritmo, resolver desafíos y ganar insignias por tus logros. ¡Comienza hoy tu camino al éxito académico!
+                    {% elif user.profile.rol == 'Docente' %}
+                        Panel de Control Educativo. Monitorea el desempeño de tus alumnos, gestiona el material didáctico y analiza los reportes para optimizar el aprendizaje en el aula.
+                    {% elif user.profile.rol == 'Administrador' %}
+                        Consola de Administración Global. Gestiona la seguridad, los usuarios, el catálogo de recompensas y la configuración general del Sistema Tutor Inteligente.
+                    {% endif %}
+                </p>
+
+                <div class="pagina-contenido border-top pt-4">
+                    {{ pagina.contenido_html|safe }}
+                </div>
+            </div>
+            <div class="col-md-4 d-none d-md-flex align-items-center justify-content-center p-4" 
+                 style="background: {% if user.profile.rol == 'Estudiante' %}#ebf5ff{% elif user.profile.rol == 'Docente' %}#e8f8f0{% else %}#fff5f5{% endif %};">
+                <i class="fas {% if user.profile.rol == 'Estudiante' %}fa-user-graduate role-student{% elif user.profile.rol == 'Docente' %}fa-chalkboard-teacher role-teacher{% else %}fa-user-shield role-admin{% endif %} fa-10x opacity-25"></i>
+            </div>
         </div>
+    </div>
+
+    <!-- Sección de Accesos Rápidos -->
+    <h3 class="fw-bold mb-4 px-2">Acciones Rápidas</h3>
+    <div class="row g-4">
+        {% if user.profile.rol == 'Estudiante' %}
+            <div class="col-md-4">
+                <a href="{% url 'lista_temas' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-primary border-5">
+                        <i class="fas fa-book-open fa-3x role-student mb-3"></i>
+                        <h5 class="fw-bold">Mis Temas</h5>
+                        <p class="small text-muted">Explora teoría, videos y ejercicios recomendados.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'mi_progreso' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-info border-5">
+                        <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                        <h5 class="fw-bold">Mi Progreso</h5>
+                        <p class="small text-muted">Mira tus métricas, puntaje XP y nivel actual.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'profile' username=user.username %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-warning border-5">
+                        <i class="fas fa-medal fa-3x text-warning mb-3"></i>
+                        <h5 class="fw-bold">Mis Insignias</h5>
+                        <p class="small text-muted">Colecciona medallas por completar actividades.</p>
+                    </div>
+                </a>
+            </div>
+
+        {% elif user.profile.rol == 'Docente' %}
+            <div class="col-md-4">
+                <a href="{% url 'reportes_docente' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-success border-5">
+                        <i class="fas fa-file-invoice-doll fa-3x role-teacher mb-3"></i>
+                        <h5 class="fw-bold">Reportes de Aula</h5>
+                        <p class="small text-muted">Analiza el progreso general y por alumno.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'banco_preguntas_list' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-primary border-5">
+                        <i class="fas fa-layer-group fa-3x text-primary mb-3"></i>
+                        <h5 class="fw-bold">Banco de Preguntas</h5>
+                        <p class="small text-muted">Gestiona los ejercicios disponibles para práctica.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'video_gestion_list' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-danger border-5">
+                        <i class="fas fa-play-circle fa-3x text-danger mb-3"></i>
+                        <h5 class="fw-bold">Videos Recomendados</h5>
+                        <p class="small text-muted">Administra los recursos multimedia de apoyo.</p>
+                    </div>
+                </a>
+            </div>
+
+        {% elif user.profile.rol == 'Administrador' %}
+            <div class="col-md-4">
+                <a href="{% url 'admin_user_list' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-danger border-5">
+                        <i class="fas fa-users-cog fa-3x role-admin mb-3"></i>
+                        <h5 class="fw-bold">Gestión de Usuarios</h5>
+                        <p class="small text-muted">Crea cuentas, asigna roles y activa usuarios.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'admin_content_dashboard' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-primary border-5">
+                        <i class="fas fa-tools fa-3x text-primary mb-3"></i>
+                        <h5 class="fw-bold">Configuración y Contenidos</h5>
+                        <p class="small text-muted">Personaliza la identidad y textos del sistema.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'admin_badge_list' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-warning border-5">
+                        <i class="fas fa-award fa-3x text-warning mb-3"></i>
+                        <h5 class="fw-bold">Catálogo de Insignias</h5>
+                        <p class="small text-muted">Define las recompensas disponibles para los alumnos.</p>
+                    </div>
+                </a>
+            </div>
+        {% endif %}
     </div>
 </div>
 
 <style>
-    .pagina-contenido { line-height: 1.6; color: #333; }
-    .pagina-contenido h1, .pagina-contenido h2, .pagina-contenido h3 { color: #2c3e50; margin-top: 1.5rem; }
+    .pagina-contenido { line-height: 1.6; color: #555; font-size: 1.1rem; }
+    .display-5 { letter-spacing: -1px; }
 </style>
 {% endblock %}

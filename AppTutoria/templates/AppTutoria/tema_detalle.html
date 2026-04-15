@@ -247,13 +247,13 @@
             <a href="{% url 'video_list' tema.slug %}" class="nav-item">
                 <span class="icon">🎥</span> Videos
             </a>
-        </nav>
-
-        <div style="margin-top: auto; padding: 1rem;">
-            <a href="{% url 'lista_temas' %}" style="text-decoration: none; color: var(--primary-color); font-weight: bold;">
-                ← Temas
+            
+            <!-- Botón en la parte interior -->
+            <hr class="my-3 opacity-10">
+            <a href="{% url 'lista_temas' %}" class="nav-item text-primary fw-bold">
+                <span class="icon">←</span> Volver a Temas
             </a>
-        </div>
+        </nav>
     </aside>
 
     <!-- Main Content Area -->

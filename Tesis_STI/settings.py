@@ -29,18 +29,20 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'AppGestionUsuario',
+    # Mis Apps
     'AppEvaluar',
+    'AppGestionUsuario',
     'AppTutoria',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -136,3 +138,42 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración de Email para consultas al docente
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Solo para desarrollo
 DOCENTE_EMAIL_DESTINO = 'luisugaz63@gmail.com'
+
+# Configuración de Django Jazmin
+JAZMIN_SETTINGS = {
+    "site_title": "Tesis STI Admin",
+    "site_header": "STI Geometría",
+    "site_brand": "Tesis STI",
+    "welcome_sign": "Bienvenido al Administrador de Tesis STI",
+    "copyright": "Tesis STI - Inteligencia en Geometría",
+    "search_model": ["auth.User", "AppGestionUsuario.Profile"],
+    "user_avatar": None,
+    "topmenu_links": [
+        {"name": "Inicio STI", "url": "home", "permissions": ["auth.view_user"]},
+        {"model": "auth.User"},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "AppGestionUsuario.Profile": "fas fa-id-card",
+        "AppGestionUsuario.Insignia": "fas fa-medal",
+        "AppEvaluar.Pregunta": "fas fa-question-circle",
+        "AppTutoria.Tema": "fas fa-book",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": True,
+    "custom_css": None,
+    "custom_js": None,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+}
+
+JAZMIN_UI_LOGS = {
+    "theme": "flatly",
+}

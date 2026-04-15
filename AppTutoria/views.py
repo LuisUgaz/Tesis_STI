@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
-from AppEvaluar.models import RecomendacionEstudiante
+from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico
 from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
 from .services import registrar_progreso
 
@@ -67,103 +67,108 @@ class VideoTemaDeleteView(LoginRequiredMixin, TeacherRequiredMixin, DeleteView):
 @login_required
 def lista_temas(request):
     """
-    Muestra la lista de temas geométricos obtenidos de la BD, resaltando el recomendado.
+    Muestra la lista de temas geométricos obtenidos de la BD, resaltando el recomendado para estudiantes.
+    Los docentes pueden ver todos los temas sin restricciones.
     """
-    # Verificar que el usuario tenga el perfil de Estudiante
-    if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
-        raise PermissionDenied("Solo los estudiantes pueden acceder a la lista de temas.")
+    # Verificar que el usuario tenga el perfil adecuado
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+        raise PermissionDenied("No tienes permiso para acceder a la lista de temas.")
 
     # Lista de temas desde la base de datos
     temas_db = list(Tema.objects.all())
     
-    # Obtener recomendación (HU08)
-    recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
-    
-    # Lógica de reordenamiento basada en la recomendación
-    if recomendacion:
-        # Buscar el tema en la lista de temas_db que coincida con el nombre de la recomendación
-        tema_recomendado_obj = next((t for t in temas_db if t.nombre == recomendacion.tema), None)
-        
-        if tema_recomendado_obj:
-            # Reordenar: colocar el objeto tema recomendado al principio
-            temas_db.remove(tema_recomendado_obj)
-            temas_db.insert(0, tema_recomendado_obj)
+    # Obtener recomendación (HU08) - Solo aplica lógica visual para estudiantes
+    recomendacion = None
+    examen = None
+    if request.user.profile.rol == 'Estudiante':
+        examen = ExamenDiagnostico.objects.first()
+        recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
+        if recomendacion:
+            tema_recomendado_obj = next((t for t in temas_db if t.nombre == recomendacion.tema), None)
+            if tema_recomendado_obj:
+                temas_db.remove(tema_recomendado_obj)
+                temas_db.insert(0, tema_recomendado_obj)
 
     return render(request, 'AppTutoria/lista_temas.html', {
         'temas': temas_db,
-        'recomendacion': recomendacion
+        'recomendacion': recomendacion,
+        'examen': examen
     })
 
 @login_required
 def tema_detalle(request, slug):
     """
-    Muestra el contenido detallado de un tema específico si el usuario tiene permiso.
-    Permite navegar entre secciones (resumen, teoria, ejercicios, videos).
+    Muestra el contenido detallado de un tema específico.
+    Los docentes supervisan todo. Los estudiantes siguen su ruta recomendada.
     """
-    # 1. Verificar rol de Estudiante
-    if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
-        raise PermissionDenied("Solo los estudiantes pueden acceder al contenido de estudio.")
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+        raise PermissionDenied("Acceso no autorizado.")
 
     # 2. Obtener el tema por slug
     tema = get_object_or_404(Tema, slug=slug)
+    es_docente = request.user.profile.rol == 'Docente'
 
-    # 3. Verificar si el tema está recomendado para el estudiante
-    esta_recomendado = RecomendacionEstudiante.objects.filter(
-        usuario=request.user, 
-        tema=tema.nombre
-    ).exists()
+    # 3. Verificar recomendación solo para estudiantes
+    if not es_docente:
+        esta_recomendado = RecomendacionEstudiante.objects.filter(
+            usuario=request.user, 
+            tema=tema.nombre
+        ).exists()
 
-    if not esta_recomendado:
-        raise PermissionDenied("No tienes acceso a este tema aún. Debes seguir tu ruta recomendada.")
+        if not esta_recomendado:
+            raise PermissionDenied("No tienes acceso a este tema aún. Debes seguir tu ruta recomendada.")
 
     # 4. Obtener la sección solicitada (por defecto 'resumen')
     seccion = request.GET.get('seccion', 'resumen')
 
-    # 5. Obtener el contenido asociado si es necesario
+    # 5. Obtener el contenido asociado
     contenido = None
     if seccion == 'teoria':
         contenido = get_object_or_404(ContenidoTema, tema=tema)
-        # Registrar progreso centralizado (HU17)
-        registrar_progreso(
-            usuario=request.user,
-            tema=tema,
-            tipo_actividad='Teoría'
-        )
+        # Registrar progreso SOLO para estudiantes
+        if not es_docente:
+            registrar_progreso(
+                usuario=request.user,
+                tema=tema,
+                tipo_actividad='Teoría'
+            )
     
     return render(request, 'AppTutoria/tema_detalle.html', {
         'tema': tema,
         'contenido': contenido,
-        'seccion': seccion
+        'seccion': seccion,
+        'es_docente': es_docente
     })
 
 @login_required
 def video_list(request, slug):
     """
     Muestra la lista de videos asociados a un tema específico.
-    Valida que el estudiante tenga acceso al tema según sus recomendaciones.
     """
-    # 1. Verificar rol de Estudiante
-    if not hasattr(request.user, 'profile') or request.user.profile.rol != 'Estudiante':
-        raise PermissionDenied("Solo los estudiantes pueden acceder a los videos.")
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+        raise PermissionDenied("Acceso denegado.")
 
     # 2. Obtener el tema por slug
     tema = get_object_or_404(Tema, slug=slug)
+    es_docente = request.user.profile.rol == 'Docente'
 
-    # 3. Verificar si el tema está recomendado para el estudiante
-    esta_recomendado = RecomendacionEstudiante.objects.filter(
-        usuario=request.user, 
-        tema=tema.nombre
-    ).exists()
+    # 3. Validar recomendación solo para estudiantes
+    if not es_docente:
+        esta_recomendado = RecomendacionEstudiante.objects.filter(
+            usuario=request.user, 
+            tema=tema.nombre
+        ).exists()
 
-    if not esta_recomendado:
-        raise PermissionDenied("No tienes acceso a los videos de este tema aún.")
+        if not esta_recomendado:
+            raise PermissionDenied("No tienes acceso a los videos de este tema aún.")
 
     # 4. Obtener los videos asociados al tema (solo activos)
     videos = VideoTema.objects.filter(tema=tema, es_activo=True)
 
     return render(request, 'AppTutoria/videos.html', {
         'tema': tema,
-        'videos': videos
+        'videos': videos,
+        'es_docente': es_docente
     })
 
 @login_required

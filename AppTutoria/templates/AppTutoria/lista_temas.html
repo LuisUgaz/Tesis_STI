@@ -165,15 +165,21 @@
             <h1>Mis Temas de Geometría</h1>
         </div>
 
-        {% if not recomendacion %}
-            <div class="info-box">
-                <p>Aún no tienes un tema recomendado. Realiza el examen diagnóstico para personalizar tu aprendizaje.</p>
-                <a href="{% url 'rendir_examen' examen_id=1 %}" class="btn-diagnostico">Rendir Diagnóstico</a>
-            </div>
-        {% else %}
-            <div class="info-box" style="background: #f1f8e9; border-color: var(--recommendation-color);">
-                <p style="color: #33691e;">Basado en tu diagnóstico, te recomendamos priorizar <strong>{{ recomendacion.tema }}</strong>.</p>
-            </div>
+        {% if user.profile.rol == 'Estudiante' %}
+            {% if not recomendacion %}
+                <div class="info-box">
+                    <p>Aún no tienes un tema recomendado. Realiza el examen diagnóstico para personalizar tu aprendizaje.</p>
+                    {% if examen %}
+                        <a href="{% url 'rendir_examen' examen_id=examen.id %}" class="btn-diagnostico">Rendir Diagnóstico</a>
+                    {% else %}
+                        <p style="color: #d32f2f; font-weight: bold;">El examen diagnóstico no está disponible en este momento.</p>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="info-box" style="background: #f1f8e9; border-color: var(--recommendation-color);">
+                    <p style="color: #33691e;">Basado en tu diagnóstico, te recomendamos priorizar <strong>{{ recomendacion.tema }}</strong>.</p>
+                </div>
+            {% endif %}
         {% endif %}
 
         <div class="temas-grid">

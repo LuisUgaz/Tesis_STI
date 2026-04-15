@@ -9,78 +9,176 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
-        .navbar-brand { font-weight: bold; color: #4a90e2 !important; }
-        .btn-custom-blue { background-color: #4a90e2; color: white; border-radius: 8px; font-weight: 600; }
-        .btn-custom-teal { background-color: #50e3c2; color: white; border-radius: 8px; font-weight: 600; }
-        .btn-custom-orange { background-color: #f5a623; color: white; border-radius: 8px; font-weight: 600; }
-        .nav-link:hover { color: #4a90e2 !important; }
-        .content-wrapper { flex: 1; }
-        footer { background-color: white; border-top: 1px solid #dee2e6; padding: 20px 0; margin-top: 50px; }
+        :root {
+            --student-color: #4a90e2;
+            --teacher-color: #27ae60;
+            --admin-color: #e74c3c;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        body { 
+            background: var(--bg-gradient);
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            color: #2c3e50;
+        }
+        
+        /* Navbar Rediseñado */
+        .navbar {
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.8rem 0;
+            transition: all 0.3s ease;
+        }
+        .navbar-brand { 
+            font-weight: 800; 
+            font-size: 1.4rem; 
+            letter-spacing: -0.5px;
+            color: #2c3e50 !important;
+        }
+        .nav-link {
+            font-weight: 600;
+            color: #5a6c7a !important;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover {
+            color: #2c3e50 !important;
+            transform: translateY(-1px);
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background: var(--student-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        .nav-link:hover::after {
+            width: 70%;
+        }
+        .nav-link.active {
+            color: var(--student-color) !important;
+        }
+        
+        .role-badge {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+        .badge-student { background: rgba(74, 144, 226, 0.15); color: var(--student-color); }
+        .badge-teacher { background: rgba(39, 174, 96, 0.15); color: var(--teacher-color); }
+        .badge-admin { background: rgba(231, 76, 60, 0.15); color: var(--admin-color); }
+
+        .content-wrapper { flex: 1; padding-bottom: 3rem; }
+        .card {
+            border: none;
+            border-radius: 20px;
+            transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        }
+        .btn-round { border-radius: 12px; font-weight: 600; padding: 10px 25px; transition: 0.3s; }
+        footer { 
+            background: rgba(255,255,255,0.8); 
+            backdrop-filter: blur(5px);
+            padding: 25px 0; 
+            margin-top: auto;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        /* Colores dinámicos por rol en UI */
+        .role-student { color: var(--student-color); }
+        .role-teacher { color: var(--teacher-color); }
+        .role-admin { color: var(--admin-color); }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top mb-4 shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">📐 {{ global_config.nombre_sistema }}</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                <span class="bg-primary text-white p-2 rounded-3 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                    <i class="fas fa-drafting-compass fa-sm"></i>
+                </span>
+                {{ global_config.nombre_sistema }}
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'lista_temas' %}">📚 Temas</a>
+                            <a class="nav-link" href="{% url 'lista_temas' %}"><i class="fas fa-book me-1"></i> Temas</a>
                         </li>
                         {% if user.profile.rol == 'Estudiante' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'mi_progreso' %}">📈 Mi Progreso</a>
+                                <a class="nav-link" href="{% url 'mi_progreso' %}"><i class="fas fa-chart-bar me-1"></i> Mi Progreso</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-primary" href="{% url 'contacto' %}"><i class="fas fa-comment-dots me-1"></i> Consultas</a>
                             </li>
                         {% elif user.profile.rol == 'Docente' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'reportes_docente' %}">📊 Reportes</a>
+                                <a class="nav-link" href="{% url 'reportes_docente' %}"><i class="fas fa-file-alt me-1"></i> Reportes</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'banco_preguntas_list' %}">📖 Banco</a>
+                                <a class="nav-link" href="{% url 'banco_preguntas_list' %}"><i class="fas fa-database me-1"></i> Banco</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'video_gestion_list' %}">🎬 Videos</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-primary fw-bold" href="{% url 'banco_preguntas_create' %}">➕ Pregunta</a>
+                                <a class="nav-link" href="{% url 'video_gestion_list' %}"><i class="fas fa-video me-1"></i> Videos</a>
                             </li>
                         {% elif user.profile.rol == 'Administrador' %}
                             <li class="nav-item">
-                                <a class="nav-link text-danger fw-bold" href="{% url 'admin_user_list' %}">⚙️ Usuarios</a>
+                                <a class="nav-link text-danger" href="{% url 'admin_user_list' %}"><i class="fas fa-users me-1"></i> Usuarios</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-primary fw-bold" href="{% url 'admin_content_dashboard' %}">⚙️ Contenidos</a>
+                                <a class="nav-link text-primary" href="{% url 'admin_content_dashboard' %}"><i class="fas fa-cog me-1"></i> Contenidos</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-warning fw-bold" href="{% url 'admin_badge_list' %}">🏅 Insignias</a>
+                                <a class="nav-link text-warning" href="{% url 'admin_badge_list' %}"><i class="fas fa-medal me-1"></i> Insignias</a>
                             </li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link text-success fw-bold" href="{% url 'contacto' %}">💬 Contactar Docente</a>
-                        </li>
                     {% endif %}
                 </ul>
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center ms-auto">
                     {% if user.is_authenticated %}
-                        <div class="dropdown me-3">
-                            <a class="btn btn-outline-secondary dropdown-toggle border-0" href="#" role="button" data-bs-toggle="dropdown">
-                                👤 {{ user.username }}
+                        <div class="dropdown">
+                            <a class="btn btn-light rounded-pill border-0 shadow-sm dropdown-toggle px-3 d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                                <div class="bg-secondary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <span class="fw-bold text-dark me-1" style="font-size: 0.9rem;">{{ user.username }}</span>
+                                <span class="role-badge 
+                                    {% if user.profile.rol == 'Estudiante' %}badge-student
+                                    {% elif user.profile.rol == 'Docente' %}badge-teacher
+                                    {% else %}badge-admin{% endif %}">
+                                    {{ user.profile.rol }}
+                                </span>
                             </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-menu-item p-2 text-decoration-none text-dark d-block" href="{% url 'profile' username=user.username %}">Ver Perfil</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-3" style="border-radius: 15px;">
+                                <li><a class="dropdown-item py-2 px-4" href="{% url 'profile' username=user.username %}"><i class="fas fa-user-circle me-2 text-muted"></i> Mi Perfil</a></li>
+                                <li><hr class="dropdown-divider opacity-50"></li>
+                                <li>
+                                    <button type="button" class="dropdown-item py-2 px-4 text-danger fw-bold" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Salir
+                                    </button>
+                                </li>
                             </ul>
                         </div>
-                        <form action="{% url 'logout' %}" method="post" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm fw-bold" style="border-radius: 8px;" onclick="return confirm('¿Cerrar sesión?')">Salir</button>
-                        </form>
                     {% else %}
-                        <a href="{% url 'login' %}" class="btn btn-primary btn-sm px-4 fw-bold">Entrar</a>
+                        <a href="{% url 'login' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow">Iniciar Sesión</a>
                     {% endif %}
                 </div>
             </div>
@@ -105,6 +203,29 @@
             {{ global_config.texto_footer|default:"© 2026 Tesis STI"|safe }}
         </div>
     </footer>
+
+    <!-- Modal de Confirmación de Cierre de Sesión -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="modal-header bg-danger text-white border-0" style="border-radius: 15px 15px 0 0;">
+                    <h5 class="modal-title" id="logoutModalLabel"><i class="fas fa-sign-out-alt me-2"></i>¿Cerrar Sesión?</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p class="mb-0 fw-bold">¿Estás seguro de que deseas salir del sistema?</p>
+                    <p class="text-muted small mt-2">Tendrás que volver a ingresar tus credenciales para acceder nuevamente.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light px-4 fw-bold" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
+                    <form action="{% url 'logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger px-4 fw-bold" style="border-radius: 10px;">Sí, Salir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
