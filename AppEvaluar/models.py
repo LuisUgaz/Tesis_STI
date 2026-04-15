@@ -38,6 +38,7 @@ class Pregunta(models.Model):
     examen = models.ForeignKey(ExamenDiagnostico, on_delete=models.CASCADE, related_name='preguntas', null=True, blank=True)
     examen_tema = models.ForeignKey(Examen, on_delete=models.SET_NULL, null=True, blank=True, related_name='preguntas')
     texto = models.TextField()
+    imagen = models.ImageField(upload_to='preguntas_imagenes/', blank=True, null=True)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='OPCION_MULTIPLE')
     tema = models.ForeignKey(Tema, on_delete=models.SET_NULL, null=True, related_name='preguntas_diagnostico')
     dificultad = models.CharField(max_length=20, choices=DIFICULTAD_CHOICES, default='Básico')
