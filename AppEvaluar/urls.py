@@ -23,4 +23,7 @@ urlpatterns = [
     path('examenes/', views.ExamenDashboardView.as_view(), name='examen_dashboard'),
     path('examenes/nuevo/', views.ExamenCreateView.as_view(), name='examen_create'),
     path('examenes/eliminar/<int:pk>/', views.ExamenDeleteView.as_view(), name='examen_delete'),
+
+    # Retroalimentación Inteligente (HU40)
+    path('ia-feedback/<int:respuesta_id>/', views.IAFeedbackView.as_view(), name='ia_feedback'),
 ]

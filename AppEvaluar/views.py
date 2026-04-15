@@ -7,7 +7,7 @@ from .models import (
     ResultadoDiagnostico, RecomendacionEstudiante,
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
-from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias
+from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias, obtener_feedback_ia
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
 from AppTutoria.services import registrar_progreso
 from AppGestionUsuario.models import Profile, MetricasEstudiante
@@ -48,6 +48,20 @@ class TeacherRequiredMixin(UserPassesTestMixin):
             (hasattr(self.request.user, 'profile') and self.request.user.profile.rol == 'Docente') or 
             self.request.user.is_staff
         )
+
+class IAFeedbackView(LoginRequiredMixin, View):
+    """
+    Endpoint AJAX para obtener la retroalimentación de la IA para una pregunta específica (HU40).
+    """
+    def get(self, request, respuesta_id):
+        respuesta = get_object_or_404(RespuestaUsuario, id=respuesta_id)
+        
+        # Seguridad: Solo el dueño de la respuesta puede pedir el feedback
+        if respuesta.usuario != request.user:
+            return JsonResponse({'error': 'No autorizado'}, status=403)
+        
+        feedback = obtener_feedback_ia(respuesta)
+        return JsonResponse({'feedback': feedback})
 
 class ExamenDashboardView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     model = Examen

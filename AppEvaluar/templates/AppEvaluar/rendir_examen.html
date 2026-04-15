@@ -152,9 +152,101 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             z-index: 1000;
         }
+
+        /* Modal y Overlay Styles (HU40) */
+        .overlay-bloqueante {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal-confirmacion {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-confirmar { background: var(--primary-color); color: white; }
+        .btn-cancelar { background: #ccc; color: #333; }
     </style>
 </head>
 <body>
+    <!-- Overlay Bloqueante (HU40) -->
+    <div id="overlay" class="overlay-bloqueante">
+        <div class="spinner"></div>
+        <h2 style="color: var(--primary-color);">Procesando tus respuestas...</h2>
+        <p>Estamos revisando tu examen para generar tu retroalimentación inteligente.</p>
+    </div>
+
+    <!-- Modal de Confirmación (HU40) -->
+    <div id="modal-confirm" class="modal-confirmacion">
+        <div class="modal-content">
+            <h3>¿Estás seguro de finalizar?</h3>
+            <p>Una vez enviado, no podrás cambiar tus respuestas.</p>
+            <div class="modal-buttons">
+                <button id="btn-cancel" class="btn-modal btn-cancelar">Cancelar</button>
+                <button id="btn-confirm" class="btn-modal btn-confirmar">¡Sí, enviar!</button>
+            </div>
+        </div>
+    </div>
+
     <div class="timer" id="timer">
         Tiempo restante: <span id="time-display">00:00</span>
     </div>
@@ -201,6 +293,28 @@
             let tiempoRestanteSegundos = tiempoLimiteMinutos * 60;
             const display = document.getElementById('time-display');
             const form = document.getElementById('examen-form');
+            
+            // Elementos HU40
+            const modalConfirm = document.getElementById('modal-confirm');
+            const overlay = document.getElementById('overlay');
+            const btnConfirm = document.getElementById('btn-confirm');
+            const btnCancel = document.getElementById('btn-cancel');
+
+            // Manejo de envío del formulario
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                modalConfirm.style.display = 'flex';
+            });
+
+            btnCancel.addEventListener('click', function() {
+                modalConfirm.style.display = 'none';
+            });
+
+            btnConfirm.addEventListener('click', function() {
+                modalConfirm.style.display = 'none';
+                overlay.style.display = 'flex';
+                form.submit();
+            });
 
             const timer = setInterval(function() {
                 const minutos = Math.floor(tiempoRestanteSegundos / 60);

@@ -128,6 +128,92 @@
             background: #357abd;
         }
 
+        /* Question Breakdown Styles (HU40) */
+        .question-list {
+            margin-top: 3rem;
+        }
+
+        .question-item {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-left: 10px solid #eee;
+        }
+
+        .question-item.correct { border-left-color: var(--secondary-color); }
+        .question-item.incorrect { border-left-color: #f8d7da; }
+
+        .question-text {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .ia-feedback-container {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .accordion-toggle {
+            width: 100%;
+            text-align: left;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .accordion-toggle:hover {
+            background: #e9ecef;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            font-style: italic;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .badge-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .badge-correct { background: var(--secondary-color); color: white; }
+        .badge-incorrect { background: #dc3545; color: white; }
+
+        .loading-ia {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .spinner-small {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border: 2px solid #ccc;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 5px;
+        }
+
         @media (max-width: 600px) {
             h1 {
                 font-size: 1.8rem;
@@ -190,9 +276,97 @@
             {% endfor %}
         </div>
 
+        <div class="question-list">
+            <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">Revisión Detallada</h2>
+            {% for respuesta in respuestas %}
+                <div class="question-item {% if respuesta.opcion_seleccionada.es_correcta %}correct{% else %}incorrect{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge-status {% if respuesta.opcion_seleccionada.es_correcta %}badge-correct{% else %}badge-incorrect{% endif %}">
+                            {% if respuesta.opcion_seleccionada.es_correcta %}Correcta{% else %}Incorrecta{% endif %}
+                        </span>
+                        <small class="text-muted">{{ respuesta.pregunta.tema.nombre }}</small>
+                    </div>
+                    <div class="question-text">{{ forloop.counter }}. {{ respuesta.pregunta.texto }}</div>
+                    
+                    {% if respuesta.pregunta.imagen %}
+                        <div class="mb-3">
+                            <img src="{{ respuesta.pregunta.imagen.url }}" alt="Imagen de la pregunta" style="max-width: 100%; border-radius: 10px; border: 1px solid #ddd;">
+                        </div>
+                    {% endif %}
+
+                    <p><strong>Tu respuesta:</strong> {{ respuesta.opcion_seleccionada.texto }}</p>
+                    {% if not respuesta.opcion_seleccionada.es_correcta %}
+                        <p class="text-success"><strong>Respuesta correcta:</strong> 
+                            {% for opcion in respuesta.pregunta.opciones.all %}
+                                {% if opcion.es_correcta %}{{ opcion.texto }}{% endif %}
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+
+                    <!-- Bloque de IA (HU40) -->
+                    <div class="ia-feedback-container">
+                        <button class="accordion-toggle" onclick="toggleAccordion('ia-{{ respuesta.id }}')">
+                            <span><i class="fas fa-robot"></i> Explicación del Tutor IA</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div id="ia-{{ respuesta.id }}" class="accordion-content">
+                            <div class="loading-ia" id="loading-ia-{{ respuesta.id }}">
+                                <div class="spinner-small"></div> Generando explicación pedagógica...
+                            </div>
+                            <div class="ia-text" id="content-ia-{{ respuesta.id }}"></div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
         <div style="text-align: center; margin-top: 2rem;">
             <a href="{% url 'home' %}" class="btn-home">Ir al Inicio</a>
         </div>
     </div>
+
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <script>
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const isVisible = content.style.display === 'block';
+            content.style.display = isVisible ? 'none' : 'block';
+            
+            // Si se abre y no tiene contenido cargado, lo buscamos
+            if (!isVisible) {
+                const respuestaId = id.replace('ia-', '');
+                cargarFeedbackIA(respuestaId);
+            }
+        }
+
+        async function cargarFeedbackIA(respuestaId) {
+            const contentDiv = document.getElementById(`content-ia-${respuestaId}`);
+            const loadingDiv = document.getElementById(`loading-ia-${respuestaId}`);
+            
+            // Si ya tiene contenido (no es el loading), no cargamos de nuevo
+            if (contentDiv.innerText.trim() !== "") return;
+
+            try {
+                const response = await fetch(`/evaluar/ia-feedback/${respuestaId}/`);
+                if (!response.ok) throw new Error('Error en la red');
+                
+                const data = await response.json();
+                loadingDiv.style.display = 'none';
+                contentDiv.innerText = data.feedback;
+            } catch (error) {
+                console.error('Error cargando feedback IA:', error);
+                loadingDiv.style.display = 'none';
+                contentDiv.innerText = "No se pudo generar la explicacion IA";
+                contentDiv.style.color = "red";
+            }
+        }
+
+        // Carga diferida automática para las incorrectas al inicio (opcional)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Podríamos precargar algunas aquí si quisiéramos
+        });
+    </script>
 </body>
 </html>

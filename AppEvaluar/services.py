@@ -1,10 +1,75 @@
 from typing import Dict, Optional
 from django.contrib.auth.models import User
-from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio, Examen, Pregunta
+from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio, Examen, Pregunta, Opcion
+import google.generativeai as genai
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Configurar Gemini si la API KEY existe
+if hasattr(settings, 'GEMINI_API_KEY') and settings.GEMINI_API_KEY:
+    genai.configure(api_key=settings.GEMINI_API_KEY)
 
 class SinResultadosError(Exception):
     """Excepción lanzada cuando un estudiante no tiene resultados de diagnóstico."""
     pass
+
+def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
+    """
+    Genera una explicación pedagógica usando Gemini 1.5 Flash para una respuesta específica.
+    """
+    try:
+        pregunta = respuesta.pregunta
+        opcion_correcta = Opcion.objects.filter(pregunta=pregunta, es_correcta=True).first()
+        
+        # Determinar si el alumno acertó
+        es_correcta = False
+        respuesta_alumno = ""
+        if pregunta.tipo == 'OPCION_MULTIPLE':
+            es_correcta = respuesta.opcion_seleccionada and respuesta.opcion_seleccionada.es_correcta
+            respuesta_alumno = respuesta.opcion_seleccionada.texto if respuesta.opcion_seleccionada else "Sin respuesta"
+        else:
+            respuesta_alumno = respuesta.respuesta_texto
+            # Nota: Para texto corto, la lógica de "correcto" podría ser más compleja, 
+            # por ahora confiamos en el juicio de la IA o comparativa simple.
+
+        # Construir el prompt pedagógico refinado (HU40 Refactor)
+        status_msg = "¡Respuesta Correcta!" if es_correcta else "Respuesta Incorrecta"
+        prompt = (
+            f"Eres un tutor de geometría experto para secundaria. Tu meta es la claridad pedagógica.\n\n"
+            f"CONTEXTO:\n"
+            f"- Pregunta: {pregunta.texto}\n"
+            f"- El estudiante eligió: {respuesta_alumno} ({status_msg})\n"
+            f"- Respuesta correcta real: {opcion_correcta.texto if opcion_correcta else 'N/A'}\n"
+            f"- Tema: {pregunta.tema.nombre if pregunta.tema else 'Geometría'}\n"
+            f"- Dificultad: {pregunta.dificultad}\n\n"
+            f"TAREA:\n"
+            f"Genera una explicación de EXACTAMENTE 3 líneas.\n"
+            f"1. Si acertó: Felicita brevemente y explica por qué esa es la respuesta usando la propiedad geométrica.\n"
+            f"2. Si falló: Identifica el error lógico más probable basado en su opción y guíalo paso a paso hacia la verdad.\n"
+            f"Usa un lenguaje motivador, sencillo y directo."
+        )
+
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Manejo de imagen (Multimodal)
+        if pregunta.imagen:
+            try:
+                from PIL import Image
+                img = Image.open(pregunta.imagen.path)
+                response = model.generate_content([prompt, img])
+            except Exception as e:
+                logger.error(f"Error procesando imagen para IA: {e}")
+                response = model.generate_content(prompt)
+        else:
+            response = model.generate_content(prompt)
+
+        return response.text.strip()
+
+    except Exception as e:
+        logger.error(f"Error al obtener feedback de IA: {e}")
+        return "No se pudo generar la explicacion IA"
 
 def asignar_preguntas_aleatorias(examen: Examen):
     """Busca preguntas disponibles para el tema del examen y las asigna aleatoriamente.
