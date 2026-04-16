@@ -15,7 +15,7 @@ class AdaptiveIntegrationTest(TestCase):
         
         # 1. Crear examen diagnóstico
         self.examen = ExamenDiagnostico.objects.create(nombre="D1")
-        self.p1 = Pregunta.objects.create(examen=self.examen, texto="P1", categoria="Ángulos", tipo='OPCION_MULTIPLE')
+        self.p1 = Pregunta.objects.create(examen=self.examen, texto="P1", tema=self.tema, tipo='OPCION_MULTIPLE')
         self.oc1 = Opcion.objects.create(pregunta=self.p1, texto="Correcta", es_correcta=True)
         
         # 2. Crear ejercicios de niveles diferentes

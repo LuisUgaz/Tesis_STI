@@ -207,3 +207,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [~] **Track: HU41 - Asignar exmenes a temas**
 *Link: [./tracks/teacher_assign_exams_to_topics_20260415/](./tracks/teacher_assign_exams_to_topics_20260415/)*
+
+---
+
+- [x] **Track: HU42 - Mejorar el motor de recomendación adaptativa y el ajuste de dificultad**
+*Link: [./tracks/user_adaptive_recommendation_v2_20260416/](./tracks/user_adaptive_recommendation_v2_20260416/)*

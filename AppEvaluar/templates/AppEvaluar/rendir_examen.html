@@ -280,6 +280,9 @@
                     {% else %}
                         <textarea name="pregunta_{{ pregunta.id }}" rows="3" placeholder="Escribe tu respuesta aquí..." required></textarea>
                     {% endif %}
+
+                    <!-- HU42: Campo oculto para el tiempo de respuesta -->
+                    <input type="hidden" name="tiempo_pregunta_{{ pregunta.id }}" id="tiempo_pregunta_{{ pregunta.id }}" value="0">
                 </div>
             {% endfor %}
 
@@ -315,6 +318,48 @@
                 overlay.style.display = 'flex';
                 form.submit();
             });
+
+            // HU42: Lógica de seguimiento de tiempo por pregunta
+            const questionCards = document.querySelectorAll('.pregunta-card');
+            const questionTimers = {};
+            let activeQuestionId = null;
+
+            // Inicializar timers
+            questionCards.forEach(card => {
+                const input = card.querySelector('input[type="hidden"]');
+                if (input) {
+                    const id = input.id.replace('tiempo_pregunta_', '');
+                    questionTimers[id] = 0;
+                }
+            });
+
+            // Observer para detectar qué pregunta está en pantalla
+            const observerOptions = {
+                root: null,
+                threshold: 0.6 // La pregunta debe estar al menos al 60% visible
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const input = entry.target.querySelector('input[type="hidden"]');
+                        if (input) {
+                            activeQuestionId = input.id.replace('tiempo_pregunta_', '');
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            questionCards.forEach(card => observer.observe(card));
+
+            // Incrementar timer de la pregunta activa cada segundo
+            setInterval(function() {
+                if (activeQuestionId && questionTimers[activeQuestionId] !== undefined) {
+                    questionTimers[activeQuestionId]++;
+                    // Actualizar el valor del input oculto para el envío
+                    document.getElementById('tiempo_pregunta_' + activeQuestionId).value = questionTimers[activeQuestionId];
+                }
+            }, 1000);
 
             const timer = setInterval(function() {
                 const minutos = Math.floor(tiempoRestanteSegundos / 60);

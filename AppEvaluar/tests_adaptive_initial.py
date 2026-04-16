@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+from AppTutoria.models import Tema
 from AppGestionUsuario.models import Profile
 from AppEvaluar.models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
 from AppEvaluar.services import calcular_recomendacion
@@ -8,9 +9,10 @@ class AdaptiveInitialLevelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='test_adaptive', password='password123')
         self.profile = Profile.objects.create(user=self.user, rol='Estudiante')
+        self.tema = Tema.objects.create(nombre="Geometría")
         self.examen = ExamenDiagnostico.objects.create(nombre="Test Diagnóstico")
         self.pregunta = Pregunta.objects.create(
-            examen=self.examen, texto="Q1", categoria="Geometría", tipo='OPCION_MULTIPLE'
+            examen=self.examen, texto="Q1", tema=self.tema, tipo='OPCION_MULTIPLE'
         )
         self.op_correcta = Opcion.objects.create(pregunta=self.pregunta, texto="C", es_correcta=True)
         self.op_incorrecta = Opcion.objects.create(pregunta=self.pregunta, texto="I", es_correcta=False)
@@ -29,7 +31,7 @@ class AdaptiveInitialLevelTest(TestCase):
         """Puntaje ~50% -> Nivel Intermedio (Simulado con 60% en metrica)."""
         # En la lógica actual, calcular_recomendacion usa las respuestas reales, no solo el puntaje del modelo Resultado.
         # Crearemos 2 preguntas para tener 50%
-        p2 = Pregunta.objects.create(examen=self.examen, texto="Q2", categoria="Geometría", tipo='OPCION_MULTIPLE')
+        p2 = Pregunta.objects.create(examen=self.examen, texto="Q2", tema=self.tema, tipo='OPCION_MULTIPLE')
         oc2 = Opcion.objects.create(pregunta=p2, texto="C", es_correcta=True)
         
         RespuestaUsuario.objects.create(usuario=self.user, pregunta=self.pregunta, opcion_seleccionada=self.op_correcta)

@@ -17,7 +17,12 @@ Esta es la pila tecnológica oficial seleccionada para el desarrollo y despliegu
 - **SVG (Scalable Vector Graphics):** Para la visualización de figuras geométricas nítidas y escalables.
 - **SMTP / Django Mail:** Motor de mensajería para el envío de consultas de estudiantes directamente al correo electrónico de los docentes.
 
-## 4. Otros Servicios y Herramientas
+## 4. Inteligencia Artificial y Ciencia de Datos
+- **Google Gemini AI (API):** Utilizado para la generación de retroalimentación pedagógica inteligente basada en el contexto del estudiante y errores específicos.
+- **Scikit-learn:** Librería de Machine Learning utilizada para implementar el clasificador SVM que resuelve empates técnicos en las recomendaciones adaptativas.
+- **NumPy:** Soporte para el procesamiento de vectores de características y cálculos matriciales requeridos por los modelos de IA.
+
+## 5. Otros Servicios y Herramientas
 - **WebSockets:** Para comunicación bidireccional en tiempo real entre el servidor y el cliente.
 - **Arquitectura:** Monolito modular con Django Apps (`AppEvaluar`, `AppGestionUsuario`, `AppTutoria`).
 - **Plataforma:** Aplicación web accesible desde cualquier navegador moderno (Responsive).

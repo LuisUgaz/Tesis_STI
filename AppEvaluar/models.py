@@ -59,6 +59,7 @@ class RespuestaUsuario(models.Model):
     pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
     opcion_seleccionada = models.ForeignKey(Opcion, on_delete=models.CASCADE, null=True, blank=True)
     respuesta_texto = models.TextField(null=True, blank=True)
+    tiempo_respuesta = models.FloatField(null=True, blank=True, help_text="Tiempo en segundos")
     fecha_respuesta = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

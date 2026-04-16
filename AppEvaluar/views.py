@@ -490,10 +490,15 @@ def rendir_examen(request, examen_id):
             campo_nombre = f'pregunta_{pregunta.id}'
             valor = request.POST.get(campo_nombre)
             
+            # HU42: Captura de tiempo de respuesta
+            tiempo_valor = request.POST.get(f'tiempo_pregunta_{pregunta.id}')
+            tiempo_respuesta = float(tiempo_valor) if tiempo_valor else None
+            
             if valor:
                 respuesta = RespuestaUsuario(
                     usuario=request.user,
-                    pregunta=pregunta
+                    pregunta=pregunta,
+                    tiempo_respuesta=tiempo_respuesta
                 )
                 
                 if pregunta.tipo == 'OPCION_MULTIPLE':

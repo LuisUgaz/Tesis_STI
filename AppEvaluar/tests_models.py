@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+from AppTutoria.models import Tema
 from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
 
 class EvaluarModelsTest(TestCase):
@@ -9,6 +10,9 @@ class EvaluarModelsTest(TestCase):
         # En AppGestionUsuario/models.py hay un modelo Profile, pero no vimos señales
         from AppGestionUsuario.models import Profile
         self.profile = Profile.objects.create(user=self.user, nombres='Test', apellidos='Student', rol='Estudiante')
+
+        self.tema_triangulos = Tema.objects.create(nombre='Triángulos')
+        self.tema_segmentos = Tema.objects.create(nombre='Segmentos')
 
         self.examen = ExamenDiagnostico.objects.create(
             nombre="Examen Diagnóstico Inicial",
@@ -20,7 +24,7 @@ class EvaluarModelsTest(TestCase):
             examen=self.examen,
             texto="¿Cuánto suman los ángulos internos de un triángulo?",
             tipo='OPCION_MULTIPLE',
-            categoria='Triángulos'
+            tema=self.tema_triangulos
         )
 
         self.opcion_correcta = Opcion.objects.create(
@@ -39,7 +43,7 @@ class EvaluarModelsTest(TestCase):
             examen=self.examen,
             texto="Define qué es un segmento.",
             tipo='TEXTO_CORTO',
-            categoria='Segmentos'
+            tema=self.tema_segmentos
         )
 
     def test_examen_diagnostico_creation(self):
@@ -47,7 +51,7 @@ class EvaluarModelsTest(TestCase):
         self.assertEqual(str(self.examen), "Examen Diagnóstico Inicial")
 
     def test_pregunta_creation(self):
-        self.assertEqual(self.pregunta_opcion.categoria, 'Triángulos')
+        self.assertEqual(self.pregunta_opcion.tema, self.tema_triangulos)
         self.assertEqual(self.pregunta_opcion.tipo, 'OPCION_MULTIPLE')
         self.assertEqual(str(self.pregunta_opcion), "¿Cuánto suman los ángulos internos de un triángulo?")
 

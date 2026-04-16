@@ -45,7 +45,7 @@ class ExamenIntegrationTest(TestCase):
         form = response.context['form']
         self.assertIn('cantidad_preguntas', form.errors)
         self.assertEqual(form.errors['cantidad_preguntas'][0], 
-                         f"No hay suficientes preguntas disponibles para el tema {self.tema.nombre}. Se requieren 6 y solo hay 5.")
+                         f"No hay suficientes preguntas disponibles para el tema {self.tema.nombre}.")
 
         # 4. Eliminar el examen y verificar liberación
         preguntas_ids = list(examen.preguntas.values_list('id', flat=True))

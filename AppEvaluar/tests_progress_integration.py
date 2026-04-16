@@ -54,7 +54,7 @@ class ProgressIntegrationTest(TestCase):
     def test_progress_registered_after_exam(self):
         """Prueba que se registre progreso automáticamente al finalizar un examen."""
         examen = ExamenDiagnostico.objects.create(nombre='Diagnóstico Inicial', tiempo_limite=30)
-        pregunta = Pregunta.objects.create(examen=examen, texto='P1', categoria='Triángulos')
+        pregunta = Pregunta.objects.create(examen=examen, texto='P1', tema=self.tema)
         opcion = Opcion.objects.create(pregunta=pregunta, texto='O1', es_correcta=True)
         
         # Simular envío de examen
