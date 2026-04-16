@@ -19,7 +19,7 @@ class BancoPreguntasFilterTests(TestCase):
         Ejercicio.objects.create(tema=self.tema1, texto="Pregunta T1-I", dificultad="Intermedio")
         Ejercicio.objects.create(tema=self.tema2, texto="Pregunta T2-B", dificultad="Básico")
         
-        self.url_list = reverse('banco_preguntas_list')
+        self.url_list = reverse('evaluar:banco_preguntas_list')
         self.client.login(username='docente_filter', password='password123')
 
     def test_filtrar_por_tema(self):

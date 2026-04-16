@@ -44,7 +44,7 @@ class AdaptiveIntegrationTest(TestCase):
         self.profile.save()
         
         # --- PASO 2: Iniciar práctica (debe cargar el ejercicio básico) ---
-        response = self.client.get(reverse('iniciar_practica'))
+        response = self.client.get(reverse('evaluar:iniciar_practica'))
         self.assertContains(response, "E Básico")
         
         # --- PASO 3: Resolver 5 ejercicios con éxito (simulamos 5 resultados) ---
@@ -52,7 +52,7 @@ class AdaptiveIntegrationTest(TestCase):
             e = Ejercicio.objects.create(tema=self.tema, texto=f"Ex {i}", dificultad='Básico')
             op = OpcionEjercicio.objects.create(ejercicio=e, texto="C", es_correcta=True)
             
-            self.client.post(reverse('validar_respuesta'), {
+            self.client.post(reverse('evaluar:validar_respuesta'), {
                 'ejercicio_id': e.id,
                 'opcion_id': op.id,
                 'tiempo': 5
@@ -63,5 +63,5 @@ class AdaptiveIntegrationTest(TestCase):
         self.assertEqual(self.profile.nivel_dificultad_actual, 'Intermedio')
         
         # --- PASO 5: La siguiente práctica debe cargar el intermedio ---
-        response2 = self.client.get(reverse('iniciar_practica'))
+        response2 = self.client.get(reverse('evaluar:iniciar_practica'))
         self.assertContains(response2, "E Intermedio")

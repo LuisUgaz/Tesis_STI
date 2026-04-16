@@ -90,7 +90,7 @@ class TeacherReportsIntegrationTest(TestCase):
     def test_json_endpoint_access_restricted(self):
         """Solo docentes pueden acceder al endpoint JSON"""
         self.client.login(username='student_test', password='pass')
-        response = self.client.get(reverse('reportes_data_json'))
+        response = self.client.get(reverse('evaluar:reportes_data_json'))
         self.assertEqual(response.status_code, 403)
 
     def test_json_endpoint_date_filtering(self):
@@ -99,14 +99,14 @@ class TeacherReportsIntegrationTest(TestCase):
         
         # Filtro de hoy (No debería encontrar el resultado de hace 10 días)
         hoy = timezone.now().date().isoformat()
-        response = self.client.get(reverse('reportes_data_json'), {'fecha_inicio': hoy})
+        response = self.client.get(reverse('evaluar:reportes_data_json'), {'fecha_inicio': hoy})
         data = response.json()
         self.assertEqual(data['summary']['total_estudiantes'], 1)
         self.assertEqual(data['summary']['precision_promedio'], 0) # Sin resultados en el rango
         
         # Filtro incluyendo hace 10 días
         pasado = (timezone.now() - timedelta(days=15)).date().isoformat()
-        response = self.client.get(reverse('reportes_data_json'), {'fecha_inicio': pasado})
+        response = self.client.get(reverse('evaluar:reportes_data_json'), {'fecha_inicio': pasado})
         data = response.json()
         self.assertEqual(data['summary']['precision_promedio'], 100.0)
 
@@ -123,14 +123,14 @@ class TeacherReportsIntegrationTest(TestCase):
         )
 
         # Filtrar por Tema 1 (Triángulos) - Debería ser 100% precisión
-        response = self.client.get(reverse('reportes_data_json'), {'tema': self.tema.id})
+        response = self.client.get(reverse('evaluar:reportes_data_json'), {'tema': self.tema.id})
         data = response.json()
         self.assertEqual(data['summary']['precision_promedio'], 100.0)
         self.assertIn('Triángulos', data['summary']['desempeno_por_tema'])
         self.assertNotIn('Ángulos', data['summary']['desempeno_por_tema'])
 
         # Filtrar por Tema 2 (Ángulos) - Debería ser 0% precisión
-        response = self.client.get(reverse('reportes_data_json'), {'tema': tema2.id})
+        response = self.client.get(reverse('evaluar:reportes_data_json'), {'tema': tema2.id})
         data = response.json()
         self.assertEqual(data['summary']['precision_promedio'], 0.0)
         self.assertIn('Ángulos', data['summary']['desempeno_por_tema'])
@@ -148,14 +148,14 @@ class TeacherReportsIntegrationTest(TestCase):
             'fecha_inicio': pasado,
             'tema': self.tema.id
         }
-        response = self.client.get(reverse('reportes_data_json'), params)
+        response = self.client.get(reverse('evaluar:reportes_data_json'), params)
         data = response.json()
         self.assertEqual(data['summary']['total_estudiantes'], 1)
         self.assertEqual(data['summary']['precision_promedio'], 100.0)
 
         # Filtro que falla por sección
         params['seccion'] = 'B'
-        response = self.client.get(reverse('reportes_data_json'), params)
+        response = self.client.get(reverse('evaluar:reportes_data_json'), params)
         data = response.json()
         self.assertEqual(data['summary']['total_estudiantes'], 0) # No hay estudiantes en 5to B
 

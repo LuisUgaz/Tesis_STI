@@ -131,10 +131,13 @@
                             </li>
                         {% elif user.profile.rol == 'Docente' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'reportes_docente' %}"><i class="fas fa-file-alt me-1"></i> Reportes</a>
+                                <a class="nav-link" href="{% url 'evaluar:reportes_docente' %}"><i class="fas fa-file-alt me-1"></i> Reportes</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'banco_preguntas_list' %}"><i class="fas fa-database me-1"></i> Banco</a>
+                                <a class="nav-link" href="{% url 'evaluar:banco_preguntas_list' %}"><i class="fas fa-database me-1"></i> Banco</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'evaluar:examen_dashboard' %}"><i class="fas fa-tasks me-1"></i> Exámenes</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'video_gestion_list' %}"><i class="fas fa-video me-1"></i> Videos</a>

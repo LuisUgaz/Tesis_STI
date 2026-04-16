@@ -58,3 +58,36 @@ class ExamenViewsTest(TestCase):
         response = self.client.post(reverse('evaluar:examen_delete', args=[examen.id]))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Examen.objects.filter(id=examen.id).exists())
+
+    def test_actualizacion_examen_view(self):
+        """Verificar que el docente puede actualizar el tema de un examen."""
+        # 1. Crear examen inicial
+        examen = Examen.objects.create(
+            nombre='Examen Inicial',
+            tema=self.tema,
+            cantidad_preguntas=2,
+            tiempo_limite=45
+        )
+        
+        # 2. Crear un nuevo tema
+        nuevo_tema = Tema.objects.create(nombre="Trigonometría")
+        Pregunta.objects.create(texto="P_Tri1", tema=nuevo_tema)
+        Pregunta.objects.create(texto="P_Tri2", tema=nuevo_tema)
+        
+        # 3. Datos de actualización
+        data = {
+            'nombre': 'Examen Actualizado',
+            'tema': nuevo_tema.id,
+            'cantidad_preguntas': 2,
+            'tiempo_limite': 30
+        }
+        
+        self.client.login(username='docente', password='password')
+        response = self.client.post(reverse('evaluar:examen_update', args=[examen.id]), data)
+        self.assertEqual(response.status_code, 302)
+        
+        # 4. Verificar cambios
+        examen.refresh_from_db()
+        self.assertEqual(examen.nombre, 'Examen Actualizado')
+        self.assertEqual(examen.tema, nuevo_tema)
+        self.assertEqual(examen.tiempo_limite, 30)

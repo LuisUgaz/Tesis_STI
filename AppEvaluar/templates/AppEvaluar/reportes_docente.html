@@ -62,15 +62,15 @@
                         <i class="fas fa-file-excel me-2"></i> Exportar a Excel
                     </button>
 
-                    <a href="{% url 'reportes_docente' %}" class="btn btn-secondary btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px; background-color: #6c757d; border: none;">
+                    <a href="{% url 'evaluar:reportes_docente' %}" class="btn btn-secondary btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px; background-color: #6c757d; border: none;">
                         <i class="fas fa-undo me-2"></i> Limpiar
                     </a>
 
-                    <a href="{% url 'banco_preguntas_create' %}" class="btn btn-primary btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px; background-color: var(--student-color); border: none;">
+                    <a href="{% url 'evaluar:banco_preguntas_create' %}" class="btn btn-primary btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px; background-color: var(--student-color); border: none;">
                         <i class="fas fa-plus-circle me-2"></i> Nueva Pregunta
                     </a>
                     
-                    <a href="{% url 'banco_preguntas_list' %}" class="btn btn-dark btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px;">
+                    <a href="{% url 'evaluar:banco_preguntas_list' %}" class="btn btn-dark btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px;">
                         <i class="fas fa-database me-2"></i> Gestionar Banco
                     </a>
                 </div>
@@ -307,7 +307,7 @@
         const params = new URLSearchParams(formData);
         
         try {
-            const response = await fetch(`{% url 'reportes_data_json' %}?${params.toString()}`);
+            const response = await fetch(`{% url 'evaluar:reportes_data_json' %}?${params.toString()}`);
             const data = await response.json();
             
             // 1. Actualizar Resumen
@@ -384,7 +384,7 @@
             const params = new URLSearchParams(formData);
             
             // Redirigir a la URL de exportación con los parámetros actuales
-            window.location.href = `{% url 'exportar_reporte_excel' %}?${params.toString()}`;
+            window.location.href = `{% url 'evaluar:exportar_reporte_excel' %}?${params.toString()}`;
         });
     });
 </script>

@@ -25,7 +25,7 @@ from django.urls import reverse_lazy
 from AppTutoria.models import Tema, ProgresoEstudiante
 from .services_export import generar_excel_reporte_docente
 from django.http import HttpResponse
-from .forms import EjercicioForm, OpcionEjercicioFormSet
+from .forms import EjercicioForm, OpcionEjercicioFormSet, ExamenForm
 from django.db import transaction
 from .utils_import import extraer_texto_pdf, extraer_texto_docx, analizar_preguntas_con_gemini
 from django.views import View
@@ -85,7 +85,7 @@ class ExamenDashboardView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
 
 class ExamenCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
     model = Examen
-    fields = ['nombre', 'tema', 'cantidad_preguntas', 'tiempo_limite']
+    form_class = ExamenForm
     template_name = 'AppEvaluar/examen_form.html'
     success_url = reverse_lazy('evaluar:examen_dashboard')
 
@@ -100,6 +100,37 @@ class ExamenCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
                 return super().form_valid(form)
         except ValueError as e:
             # Si falla la asignación (por falta de preguntas), cancelamos la creación
+            form.add_error('cantidad_preguntas', str(e))
+            return self.form_invalid(form)
+
+class ExamenUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
+    model = Examen
+    form_class = ExamenForm
+    template_name = 'AppEvaluar/examen_form.html'
+    success_url = reverse_lazy('evaluar:examen_dashboard')
+
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                # Al actualizar, si cambia el tema o la cantidad de preguntas, 
+                # debemos re-asignar las preguntas.
+                examen_previo = Examen.objects.get(pk=self.kwargs['pk'])
+                tema_cambio = (examen_previo.tema != form.cleaned_data['tema'])
+                cantidad_cambio = (examen_previo.cantidad_preguntas != form.cleaned_data['cantidad_preguntas'])
+                
+                self.object = form.save()
+                
+                if tema_cambio or cantidad_cambio:
+                    # Liberar preguntas actuales
+                    self.object.preguntas.update(examen_tema=None)
+                    # Asignar nuevas
+                    asignar_preguntas_aleatorias(self.object)
+                    messages.success(self.request, f"Examen '{self.object.nombre}' actualizado. Se han re-asignado las preguntas debido a cambios en el tema o cantidad.")
+                else:
+                    messages.success(self.request, f"Examen '{self.object.nombre}' actualizado correctamente.")
+                
+                return super().form_valid(form)
+        except ValueError as e:
             form.add_error('cantidad_preguntas', str(e))
             return self.form_invalid(form)
 
@@ -424,7 +455,7 @@ def rendir_examen(request, examen_id):
     # Validar si el estudiante ya realizó el examen (HU06)
     if ResultadoDiagnostico.objects.filter(estudiante=request.user, examen=examen).exists():
         messages.error(request, "Ya has realizado este examen diagnóstico.")
-        return redirect('ver_resultados', examen_id=examen.id)
+        return redirect('evaluar:ver_resultados', examen_id=examen.id)
 
     preguntas = examen.preguntas.all().prefetch_related('opciones')
     
@@ -492,8 +523,9 @@ def rendir_examen(request, examen_id):
         actualizar_metricas_estudiante(request.user, actividad_reciente=resultado_diag)
 
         # Registrar progreso centralizado por tema (HU17)
-        temas_evaluados = preguntas.values_list('categoria', flat=True).distinct()
+        temas_evaluados = preguntas.values_list('tema__nombre', flat=True).distinct()
         for nombre_tema in temas_evaluados:
+            if not nombre_tema: continue
             tema_obj = Tema.objects.filter(nombre=nombre_tema).first()
             if tema_obj:
                 registrar_progreso(
@@ -515,7 +547,7 @@ def rendir_examen(request, examen_id):
             del request.session[session_key]
             
         messages.success(request, "¡Examen enviado con éxito!")
-        return redirect('ver_resultados', examen_id=examen.id)
+        return redirect('evaluar:ver_resultados', examen_id=examen.id)
         
     return render(request, 'AppEvaluar/rendir_examen.html', {
         'examen': examen,
@@ -540,7 +572,7 @@ def ver_resultados(request, examen_id):
     # Si hay respuestas, calculamos el resumen por temas (esto es para el detalle visual)
     if respuestas.exists():
         for respuesta in respuestas:
-            tema = respuesta.pregunta.categoria
+            tema = respuesta.pregunta.tema.nombre if respuesta.pregunta.tema else "Sin Tema"
             if tema not in resumen_temas:
                 resumen_temas[tema] = {'correctas': 0, 'total': 0}
             
@@ -578,7 +610,7 @@ class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateV
     model = Ejercicio
     form_class = EjercicioForm
     template_name = 'AppEvaluar/banco_preguntas_form.html'
-    success_url = reverse_lazy('banco_preguntas_list')
+    success_url = reverse_lazy('evaluar:banco_preguntas_list')
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -635,7 +667,7 @@ class BancoPreguntasUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateV
     model = Ejercicio
     form_class = EjercicioForm
     template_name = 'AppEvaluar/banco_preguntas_edit.html'
-    success_url = reverse_lazy('banco_preguntas_list')
+    success_url = reverse_lazy('evaluar:banco_preguntas_list')
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -665,7 +697,7 @@ class BancoPreguntasDeleteView(LoginRequiredMixin, TeacherRequiredMixin, UpdateV
     model = Ejercicio
     fields = [] # No necesitamos campos del formulario, solo la acción POST
     template_name = 'AppEvaluar/banco_preguntas_list.html' # Fallback
-    success_url = reverse_lazy('banco_preguntas_list')
+    success_url = reverse_lazy('evaluar:banco_preguntas_list')
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -766,4 +798,4 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
                     preguntas_guardadas += 1
         
         messages.success(request, f"Se han importado exitosamente {preguntas_guardadas} preguntas al banco.")
-        return redirect('banco_preguntas_list')
+        return redirect('evaluar:banco_preguntas_list')

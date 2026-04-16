@@ -27,12 +27,12 @@ class EjercicioIntegrationTest(TestCase):
         self.client.login(username='alumno_final', password='password123')
         
         # 1. Acceder a la vista de inicio
-        response = self.client.get(reverse('iniciar_practica'))
+        response = self.client.get(reverse('evaluar:iniciar_practica'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "¿Suma?")
         
         # 2. Enviar respuesta correcta (simulando Fetch)
-        response_ajax = self.client.post(reverse('validar_respuesta'), {
+        response_ajax = self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio.id,
             'opcion_id': self.opcion.id,
             'tiempo': 5

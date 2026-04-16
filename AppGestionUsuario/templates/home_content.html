@@ -65,7 +65,7 @@
 
         {% elif user.profile.rol == 'Docente' %}
             <div class="col-md-4">
-                <a href="{% url 'reportes_docente' %}" class="text-decoration-none text-dark">
+                <a href="{% url 'evaluar:reportes_docente' %}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm p-4 text-center border-bottom border-success border-5">
                         <i class="fas fa-file-invoice-doll fa-3x role-teacher mb-3"></i>
                         <h5 class="fw-bold">Reportes de Aula</h5>
@@ -74,7 +74,7 @@
                 </a>
             </div>
             <div class="col-md-4">
-                <a href="{% url 'banco_preguntas_list' %}" class="text-decoration-none text-dark">
+                <a href="{% url 'evaluar:banco_preguntas_list' %}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm p-4 text-center border-bottom border-primary border-5">
                         <i class="fas fa-layer-group fa-3x text-primary mb-3"></i>
                         <h5 class="fw-bold">Banco de Preguntas</h5>
@@ -83,11 +83,20 @@
                 </a>
             </div>
             <div class="col-md-4">
+                <a href="{% url 'evaluar:examen_dashboard' %}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-warning border-5">
+                        <i class="fas fa-tasks fa-3x text-warning mb-3"></i>
+                        <h5 class="fw-bold">Gestión de Exámenes</h5>
+                        <p class="small text-muted">Crea y asigna exámenes por tema a los alumnos.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
                 <a href="{% url 'video_gestion_list' %}" class="text-decoration-none text-dark">
-                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-danger border-5">
-                        <i class="fas fa-play-circle fa-3x text-danger mb-3"></i>
-                        <h5 class="fw-bold">Videos Recomendados</h5>
-                        <p class="small text-muted">Administra los recursos multimedia de apoyo.</p>
+                    <div class="card h-100 shadow-sm p-4 text-center border-bottom border-info border-5">
+                        <i class="fas fa-video fa-3x text-info mb-3"></i>
+                        <h5 class="fw-bold">Gestión de Videos</h5>
+                        <p class="small text-muted">Sube y organiza material audiovisual por tema.</p>
                     </div>
                 </a>
             </div>

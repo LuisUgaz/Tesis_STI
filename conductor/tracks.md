@@ -202,3 +202,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU40 - Generar retroalimentación inteligente al finalizar el examen diagnóstico**
 *Link: [./tracks/user_ia_diagnostic_feedback_20260414/](./tracks/user_ia_diagnostic_feedback_20260414/)*
+\
+---
+
+- [~] **Track: HU41 - Asignar exmenes a temas**
+*Link: [./tracks/teacher_assign_exams_to_topics_20260415/](./tracks/teacher_assign_exams_to_topics_20260415/)*

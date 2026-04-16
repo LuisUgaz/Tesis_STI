@@ -24,14 +24,14 @@ class EjercicioViewsTest(TestCase):
     def test_iniciar_practica_sin_recomendacion(self):
         """No debería poder iniciar práctica si no tiene tema recomendado."""
         self.client.login(username='estudiante1', password='password123')
-        response = self.client.get(reverse('iniciar_practica'))
+        response = self.client.get(reverse('evaluar:iniciar_practica'))
         self.assertEqual(response.status_code, 403)
 
     def test_iniciar_practica_con_recomendacion(self):
         """Debería mostrar la página de práctica con los ejercicios del tema."""
         RecomendacionEstudiante.objects.create(usuario=self.user, tema=self.tema.nombre, metrica_desempeno=50)
         self.client.login(username='estudiante1', password='password123')
-        response = self.client.get(reverse('iniciar_practica'))
+        response = self.client.get(reverse('evaluar:iniciar_practica'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'AppEvaluar/practica_ejercicio.html')
 
@@ -40,7 +40,7 @@ class EjercicioViewsTest(TestCase):
         RecomendacionEstudiante.objects.create(usuario=self.user, tema=self.tema.nombre, metrica_desempeno=50)
         self.client.login(username='estudiante1', password='password123')
         
-        response = self.client.post(reverse('validar_respuesta'), {
+        response = self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio.id,
             'opcion_id': self.opcion_correcta.id,
             'tiempo': 10
@@ -66,7 +66,7 @@ class EjercicioViewsTest(TestCase):
         self.client.login(username='estudiante1', password='password123')
         
         # 2. Enviar respuesta incorrecta
-        response = self.client.post(reverse('validar_respuesta'), {
+        response = self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio.id,
             'opcion_id': self.opcion_incorrecta.id,
             'tiempo': 5

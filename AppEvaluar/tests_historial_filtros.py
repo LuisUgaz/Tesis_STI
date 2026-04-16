@@ -43,7 +43,7 @@ class HistorialFiltrosTests(TestCase):
         )
         ProgresoEstudiante.objects.filter(id=self.p3.id).update(fecha_registro=self.hace_una_semana)
 
-        self.url = reverse('historial_resultados')
+        self.url = reverse('evaluar:historial_resultados')
 
     def test_filter_by_date_range_start(self):
         """Probar filtrado solo con fecha de inicio."""

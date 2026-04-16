@@ -34,7 +34,7 @@ class GamificationIntegrationTest(TestCase):
         """Al responder correctamente un ejercicio básico, el perfil debe ganar 10 puntos."""
         self.client.login(username='gamestudent', password='password123')
         
-        self.client.post(reverse('validar_respuesta'), {
+        self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio_basico.id,
             'opcion_id': self.opcion_correcta.id,
             'tiempo': 10
@@ -47,7 +47,7 @@ class GamificationIntegrationTest(TestCase):
         """Al responder incorrectamente, el perfil debe ganar 2 puntos (esfuerzo)."""
         self.client.login(username='gamestudent', password='password123')
         
-        self.client.post(reverse('validar_respuesta'), {
+        self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio_basico.id,
             'opcion_id': self.opcion_incorrecta.id,
             'tiempo': 10
@@ -60,7 +60,7 @@ class GamificationIntegrationTest(TestCase):
         """La respuesta JSON de validación debe incluir los puntos ganados (para el frontend)."""
         self.client.login(username='gamestudent', password='password123')
         
-        response = self.client.post(reverse('validar_respuesta'), {
+        response = self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio_basico.id,
             'opcion_id': self.opcion_correcta.id,
             'tiempo': 10

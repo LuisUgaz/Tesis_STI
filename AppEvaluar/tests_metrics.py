@@ -19,7 +19,7 @@ class MetricsServiceTest(TestCase):
     def test_view_validar_respuesta_updates_metrics(self):
         self.client.login(username='metrics_student', password='password123')
         from django.urls import reverse
-        url = reverse('validar_respuesta')
+        url = reverse('evaluar:validar_respuesta')
         response = self.client.post(url, {
             'ejercicio_id': self.ejercicio.id,
             'opcion_id': self.opcion.id,

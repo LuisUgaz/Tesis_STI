@@ -348,7 +348,7 @@
             formData.append('csrfmiddlewaretoken', card.querySelector('[name=csrfmiddlewaretoken]').value);
 
             try {
-                const response = await fetch("{% url 'validar_respuesta' %}", {
+                const response = await fetch("{% url 'evaluar:validar_respuesta' %}", {
                     method: 'POST',
                     body: formData
                 });

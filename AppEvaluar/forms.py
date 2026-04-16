@@ -1,6 +1,17 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Ejercicio, OpcionEjercicio
+from .models import Ejercicio, OpcionEjercicio, Examen
+
+class ExamenForm(forms.ModelForm):
+    class Meta:
+        model = Examen
+        fields = ['nombre', 'tema', 'cantidad_preguntas', 'tiempo_limite']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del examen...'}),
+            'tema': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad_preguntas': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'tiempo_limite': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'En minutos...'}),
+        }
 
 class EjercicioForm(forms.ModelForm):
     class Meta:

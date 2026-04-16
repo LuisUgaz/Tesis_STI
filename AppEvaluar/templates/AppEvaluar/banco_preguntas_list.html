@@ -8,10 +8,10 @@
             <p class="text-muted small">Administre, edite y mantenga actualizados los ejercicios geométricos.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{% url 'importar_banco' %}" class="btn btn-outline-primary shadow-sm fw-bold d-flex align-items-center gap-2" style="border-radius: 10px;">
+            <a href="{% url 'evaluar:importar_banco' %}" class="btn btn-outline-primary shadow-sm fw-bold d-flex align-items-center gap-2" style="border-radius: 10px;">
                 🤖 IMPORTACIÓN INTELIGENTE
             </a>
-            <a href="{% url 'banco_preguntas_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
+            <a href="{% url 'evaluar:banco_preguntas_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
                 ➕ NUEVA PREGUNTA
             </a>
         </div>
@@ -47,7 +47,7 @@
                     <button type="submit" class="btn btn-dark fw-bold w-100" style="border-radius: 10px;">
                         🔍 BUSCAR
                     </button>
-                    <a href="{% url 'banco_preguntas_list' %}" class="btn btn-outline-secondary fw-bold w-100" style="border-radius: 10px;">
+                    <a href="{% url 'evaluar:banco_preguntas_list' %}" class="btn btn-outline-secondary fw-bold w-100" style="border-radius: 10px;">
                         🔄 LIMPIAR
                     </a>
                 </div>
@@ -127,7 +127,7 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group" role="group">
-                                    <a href="{% url 'banco_preguntas_edit' pk=ejercicio.pk %}" class="btn btn-outline-primary btn-sm fw-bold px-3" style="border-radius: 8px 0 0 8px;">
+                                    <a href="{% url 'evaluar:banco_preguntas_edit' pk=ejercicio.pk %}" class="btn btn-outline-primary btn-sm fw-bold px-3" style="border-radius: 8px 0 0 8px;">
                                         ✏️ Editar
                                     </a>
                                     <button type="button" 
@@ -147,7 +147,7 @@
                             <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="bi bi-info-circle fs-2"></i>
                                 <p class="mt-2 mb-0">No se encontraron ejercicios que coincidan con los filtros.</p>
-                                <a href="{% url 'banco_preguntas_list' %}" class="btn btn-link text-decoration-none">Ver todos los ejercicios</a>
+                                <a href="{% url 'evaluar:banco_preguntas_list' %}" class="btn btn-link text-decoration-none">Ver todos los ejercicios</a>
                             </td>
                         </tr>
                         {% endfor %}

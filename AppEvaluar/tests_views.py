@@ -3,21 +3,23 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from AppGestionUsuario.models import Profile
 from .models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
+from AppTutoria.models import Tema
 
 class EvaluarViewsTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user_student = User.objects.create_user(username='student', password='password123')
-        Profile.objects.create(user=self.user_student, nombres='Juan', apellidos='Perez', rol='Estudiante')
+        Profile.objects.create(user=self.user_student, nombres='Juan', apellidos='Perez', rol='Estudiante', grado='5', seccion='A')
         
         self.user_teacher = User.objects.create_user(username='teacher', password='password123')
         Profile.objects.create(user=self.user_teacher, nombres='Maria', apellidos='Gomez', rol='Docente')
 
+        self.tema_obj = Tema.objects.create(nombre='Gral', slug='gral')
         self.examen = ExamenDiagnostico.objects.create(nombre="Examen Test", tiempo_limite=30)
-        self.pregunta = Pregunta.objects.create(examen=self.examen, texto="Pregunta 1", tipo='OPCION_MULTIPLE', categoria='Gral')
+        self.pregunta = Pregunta.objects.create(examen=self.examen, texto="Pregunta 1", tipo='OPCION_MULTIPLE', tema=self.tema_obj)
         Opcion.objects.create(pregunta=self.pregunta, texto="Opcion A", es_correcta=True)
 
-        self.url_examen = reverse('rendir_examen', kwargs={'examen_id': self.examen.id})
+        self.url_examen = reverse('evaluar:rendir_examen', kwargs={'examen_id': self.examen.id})
 
     def test_examen_view_requires_login(self):
         response = self.client.get(self.url_examen)
@@ -79,7 +81,7 @@ class EvaluarViewsTest(TestCase):
             pregunta=self.pregunta,
             opcion_seleccionada=Opcion.objects.get(texto="Opcion A")
         )
-        url_resultados = reverse('ver_resultados', kwargs={'examen_id': self.examen.id})
+        url_resultados = reverse('evaluar:ver_resultados', kwargs={'examen_id': self.examen.id})
         response = self.client.get(url_resultados)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'AppEvaluar/resultados.html')

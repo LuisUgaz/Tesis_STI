@@ -170,7 +170,7 @@
                 <div class="info-box">
                     <p>Aún no tienes un tema recomendado. Realiza el examen diagnóstico para personalizar tu aprendizaje.</p>
                     {% if examen %}
-                        <a href="{% url 'rendir_examen' examen_id=examen.id %}" class="btn-diagnostico">Rendir Diagnóstico</a>
+                        <a href="{% url 'evaluar:rendir_examen' examen_id=examen.id %}" class="btn-diagnostico">Rendir Diagnóstico</a>
                     {% else %}
                         <p style="color: #d32f2f; font-weight: bold;">El examen diagnóstico no está disponible en este momento.</p>
                     {% endif %}

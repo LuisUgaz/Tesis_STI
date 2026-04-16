@@ -11,7 +11,7 @@
                             <h3 class="mb-0 fw-bold">✏️ Editar Pregunta</h3>
                             <p class="text-muted small">Actualice el contenido del ejercicio ID: {{ object.id }}</p>
                         </div>
-                        <a href="{% url 'banco_preguntas_list' %}" class="btn btn-outline-secondary btn-sm fw-bold" style="border-radius: 8px;">
+                        <a href="{% url 'evaluar:banco_preguntas_list' %}" class="btn btn-outline-secondary btn-sm fw-bold" style="border-radius: 8px;">
                             ⬅️ Volver al listado
                         </a>
                     </div>
@@ -116,7 +116,7 @@
                         </div>
 
                         <div class="mt-5 d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'banco_preguntas_list' %}" class="btn btn-light px-4 fw-bold">Cancelar cambios</a>
+                            <a href="{% url 'evaluar:banco_preguntas_list' %}" class="btn btn-light px-4 fw-bold">Cancelar</a>
                             <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
                                 ACTUALIZAR PREGUNTA
                             </button>

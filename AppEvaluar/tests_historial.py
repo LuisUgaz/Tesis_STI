@@ -35,7 +35,7 @@ class HistorialResultadosTests(TestCase):
             seccion='B'
         )
 
-        self.url_historial = reverse('historial_resultados')
+        self.url_historial = reverse('evaluar:historial_resultados')
 
     def test_historial_requires_login(self):
         response = self.client.get(self.url_historial)

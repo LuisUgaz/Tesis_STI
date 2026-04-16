@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
-from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico
+from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico, Examen
 from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
 from .services import registrar_progreso
 
@@ -74,8 +74,9 @@ def lista_temas(request):
     if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
         raise PermissionDenied("No tienes permiso para acceder a la lista de temas.")
 
-    # Lista de temas desde la base de datos
-    temas_db = list(Tema.objects.all())
+    # Lista de temas desde la base de datos con sus exámenes asociados
+    temas_qs = Tema.objects.prefetch_related('examenes').all()
+    temas_db = list(temas_qs)
     
     # Obtener recomendación (HU08) - Solo aplica lógica visual para estudiantes
     recomendacion = None

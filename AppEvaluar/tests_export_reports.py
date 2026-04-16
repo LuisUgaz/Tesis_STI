@@ -34,7 +34,7 @@ class ExportReportsTests(TestCase):
             seccion='A'
         )
         
-        self.export_url = reverse('exportar_reporte_excel')
+        self.export_url = reverse('evaluar:exportar_reporte_excel')
 
     def test_export_access_restricted_to_docentes(self):
         """La URL de exportación solo debe ser accesible para docentes."""

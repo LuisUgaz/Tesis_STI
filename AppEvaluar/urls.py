@@ -22,6 +22,7 @@ urlpatterns = [
     # Gestión de Exámenes por Tema (HU39)
     path('examenes/', views.ExamenDashboardView.as_view(), name='examen_dashboard'),
     path('examenes/nuevo/', views.ExamenCreateView.as_view(), name='examen_create'),
+    path('examenes/editar/<int:pk>/', views.ExamenUpdateView.as_view(), name='examen_update'),
     path('examenes/eliminar/<int:pk>/', views.ExamenDeleteView.as_view(), name='examen_delete'),
 
     # Retroalimentación Inteligente (HU40)

@@ -32,7 +32,7 @@ class ProgressIntegrationTest(TestCase):
 
     def test_progress_registered_after_exercise(self):
         """Prueba que se registre progreso automáticamente al validar una respuesta de ejercicio."""
-        response = self.client.post(reverse('validar_respuesta'), {
+        response = self.client.post(reverse('evaluar:validar_respuesta'), {
             'ejercicio_id': self.ejercicio.id,
             'opcion_id': self.opcion.id,
             'tiempo': 10
@@ -60,7 +60,7 @@ class ProgressIntegrationTest(TestCase):
         # Simular envío de examen
         # Primero necesitamos el tema 'Triángulos' ya existe
         
-        response = self.client.post(reverse('rendir_examen', args=[examen.id]), {
+        response = self.client.post(reverse('evaluar:rendir_examen', args=[examen.id]), {
             f'pregunta_{pregunta.id}': opcion.id
         })
         self.assertEqual(response.status_code, 302) # Redirect to results

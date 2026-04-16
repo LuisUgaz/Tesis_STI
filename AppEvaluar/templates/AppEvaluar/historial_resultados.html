@@ -151,7 +151,7 @@
         </div>
 
         <button type="submit" class="btn-filter">Filtrar</button>
-        <a href="{% url 'historial_resultados' %}" class="btn-clear">Limpiar</a>
+        <a href="{% url 'evaluar:historial_resultados' %}" class="btn-clear">Limpiar</a>
     </form>
 
     {% if not progresos and tema_seleccionado or fecha_inicio or fecha_fin %}

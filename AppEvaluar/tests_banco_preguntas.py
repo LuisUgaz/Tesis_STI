@@ -16,8 +16,8 @@ class BancoPreguntasTests(TestCase):
         
         self.tema = Tema.objects.create(nombre="Triángulos", slug="triangulos")
         try:
-            self.url_create = reverse('banco_preguntas_create')
-            self.url_list = reverse('banco_preguntas_list')
+            self.url_create = reverse('evaluar:banco_preguntas_create')
+            self.url_list = reverse('evaluar:banco_preguntas_list')
         except:
             self.url_create = '/evaluar/banco-preguntas/nuevo/'
             self.url_list = '/evaluar/banco-preguntas/'
@@ -26,7 +26,7 @@ class BancoPreguntasTests(TestCase):
         """Debe marcar un ejercicio como inactivo en lugar de borrarlo físicamente."""
         ejercicio = Ejercicio.objects.create(tema=self.tema, texto="Para eliminar", dificultad="Básico")
         try:
-            url_delete = reverse('banco_preguntas_delete', kwargs={'pk': ejercicio.pk})
+            url_delete = reverse('evaluar:banco_preguntas_delete', kwargs={'pk': ejercicio.pk})
         except:
             url_delete = f'/evaluar/banco-preguntas/eliminar/{ejercicio.pk}/'
 
@@ -66,7 +66,7 @@ class BancoPreguntasTests(TestCase):
         Ejercicio.objects.create(tema=self.tema, texto="Pregunta Inactiva", es_activo=False, dificultad="Básico")
 
         self.client.login(username='estudiante1', password='password123')
-        url_practica = reverse('iniciar_practica')
+        url_practica = reverse('evaluar:iniciar_practica')
         
         response = self.client.get(url_practica)
         self.assertContains(response, "Pregunta Activa")
@@ -76,7 +76,7 @@ class BancoPreguntasTests(TestCase):
         """Un estudiante no debe poder eliminar (desactivar) preguntas."""
         ejercicio = Ejercicio.objects.create(tema=self.tema, texto="Prohibido borrar", dificultad="Básico")
         try:
-            url_delete = reverse('banco_preguntas_delete', kwargs={'pk': ejercicio.pk})
+            url_delete = reverse('evaluar:banco_preguntas_delete', kwargs={'pk': ejercicio.pk})
         except:
             url_delete = f'/evaluar/banco-preguntas/eliminar/{ejercicio.pk}/'
 
@@ -175,7 +175,7 @@ class BancoPreguntasTests(TestCase):
             ))
 
         try:
-            url_edit = reverse('banco_preguntas_edit', kwargs={'pk': ejercicio.pk})
+            url_edit = reverse('evaluar:banco_preguntas_edit', kwargs={'pk': ejercicio.pk})
         except:
             url_edit = f'/evaluar/banco-preguntas/editar/{ejercicio.pk}/'
 
@@ -228,3 +228,4 @@ class BancoPreguntasTests(TestCase):
         opc2 = ejercicio.opciones.get(id=opciones_objs[1].id)
         self.assertEqual(opc2.texto, 'Opción 2 editada (Ahora correcta)')
         self.assertTrue(opc2.es_correcta)
+
