@@ -18,6 +18,20 @@ class ContenidoTema(models.Model):
     def __str__(self):
         return f"Contenido de {self.tema.nombre}"
 
+class ImagenContenido(models.Model):
+    contenido = models.ForeignKey(ContenidoTema, on_delete=models.CASCADE, related_name='imagenes')
+    imagen = models.ImageField(upload_to='teoria_imagenes/')
+    orden = models.PositiveIntegerField(default=1, help_text="Orden de aparición en el carrusel")
+    descripcion_alt = models.CharField(max_length=200, blank=True, null=True, help_text="Descripción para accesibilidad")
+
+    class Meta:
+        verbose_name = "Imagen de Teoría"
+        verbose_name_plural = "Imágenes de Teoría"
+        ordering = ['orden']
+
+    def __str__(self):
+        return f"Imagen {self.orden} de {self.contenido.tema.nombre}"
+
 class VideoTema(models.Model):
     tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='videos')
     titulo = models.CharField(max_length=200)
@@ -71,6 +85,7 @@ class ProgresoEstudiante(models.Model):
     grado = models.CharField(max_length=10)
     seccion = models.CharField(max_length=10)
     referencia_id = models.PositiveIntegerField(null=True, blank=True, help_text="ID de la actividad específica (ejercicio, video, etc.)")
+    porcentaje_completado = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, help_text="Porcentaje de avance en la actividad (0-100)")
 
     class Meta:
         verbose_name = "Progreso del Estudiante"

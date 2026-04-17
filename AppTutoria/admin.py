@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo
+from .models import Tema, ContenidoTema, ImagenContenido, VideoTema, VisualizacionVideo
+
+class ImagenContenidoInline(admin.TabularInline):
+    model = ImagenContenido
+    extra = 5  # Muestra 5 espacios vacíos para subir imágenes rápidamente
+    fields = ('imagen', 'orden', 'descripcion_alt')
 
 @admin.register(Tema)
 class TemaAdmin(admin.ModelAdmin):
@@ -9,6 +14,7 @@ class TemaAdmin(admin.ModelAdmin):
 @admin.register(ContenidoTema)
 class ContenidoTemaAdmin(admin.ModelAdmin):
     list_display = ('tema', 'fecha_actualizacion')
+    inlines = [ImagenContenidoInline]
 
 @admin.register(VideoTema)
 class VideoTemaAdmin(admin.ModelAdmin):

@@ -212,3 +212,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU42 - Mejorar el motor de recomendación adaptativa y el ajuste de dificultad**
 *Link: [./tracks/user_adaptive_recommendation_v2_20260416/](./tracks/user_adaptive_recommendation_v2_20260416/)*
+
+---
+
+- [x] **Track: HU43 - Visualizar teoría mediante carrusel de imágenes por tema**
+*Link: [./tracks/user_visualize_theory_carousel_20260417/](./tracks/user_visualize_theory_carousel_20260417/)*

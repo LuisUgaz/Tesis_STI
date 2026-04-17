@@ -1,9 +1,11 @@
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico, Examen
+from AppEvaluar.views import student_required
 from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
 from .services import registrar_progreso
 
@@ -221,3 +223,38 @@ def registrar_visualizacion(request):
         'contador': visualizacion.contador,
         'video': video.titulo
     })
+
+@login_required
+@student_required
+@require_POST
+def actualizar_progreso_teoria(request):
+    """
+    Actualiza el progreso de teoría mediante AJAX (HU43).
+    Recibe tema_id, pagina_actual y total_paginas.
+    """
+    try:
+        data = json.loads(request.body)
+        tema_id = data.get('tema_id')
+        pagina_actual = data.get('pagina_actual')
+        total_paginas = data.get('total_paginas')
+
+        if not all([tema_id, pagina_actual, total_paginas]):
+            return JsonResponse({'success': False, 'error': 'Faltan parámetros'}, status=400)
+
+        tema = get_object_or_404(Tema, id=tema_id)
+        
+        # Calcular porcentaje
+        porcentaje = (pagina_actual / total_paginas) * 100
+        
+        # Registrar o actualizar progreso
+        registrar_progreso(
+            usuario=request.user,
+            tema=tema,
+            tipo_actividad='Teoría',
+            referencia_id=pagina_actual,
+            porcentaje=porcentaje
+        )
+
+        return JsonResponse({'success': True, 'porcentaje': porcentaje})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

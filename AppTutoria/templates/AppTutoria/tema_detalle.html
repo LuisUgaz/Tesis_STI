@@ -226,9 +226,138 @@
                 padding: 1rem;
             }
         }
+
+        /* Carousel Styles (HU43) */
+        .carousel-container {
+            position: relative;
+            background: #2c3e50;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .carousel-viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            position: relative;
+            cursor: zoom-in;
+        }
+
+        .carousel-image {
+            max-width: 100%;
+            max-height: 600px;
+            display: none;
+            user-select: none;
+        }
+
+        .carousel-image.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .carousel-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--card-bg);
+            border-top: 1px solid #eee;
+        }
+
+        .carousel-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .carousel-btn:hover:not(:disabled) {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .carousel-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .carousel-progress {
+            font-weight: bold;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* Lightbox Styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            max-width: 95%;
+            max-height: 95%;
+            border-radius: 5px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 3rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .no-content-msg {
+            text-align: center;
+            padding: 3rem;
+            background: #fff3cd;
+            border-radius: 15px;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
+    <!-- Lightbox for Fullscreen (HU43) -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img src="" alt="Fullscreen" class="lightbox-content" id="lightbox-img">
+    </div>
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -292,7 +421,43 @@
 
                 {% elif seccion == 'teoria' %}
                     {% if contenido %}
-                        {{ contenido.cuerpo_html|safe }}
+                        <div class="content-text" style="margin-bottom: 2rem;">
+                            {{ contenido.cuerpo_html|safe }}
+                        </div>
+
+                        <!-- Carrusel de Imágenes (HU43) -->
+                        <div id="carousel-section">
+                            <h3 style="color: var(--primary-color); margin-bottom: 1.5rem;">📚 Visualización Interactiva</h3>
+                            
+                            {% if contenido.imagenes.all %}
+                                <div class="carousel-container">
+                                    <div class="carousel-viewport" id="carousel-viewport">
+                                        {% for img in contenido.imagenes.all %}
+                                            <img src="{{ img.imagen.url }}" 
+                                                 alt="{{ img.descripcion_alt|default:'Imagen de teoría' }}" 
+                                                 class="carousel-image {% if forloop.first %}active{% endif %}"
+                                                 data-index="{{ forloop.counter }}">
+                                        {% endfor %}
+                                    </div>
+                                    <div class="carousel-controls">
+                                        <button class="carousel-btn" id="prev-btn" disabled>
+                                            <span>⬅️</span> Anterior
+                                        </button>
+                                        <div class="carousel-progress" id="carousel-progress">
+                                            Página 1 de {{ contenido.imagenes.count }}
+                                        </div>
+                                        <button class="carousel-btn" id="next-btn" {% if contenido.imagenes.count <= 1 %}disabled{% endif %}>
+                                            Siguiente <span>➡️</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="no-content-msg">
+                                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">⚠️</span>
+                                    No hay contenido visual disponible para este tema.
+                                </div>
+                            {% endif %}
+                        </div>
                         
                         {% if contenido.material_pdf %}
                             <div class="material-box">
@@ -320,5 +485,105 @@
             </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('.carousel-image');
+            if (images.length === 0) return;
+
+            let currentIndex = 0;
+            const total = images.length;
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const progressText = document.getElementById('carousel-progress');
+            const viewport = document.getElementById('carousel-viewport');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxClose = document.querySelector('.lightbox-close');
+
+            // Configuración CSRF para peticiones AJAX
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+
+            function updateCarousel(index) {
+                images.forEach(img => img.classList.remove('active'));
+                images[index].classList.add('active');
+                
+                currentIndex = index;
+                progressText.innerText = `Página ${index + 1} de ${total}`;
+                
+                prevBtn.disabled = index === 0;
+                nextBtn.disabled = index === total - 1;
+
+                // Actualizar progreso en el servidor (HU43)
+                {% if not es_docente %}
+                fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        tema_id: "{{ tema.id }}",
+                        pagina_actual: index + 1,
+                        total_paginas: total
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Progreso actualizado: ${data.porcentaje}%`);
+                    }
+                })
+                .catch(error => console.error('Error al actualizar progreso:', error));
+                {% endif %}
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < total - 1) updateCarousel(currentIndex + 1);
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) updateCarousel(currentIndex - 1);
+            });
+
+            // Soporte de Teclado (HU43)
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
+                if (e.key === 'ArrowLeft' && !prevBtn.disabled) prevBtn.click();
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) lightboxClose.click();
+            });
+
+            // Lightbox / Pantalla Completa (HU43)
+            viewport.addEventListener('click', () => {
+                const activeImg = images[currentIndex];
+                lightboxImg.src = activeImg.src;
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Evitar scroll
+            });
+
+            lightboxClose.addEventListener('click', () => {
+                lightbox.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) lightboxClose.click();
+            });
+        });
+    </script>
 </body>
 </html>
