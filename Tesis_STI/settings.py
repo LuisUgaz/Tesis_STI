@@ -179,3 +179,8 @@ JAZMIN_UI_LOGS = {
 }
 
 GEMINI_API_KEY = 'AIzaSyB5agRah-CAGfCFTLlLXF7iKL-J-D2oC4E'
+
+# Multimedia: imágenes y videos
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+

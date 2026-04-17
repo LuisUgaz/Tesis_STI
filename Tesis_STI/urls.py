@@ -19,6 +19,8 @@ from django.urls import path, include
 from AppGestionUsuario.views import CustomLoginView, CustomLogoutView, HomeView
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,3 +31,7 @@ urlpatterns = [
     path('logout/', CustomLogoutView.as_view(next_page='login'), name='logout'),
     path('', HomeView.as_view(), name='home'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

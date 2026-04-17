@@ -9,17 +9,17 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Registro de usuarios con roles y campos extendidos (HU01)**
+- [x] **Track: Registro de usuarios con roles y campos extendidos (HU01)**
   *Link: [./tracks/user_registration_20260328/](./tracks/user_registration_20260328/)*
 
 ---
 
-- [ ] **Track: Inicio de Sesión de Usuarios (HU02)**
+- [x] **Track: Inicio de Sesión de Usuarios (HU02)**
   *Link: [./tracks/user_login_20260329/](./tracks/user_login_20260329/)*
 
 ---
 
-- [ ] **Track: Cierre de Sesión de Usuarios (HU03)**
+- [x] **Track: Cierre de Sesión de Usuarios (HU03)**
   *Link: [./tracks/user_logout_20260329/](./tracks/user_logout_20260329/)*
 
 ---
@@ -40,7 +40,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: HU07 - Procesar resultados para recomendación**
+- [x] **Track: HU07 - Procesar resultados para recomendación (Subsumida por HU42)**
   *Link: [./tracks/user_recommendation_logic_20260331/](./tracks/user_recommendation_logic_20260331/)*
 
 ---
@@ -50,7 +50,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: HU09 - Visualizar temas disponibles**
+- [x] **Track: HU09 - Visualizar temas disponibles**
 *Link: [./tracks/user_visualize_topics_20260403/](./tracks/user_visualize_topics_20260403/)*
 
 ---
@@ -95,7 +95,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: HU18 - Consultar historial de resultados**
+- [x] **Track: HU18 - Consultar historial de resultados**
 *Link: [./tracks/user_consult_results_history_20260412/](./tracks/user_consult_results_history_20260412/)*
 
 ---
@@ -205,7 +205,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 \
 ---
 
-- [~] **Track: HU41 - Asignar exmenes a temas**
+- [x] **Track: HU41 - Asignar exmenes a temas**
 *Link: [./tracks/teacher_assign_exams_to_topics_20260415/](./tracks/teacher_assign_exams_to_topics_20260415/)*
 
 ---

@@ -59,6 +59,18 @@
             color: var(--primary-color);
         }
 
+        .pregunta-imagen {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+
         .opciones {
             display: flex;
             flex-direction: column;
@@ -264,9 +276,13 @@
                     <div class="pregunta-texto">
                         {{ forloop.counter }}. {{ pregunta.texto }}
                         <small style="display: block; color: #999; font-size: 0.8rem; font-weight: normal;">
-                            Categoría: {{ pregunta.categoria }}
+                            Categoría: {{ pregunta.tema.nombre|default:"Sin categoría" }}
                         </small>
                     </div>
+
+                    {% if pregunta.imagen %}
+                        <img src="{{ pregunta.imagen.url }}" alt="Imagen de la pregunta" class="pregunta-imagen">
+                    {% endif %}
 
                     {% if pregunta.tipo == 'OPCION_MULTIPLE' %}
                         <div class="opciones">

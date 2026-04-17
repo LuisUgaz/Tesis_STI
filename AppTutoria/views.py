@@ -134,11 +134,15 @@ def tema_detalle(request, slug):
                 tipo_actividad='Teoría'
             )
     
+    # HU41: Obtener exámenes asociados al tema
+    examenes = Examen.objects.filter(tema=tema)
+    
     return render(request, 'AppTutoria/tema_detalle.html', {
         'tema': tema,
         'contenido': contenido,
         'seccion': seccion,
-        'es_docente': es_docente
+        'es_docente': es_docente,
+        'examenes': examenes
     })
 
 @login_required

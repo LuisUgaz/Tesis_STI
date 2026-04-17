@@ -17,7 +17,7 @@ class PreguntaAdmin(admin.ModelAdmin):
     inlines = [OpcionInline]
     fieldsets = (
         (None, {
-            'fields': ('examen', 'texto', 'tipo')
+            'fields': ('examen', 'texto', 'imagen', 'tipo')
         }),
         ('Clasificación Académica', {
             'fields': ('tema', 'dificultad'),
