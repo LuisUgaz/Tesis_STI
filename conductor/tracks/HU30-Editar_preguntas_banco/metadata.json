@@ -1,0 +1,8 @@
+{
+    "track_id":  "HU30-Editar_preguntas_banco",
+    "type":  "feature",
+    "status":  "new",
+    "created_at":  "2026-04-13T12:00:00Z",
+    "updated_at":  "2026-04-13T12:00:00Z",
+    "description":  "HU30 - Editar preguntas del banco: Como docente quiero editar preguntas existentes para mantener actualizado el banco de problemas."
+}

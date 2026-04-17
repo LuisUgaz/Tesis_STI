@@ -1,0 +1,8 @@
+{
+    "track_id":  "HU40-IA_Feedback_examen_diagnostico",
+    "type":  "feature",
+    "status":  "new",
+    "created_at":  "2026-04-14T12:00:00Z",
+    "updated_at":  "2026-04-14T12:00:00Z",
+    "description":  "HU40 - Generar retroalimentación inteligente al finalizar el examen diagnóstico usando Gemini 1.5 Flash."
+}

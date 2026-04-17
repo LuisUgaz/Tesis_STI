@@ -1,0 +1,8 @@
+{
+    "track_id":  "HU07-Logica_recomendacion",
+    "type":  "feature",
+    "status":  "new",
+    "created_at":  "2026-03-31T17:15:00Z",
+    "updated_at":  "2026-03-31T17:15:00Z",
+    "description":  "HU07 - Procesar resultados para recomendación: Como sistema quiero procesar los resultados del diagnóstico para determinar el tema que el estudiante debe reforzar."
+}

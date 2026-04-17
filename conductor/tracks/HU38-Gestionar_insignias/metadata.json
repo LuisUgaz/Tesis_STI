@@ -1,0 +1,8 @@
+{
+    "track_id":  "HU38-Gestionar_insignias",
+    "type":  "feature",
+    "status":  "new",
+    "created_at":  "2026-04-14T15:33:00Z",
+    "updated_at":  "2026-04-14T15:33:00Z",
+    "description":  "\"HU38 - Gestionar insignias\" Desarrollar la siguiente historia de usuario para el proyecto de tesis “Sistema Tutor Inteligente Adaptativo para el aprendizaje de problemas geométricos”, usando Python, Django y PostgreSQL. Historia de usuario: Como administrador quiero gestionar las insignias del sistema para definir y mantener las recompensas disponibles."
+}

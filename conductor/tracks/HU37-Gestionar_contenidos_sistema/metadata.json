@@ -1,0 +1,8 @@
+{
+    "track_id":  "HU37-Gestionar_contenidos_sistema",
+    "type":  "feature",
+    "status":  "new",
+    "created_at":  "2026-04-14T14:37:00Z",
+    "updated_at":  "2026-04-14T14:37:00Z",
+    "description":  "\"HU37 - Gestionar contenidos del sistema\" Desarrollar la siguiente historia de usuario para el proyecto de tesis “Sistema Tutor Inteligente Adaptativo para el aprendizaje de problemas geométricos”, usando Python, Django y PostgreSQL. Historia de usuario: Como administrador quiero gestionar contenidos generales para mantener actualizado el sistema."
+}
