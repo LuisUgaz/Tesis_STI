@@ -22,9 +22,10 @@ def registrar_progreso(usuario, tema, tipo_actividad, referencia_id=None, porcen
     progreso_existente = ProgresoEstudiante.objects.filter(**query_params).first()
     ya_registrado = progreso_existente is not None
 
-    profile = usuario.profile
-    grado = profile.grado
-    seccion = profile.seccion
+    # 2. Obtener datos del perfil con seguridad
+    profile = getattr(usuario, 'profile', None)
+    grado = (profile.grado if profile and profile.grado else 'N/A')[:10]
+    seccion = (profile.seccion if profile and profile.seccion else 'N/A')[:10]
     
     if tipo_actividad == 'Teoría' and ya_registrado:
         # Actualizar el registro existente

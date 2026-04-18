@@ -36,7 +36,7 @@
     <div class="row g-4">
         {% if user.profile.rol == 'Estudiante' %}
             <div class="col-md-4">
-                <a href="{% url 'lista_temas' %}" class="text-decoration-none text-dark">
+                <a href="{% url 'tutoria:lista_temas' %}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm p-4 text-center border-bottom border-primary border-5">
                         <i class="fas fa-book-open fa-3x role-student mb-3"></i>
                         <h5 class="fw-bold">Mis Temas</h5>
@@ -92,7 +92,7 @@
                 </a>
             </div>
             <div class="col-md-4">
-                <a href="{% url 'video_gestion_list' %}" class="text-decoration-none text-dark">
+                <a href="{% url 'tutoria:video_gestion_list' %}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow-sm p-4 text-center border-bottom border-info border-5">
                         <i class="fas fa-video fa-3x text-info mb-3"></i>
                         <h5 class="fw-bold">Gestión de Videos</h5>

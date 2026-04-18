@@ -31,7 +31,7 @@ class TutoriaGamificationIntegrationTest(TestCase):
         """Al registrar visualización de video, el perfil debe ganar 5 puntos."""
         self.client.login(username='tutstudent', password='password123')
         
-        response = self.client.post(reverse('registrar_visualizacion'), {
+        response = self.client.post(reverse('tutoria:registrar_visualizacion'), {
             'video_id': self.video.id
         })
         
@@ -44,9 +44,9 @@ class TutoriaGamificationIntegrationTest(TestCase):
         self.client.login(username='tutstudent', password='password123')
         
         # Primera vista
-        self.client.post(reverse('registrar_visualizacion'), {'video_id': self.video.id})
+        self.client.post(reverse('tutoria:registrar_visualizacion'), {'video_id': self.video.id})
         # Segunda vista
-        self.client.post(reverse('registrar_visualizacion'), {'video_id': self.video.id})
+        self.client.post(reverse('tutoria:registrar_visualizacion'), {'video_id': self.video.id})
         
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 5)
@@ -56,7 +56,7 @@ class TutoriaGamificationIntegrationTest(TestCase):
         self.client.login(username='tutstudent', password='password123')
         
         # En tema_detalle, la teoría se registra si seccion == 'teoria'
-        response = self.client.get(reverse('tema_detalle', kwargs={'slug': self.tema.slug}), {
+        response = self.client.get(reverse('tutoria:tema_detalle', kwargs={'slug': self.tema.slug}), {
             'seccion': 'teoria'
         })
         
@@ -69,9 +69,9 @@ class TutoriaGamificationIntegrationTest(TestCase):
         self.client.login(username='tutstudent', password='password123')
         
         # Primera vez
-        self.client.get(reverse('tema_detalle', kwargs={'slug': self.tema.slug}), {'seccion': 'teoria'})
+        self.client.get(reverse('tutoria:tema_detalle', kwargs={'slug': self.tema.slug}), {'seccion': 'teoria'})
         # Segunda vez
-        self.client.get(reverse('tema_detalle', kwargs={'slug': self.tema.slug}), {'seccion': 'teoria'})
+        self.client.get(reverse('tutoria:tema_detalle', kwargs={'slug': self.tema.slug}), {'seccion': 'teoria'})
         
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.puntos_acumulados, 5)

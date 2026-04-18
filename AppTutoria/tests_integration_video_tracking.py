@@ -39,7 +39,7 @@ class VideoTrackingIntegrationTest(TestCase):
         self.client.login(username='student_final', password='password123')
         
         # 1. Simular evento 'ended' (llamada al endpoint)
-        url = reverse('registrar_visualizacion')
+        url = reverse('tutoria:registrar_visualizacion')
         response = self.client.post(url, {'video_id': self.video.id})
         self.assertEqual(response.status_code, 200)
         

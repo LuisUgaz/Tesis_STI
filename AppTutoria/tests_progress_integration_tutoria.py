@@ -28,7 +28,7 @@ class ProgressIntegrationTutoriaTest(TestCase):
 
     def test_progress_registered_after_theory_view(self):
         """Prueba que se registre progreso al ver la teoría de un tema."""
-        response = self.client.get(reverse('tema_detalle', args=[self.tema.slug]), {'seccion': 'teoria'})
+        response = self.client.get(reverse('tutoria:tema_detalle', args=[self.tema.slug]), {'seccion': 'teoria'})
         self.assertEqual(response.status_code, 200)
         
         # Verificar que se creó el progreso
@@ -44,7 +44,7 @@ class ProgressIntegrationTutoriaTest(TestCase):
 
     def test_progress_registered_after_video_view(self):
         """Prueba que se registre progreso al visualizar un video."""
-        response = self.client.post(reverse('registrar_visualizacion'), {
+        response = self.client.post(reverse('tutoria:registrar_visualizacion'), {
             'video_id': self.video.id
         })
         self.assertEqual(response.status_code, 200)

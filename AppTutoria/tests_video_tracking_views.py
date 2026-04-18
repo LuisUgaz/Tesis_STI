@@ -20,7 +20,7 @@ class VideoTrackingViewsTest(TestCase):
         )
         
         # URL del endpoint
-        self.url = reverse('registrar_visualizacion')
+        self.url = reverse('tutoria:registrar_visualizacion')
 
     def test_registrar_visualizacion_anonymous(self):
         """Un usuario no autenticado no puede registrar vistas."""

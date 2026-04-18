@@ -18,7 +18,7 @@ class VideoRegistrationTests(TestCase):
         self.tema = Tema.objects.create(nombre="Triángulos", slug="triangulos")
         
         try:
-            self.url_create = reverse('video_registro_create')
+            self.url_create = reverse('tutoria:video_registro_create')
         except:
             self.url_create = '/tutoria/videos/nuevo/'
 

@@ -40,7 +40,7 @@ class VideoTemaCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
     model = VideoTema
     form_class = VideoTemaForm
     template_name = 'AppTutoria/video_registro_form.html'
-    success_url = reverse_lazy('video_gestion_list')
+    success_url = reverse_lazy('tutoria:video_gestion_list')
 
     def form_valid(self, form):
         messages.success(self.request, "Video recomendado registrado exitosamente.")
@@ -48,7 +48,7 @@ class VideoTemaCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
 
 class VideoTemaDeleteView(LoginRequiredMixin, TeacherRequiredMixin, DeleteView):
     model = VideoTema
-    success_url = reverse_lazy('video_gestion_list')
+    success_url = reverse_lazy('tutoria:video_gestion_list')
 
     def post(self, request, *args, **kwargs):
         """

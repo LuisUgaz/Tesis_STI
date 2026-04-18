@@ -7,7 +7,7 @@
             <h2 class="mb-0 fw-bold">🎬 Gestión de Videos Recomendados</h2>
             <p class="text-muted small">Administre el contenido audiovisual de apoyo para los estudiantes.</p>
         </div>
-        <a href="{% url 'video_registro_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
+        <a href="{% url 'tutoria:video_registro_create' %}" class="btn btn-primary shadow-sm fw-bold" style="border-radius: 10px; background-color: #4a90e2; border-color: #4a90e2;">
             ➕ REGISTRAR VIDEO
         </a>
     </div>
@@ -55,7 +55,7 @@
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-outline-danger btn-sm border-0" 
-                                        onclick="confirmarEliminacion('{{ video.pk }}', '{{ video.titulo|escapejs }}', '{% url 'video_registro_delete' video.pk %}')"
+                                        onclick="confirmarEliminacion('{{ video.pk }}', '{{ video.titulo|escapejs }}', '{% url 'tutoria:video_registro_delete' video.pk %}')"
                                         title="Eliminar Video">
                                     <i class="bi bi-trash3-fill"></i>
                                 </button>
@@ -66,7 +66,7 @@
                             <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="bi bi-camera-video fs-2"></i>
                                 <p class="mt-2 mb-0">No hay videos registrados aún.</p>
-                                <a href="{% url 'video_registro_create' %}" class="btn btn-link text-decoration-none">Registrar el primer video</a>
+                                <a href="{% url 'tutoria:video_registro_create' %}" class="btn btn-link text-decoration-none">Registrar el primer video</a>
                             </td>
                         </tr>
                         {% endfor %}

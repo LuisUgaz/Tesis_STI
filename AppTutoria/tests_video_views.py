@@ -20,13 +20,13 @@ class VideoViewsTest(TestCase):
         )
         
         # URL esperada
-        self.url = reverse('video_list', kwargs={'slug': self.tema.slug})
+        self.url = reverse('tutoria:video_list', kwargs={'slug': self.tema.slug})
 
     def test_video_list_access_denied_without_recommendation(self):
-        """Un estudiante sin la recomendación del tema no debería acceder."""
+        """Un estudiante sin la recomendación del tema no debería acceder y ser redirigido."""
         self.client.login(username='estudiante1', password='password123')
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403) # Permission Denied
+        self.assertRedirects(response, reverse('tutoria:lista_temas'))
 
     def test_video_list_access_granted_with_recommendation(self):
         """Un estudiante con la recomendación del tema debería acceder."""

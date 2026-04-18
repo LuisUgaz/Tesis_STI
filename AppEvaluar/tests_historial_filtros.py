@@ -17,7 +17,7 @@ class HistorialFiltrosTests(TestCase):
         self.tema2 = Tema.objects.create(nombre="Ángulos", slug="angulos")
 
         # Crear progresos en diferentes fechas
-        self.hoy = timezone.now()
+        self.hoy = timezone.localtime()
         self.ayer = self.hoy - timedelta(days=1)
         self.hace_una_semana = self.hoy - timedelta(days=7)
 

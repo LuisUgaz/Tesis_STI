@@ -8,7 +8,7 @@ from .models import Tema
 class ListaTemasViewTest(TestCase):
     def setUp(self):
         self.client = Client()
-        self.url = reverse('lista_temas')
+        self.url = reverse('tutoria:lista_temas')
         
         # Crear usuario estudiante
         self.user_estudiante = User.objects.create_user(username='estudiante', password='password123')
@@ -29,13 +29,11 @@ class ListaTemasViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'AppTutoria/lista_temas.html')
 
-    def test_acceso_docente_restringido(self):
-        """Verifica que un docente sea redirigido o se le niegue el acceso (dependiendo de la implementación, aquí esperamos un 403 o redirección)."""
+    def test_acceso_docente_permitido_lista(self):
+        """Verifica que un docente pueda acceder a la lista de temas."""
         self.client.login(username='docente', password='password123')
         response = self.client.get(self.url)
-        # Por ahora, si no tiene el rol, podemos redirigir al home o mostrar 403. 
-        # Vamos a implementar que solo Estudiantes pasen.
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
     def test_acceso_anonimo_restringido(self):
         """Verifica que un usuario no autenticado sea redirigido al login."""
@@ -78,29 +76,25 @@ class TemaDetalleViewTest(TestCase):
             cuerpo_html="<h3>Teoría de Ángulos</h3><p>Contenido de prueba.</p>"
         )
         
-        # URL del detalle (se usará reverse una vez definida en urls.py)
-        # Por ahora usaremos la ruta manual para forzar el fallo si no existe la URL
-        self.url_detalle = f"/tutoria/tema/{self.tema.slug}/"
+        # URL del detalle
+        self.url_detalle = reverse('tutoria:tema_detalle', kwargs={'slug': self.tema.slug})
 
     def test_acceso_anonimo_redirige_login(self):
         """Verifica que un usuario no autenticado sea redirigido."""
         response = self.client.get(self.url_detalle)
         self.assertEqual(response.status_code, 302)
 
-    def test_acceso_docente_prohibido(self):
-        """Verifica que un docente no pueda acceder al contenido de estudio del estudiante."""
+    def test_acceso_docente_permitido(self):
+        """Verifica que un docente PUEDA acceder al contenido de estudio (supervisión)."""
         self.client.login(username='docente', password='password123')
         response = self.client.get(self.url_detalle)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
-    def test_acceso_estudiante_sin_recomendacion_prohibido(self):
-        """Verifica que un estudiante no pueda acceder a un tema que no le ha sido recomendado."""
+    def test_acceso_estudiante_sin_recomendacion_redirige(self):
+        """Verifica que un estudiante sea redirigido si no tiene recomendación."""
         self.client.login(username='estudiante', password='password123')
-        # No creamos RecomendacionEstudiante para 'Ángulos'
         response = self.client.get(self.url_detalle)
-        # Según el spec, debería redirigir o dar error. Vamos a esperar un 403 (Prohibido) o 302 a la lista.
-        # Implementaremos un 403 para mayor seguridad.
-        self.assertEqual(response.status_code, 403)
+        self.assertRedirects(response, reverse('tutoria:lista_temas'))
 
     def test_acceso_estudiante_con_recomendacion_exitoso(self):
         """Verifica el acceso exitoso cuando el tema está recomendado (muestra resumen por defecto)."""

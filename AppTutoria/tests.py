@@ -19,7 +19,7 @@ class ListaTemasViewTest(TestCase):
 
     def test_lista_temas_view_status_code(self):
         """La vista debe retornar 200 OK para un usuario autenticado."""
-        url = reverse('lista_temas')
+        url = reverse('tutoria:lista_temas')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -32,7 +32,7 @@ class ListaTemasViewTest(TestCase):
             metrica_desempeno=25.0
         )
         
-        url = reverse('lista_temas')
+        url = reverse('tutoria:lista_temas')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIn('recomendacion', response.context)
@@ -44,7 +44,7 @@ class ListaTemasViewTest(TestCase):
 
     def test_lista_temas_context_sin_recomendacion(self):
         """Si no hay recomendación, el contexto debe reflejarlo."""
-        url = reverse('lista_temas')
+        url = reverse('tutoria:lista_temas')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context.get('recomendacion'))

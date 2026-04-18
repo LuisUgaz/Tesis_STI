@@ -37,16 +37,16 @@ class VideoIntegrationTest(TestCase):
         self.client.login(username='alumno_test', password='password123')
         
         # Acceder al detalle del tema recomendado (HU10/HU11)
-        response_detalle = self.client.get(reverse('tema_detalle', kwargs={'slug': self.tema_rec.slug}))
+        response_detalle = self.client.get(reverse('tutoria:tema_detalle', kwargs={'slug': self.tema_rec.slug}))
         self.assertEqual(response_detalle.status_code, 200)
         # Verificar que el enlace a videos esté presente en el sidebar (Fase 3)
-        self.assertContains(response_detalle, reverse('video_list', kwargs={'slug': self.tema_rec.slug}))
+        self.assertContains(response_detalle, reverse('tutoria:video_list', kwargs={'slug': self.tema_rec.slug}))
         
         # Acceder a la lista de videos (HU12)
-        response_videos = self.client.get(reverse('video_list', kwargs={'slug': self.tema_rec.slug}))
+        response_videos = self.client.get(reverse('tutoria:video_list', kwargs={'slug': self.tema_rec.slug}))
         self.assertEqual(response_videos.status_code, 200)
         self.assertContains(response_videos, "Video de Triángulos")
         
-        # Intentar acceder a videos de un tema NO recomendado (Debe fallar)
-        response_prohibido = self.client.get(reverse('video_list', kwargs={'slug': self.tema_no_rec.slug}))
-        self.assertEqual(response_prohibido.status_code, 403)
+        # Intentar acceder a videos de un tema NO recomendado (Debe redirigir)
+        response_prohibido = self.client.get(reverse('tutoria:video_list', kwargs={'slug': self.tema_no_rec.slug}))
+        self.assertRedirects(response_prohibido, reverse('tutoria:lista_temas'))

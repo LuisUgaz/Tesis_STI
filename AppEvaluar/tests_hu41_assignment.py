@@ -56,7 +56,7 @@ class ExamenAssignmentTest(TestCase):
         examen = Examen.objects.create(nombre="Quiz de Ángulos", cantidad_preguntas=1, tiempo_limite=10, tema=self.tema)
         
         self.client.login(username='estudiante', password='password123')
-        url = reverse('tema_detalle', args=[self.tema.slug])
+        url = reverse('tutoria:tema_detalle', args=[self.tema.slug])
         
         response = self.client.get(url)
         

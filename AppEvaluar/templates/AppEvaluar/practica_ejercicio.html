@@ -273,7 +273,7 @@
                 <div class="progress-container">
                     <div class="progress-bar" id="progress-bar"></div>
                 </div>
-                <a href="{% url 'lista_temas' %}" style="text-decoration: none; color: #666;">Salir</a>
+                <a href="{% url 'tutoria:lista_temas' %}" style="text-decoration: none; color: #666;">Salir</a>
             </div>
 
             {% for ejercicio in ejercicios %}
@@ -314,7 +314,7 @@
             <h2 style="color: var(--success-color);">¡Práctica completada!</h2>
             <p>Has terminado la sesión de ejercicios para el tema: <strong>{{ tema.nombre }}</strong>.</p>
             <div style="font-size: 4rem; margin: 2rem 0;">🏆</div>
-            <a href="{% url 'lista_temas' %}" class="btn btn-primary" style="text-decoration: none; display: inline-block;">Volver a Temas</a>
+            <a href="{% url 'tutoria:lista_temas' %}" class="btn btn-primary" style="text-decoration: none; display: inline-block;">Volver a Temas</a>
         </div>
     </div>
 
