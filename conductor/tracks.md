@@ -217,3 +217,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU43 - Visualizar teoría mediante carrusel de imágenes por tema**
 *Link: [./tracks/HU43-Visualizar_teoria_carrusel/](./tracks/HU43-Visualizar_teoria_carrusel/)*
+
+---
+
+- [x] **Track: HU44 - Validación de acceso y redirección al examen diagnóstico**
+*Link: [./tracks/HU44-Validacion_acceso_examen_diagnostico/](./tracks/HU44-Validacion_acceso_examen_diagnostico/)*

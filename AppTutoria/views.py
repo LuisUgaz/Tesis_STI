@@ -119,7 +119,8 @@ def tema_detalle(request, slug):
         ).exists()
 
         if not esta_recomendado:
-            raise PermissionDenied("No tienes acceso a este tema aún. Debes seguir tu ruta recomendada.")
+            messages.info(request, "Para acceder a este tema, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+            return redirect('tutoria:lista_temas')
 
     # 4. Obtener la sección solicitada (por defecto 'resumen')
     seccion = request.GET.get('seccion', 'resumen')
@@ -167,7 +168,8 @@ def video_list(request, slug):
         ).exists()
 
         if not esta_recomendado:
-            raise PermissionDenied("No tienes acceso a los videos de este tema aún.")
+            messages.info(request, "Para acceder a los videos, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+            return redirect('tutoria:lista_temas')
 
     # 4. Obtener los videos asociados al tema (solo activos)
     videos = VideoTema.objects.filter(tema=tema, es_activo=True)
@@ -197,7 +199,7 @@ def registrar_visualizacion(request):
     ).exists()
 
     if not esta_recomendado:
-        raise PermissionDenied("No tienes permiso para registrar visualizaciones de este tema.")
+        return JsonResponse({'error': 'Acceso denegado. Debes realizar el examen diagnóstico.'}, status=403)
 
     # Registrar o actualizar contador
     visualizacion, created = VisualizacionVideo.objects.get_or_create(

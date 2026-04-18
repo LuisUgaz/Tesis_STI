@@ -251,10 +251,10 @@
             <h2>{{ tema.nombre }}</h2>
         </div>
         <nav class="nav-menu">
-            <a href="{% url 'tema_detalle' tema.slug %}?seccion=resumen" class="nav-item">
+            <a href="{% url 'tutoria:tema_detalle' tema.slug %}?seccion=resumen" class="nav-item">
                 <span class="icon">📋</span> Resumen
             </a>
-            <a href="{% url 'tema_detalle' tema.slug %}?seccion=teoria" class="nav-item">
+            <a href="{% url 'tutoria:tema_detalle' tema.slug %}?seccion=teoria" class="nav-item">
                 <span class="icon">📖</span> Marco Teórico
             </a>
             <a href="#" class="nav-item active">
@@ -263,7 +263,7 @@
 
             <!-- Botón en la parte interior -->
             <hr class="my-3 opacity-10">
-            <a href="{% url 'lista_temas' %}" class="nav-item text-primary fw-bold">
+            <a href="{% url 'tutoria:lista_temas' %}" class="nav-item text-primary fw-bold">
                 <span class="icon">←</span> Volver a Temas
             </a>
         </nav>
@@ -372,7 +372,7 @@
             formData.append('video_id', videoId);
             formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
-            fetch("{% url 'registrar_visualizacion' %}", {
+            fetch("{% url 'tutoria:registrar_visualizacion' %}", {
                 method: 'POST',
                 body: formData
             })

@@ -373,7 +373,7 @@
             <a href="#" class="nav-item disabled">
                 <span class="icon">✏️</span> Ejercicios
             </a>
-            <a href="{% url 'video_list' tema.slug %}" class="nav-item">
+            <a href="{% url 'tutoria:video_list' tema.slug %}" class="nav-item">
                 <span class="icon">🎥</span> Videos
             </a>
             
@@ -391,7 +391,7 @@
 
             <!-- Botón en la parte interior -->
             <hr class="my-3 opacity-10">
-            <a href="{% url 'lista_temas' %}" class="nav-item text-primary fw-bold">
+            <a href="{% url 'tutoria:lista_temas' %}" class="nav-item text-primary fw-bold">
                 <span class="icon">←</span> Volver a Temas
             </a>
         </nav>
