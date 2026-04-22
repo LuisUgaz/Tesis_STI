@@ -1,12 +1,14 @@
 from typing import Dict, Optional
 from django.contrib.auth.models import User
-from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio, Examen, Pregunta, Opcion, Ejercicio
+from .models import ResultadoDiagnostico, RespuestaUsuario, RecomendacionEstudiante, ResultadoEjercicio, Examen, Pregunta, Opcion, Ejercicio, LogEntrenamientoSVM
+from AppTutoria.models import Tema
 import google.generativeai as genai
 from django.conf import settings
 import logging
 from django.db.models import Avg, StdDev
 import math
 from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -95,12 +97,13 @@ def resolver_empate_svm(estudiante: User, temas_empatados: list) -> str:
     """
     Utiliza un clasificador SVM para decidir qué tema priorizar en caso de empate.
     Variables: tiempo promedio global, nivel, puntos.
+    Incorpora aprendizaje evolutivo basado en LogEntrenamientoSVM.
     """
     try:
         if not temas_empatados: return None
         if len(temas_empatados) == 1: return temas_empatados[0]
 
-        # 1. Preparar features del estudiante
+        # 1. Preparar features del estudiante actual
         profile = getattr(estudiante, 'profile', None)
         puntos = float(profile.puntos_acumulados) if profile else 0
         nivel = 1
@@ -108,7 +111,7 @@ def resolver_empate_svm(estudiante: User, temas_empatados: list) -> str:
             niveles = {'Básico': 1, 'Intermedio': 2, 'Avanzado': 3}
             nivel = niveles.get(profile.nivel_dificultad_actual, 1)
         
-        # Tiempo promedio global
+        # Tiempo promedio global de respuestas correctas
         avg_time = RespuestaUsuario.objects.filter(
             usuario=estudiante, 
             opcion_seleccionada__es_correcta=True
@@ -116,28 +119,82 @@ def resolver_empate_svm(estudiante: User, temas_empatados: list) -> str:
         
         X_current = np.array([[float(avg_time), float(nivel), float(puntos)]])
 
-        # 2. Datos sintéticos para el SVM (HU42: Desempate)
-        X_train = np.array([
-            [10, 3, 500], # Caso A: Perfil avanzado -> Predicción 1 (Cambiar orden)
-            [60, 1, 50],   # Caso B: Perfil inicial -> Predicción 0 (Mantener orden)
-            [15, 2, 400], # Caso C: Perfil medio -> Predicción 1
-            [50, 1, 100],  # Caso D: Perfil inicial -> Predicción 0
-        ])
-        y_train = np.array([1, 0, 1, 0])
+        # 2. Obtener datos de entrenamiento reales (Excluir pendientes de feedback)
+        logs_reales = LogEntrenamientoSVM.objects.exclude(fue_exito__isnull=True)
+        
+        if logs_reales.count() >= 10:
+            # Entrenamiento con datos reales de la base de datos
+            X_train = np.array([
+                [l.tiempo_promedio, float(l.nivel_estudiante), l.puntos_acumulados] 
+                for l in logs_reales
+            ])
+            # y=1 si fue éxito (reforzamos la decisión tomada), y=0 si fue fallo
+            y_train = np.array([1 if l.fue_exito else 0 for l in logs_reales])
+        else:
+            # Fallback a datos sintéticos iniciales ampliados
+            X_train = np.array([
+                [10, 3, 500], [60, 1, 50], [15, 2, 400], [50, 1, 100],
+                [12, 3, 600], [55, 1, 80], [20, 2, 350], [45, 1, 120]
+            ])
+            y_train = np.array([1, 0, 1, 0, 1, 0, 1, 0])
 
+        # 3. Normalización (Escalado) para manejar diferentes magnitudes (puntos vs nivel)
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_current_scaled = scaler.transform(X_current)
+
+        # 4. Clasificación SVM
         clf = SVC(kernel='linear', C=1.0)
-        clf.fit(X_train, y_train)
+        clf.fit(X_train_scaled, y_train)
         
-        prediccion = clf.predict(X_current)[0]
+        prediccion = clf.predict(X_current_scaled)[0]
+        # Si la predicción es 1 (éxito probable con cambio), prioriza el segundo tema.
+        # Esto es una lógica simplificada para el desempate.
+        indice_elegido = 1 if prediccion == 1 else 0
+        tema_elegido_nombre = temas_empatados[indice_elegido]
 
-        if prediccion == 1:
-            return temas_empatados[1] # Prioriza el segundo tema
+        # 5. Registrar en el log para futura retroalimentación (etiqueta 'fue_exito' pendiente)
+        tema_obj = Tema.objects.filter(nombre=tema_elegido_nombre).first()
+        if tema_obj:
+            LogEntrenamientoSVM.objects.create(
+                estudiante=estudiante,
+                tema_elegido=tema_obj,
+                tiempo_promedio=float(avg_time),
+                nivel_estudiante=nivel,
+                puntos_acumulados=puntos,
+                fue_exito=None 
+            )
         
-        return temas_empatados[0] # Prioriza el primero (alfabético)
+        return tema_elegido_nombre
 
     except Exception as e:
-        logger.error(f"Error en SVM desempate: {e}")
+        logger.error(f"Error en SVM desempate dinámico: {e}")
         return temas_empatados[0] if temas_empatados else None
+
+def evaluar_exito_recomendacion(estudiante: User, tema_nombre: str, es_correcto: bool):
+    """
+    Evalúa si la recomendación actual está siendo efectiva para actualizar el LogEntrenamientoSVM.
+    Se llama cada vez que el estudiante resuelve un ejercicio de práctica.
+    """
+    try:
+        tema = Tema.objects.filter(nombre=tema_nombre).first()
+        if not tema: return
+
+        # Buscar el último log pendiente para este estudiante y tema
+        ultimo_log = LogEntrenamientoSVM.objects.filter(
+            estudiante=estudiante,
+            tema_elegido=tema,
+            fue_exito__isnull=True
+        ).order_by('-fecha_recomendacion').first()
+
+        if ultimo_log:
+            # Si el estudiante acierta, marcamos como éxito de la recomendación
+            if es_correcto:
+                ultimo_log.fue_exito = True
+                ultimo_log.save()
+            # En un sistema más complejo, el fallo esperaría a varios intentos antes de marcar False
+    except Exception as e:
+        logger.error(f"Error al evaluar éxito de recomendación: {e}")
 
 def calcular_recomendacion(estudiante: User) -> Optional[Dict]:
     """Calcula el tema que el estudiante debe reforzar basado en sus respuestas.

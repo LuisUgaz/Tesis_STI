@@ -4,20 +4,20 @@
 <div class="container-fluid mt-4 px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0 fw-bold">🔎 Revisión de Preguntas Detectadas</h2>
-            <p class="text-muted small">Verifica que la IA haya extraído correctamente las preguntas antes de guardarlas en el banco.</p>
+            <h2 class="mb-0 fw-bold">🔎 Editor de Confirmación de Preguntas</h2>
+            <p class="text-muted small">Edite los enunciados, añada opciones y marque la respuesta correcta antes de guardar en el banco.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{% url 'importar_banco' %}" class="btn btn-outline-secondary fw-bold" style="border-radius: 10px;">
+            <a href="{% url 'evaluar:importar_banco' %}" class="btn btn-outline-secondary fw-bold" style="border-radius: 10px;">
                 ❌ CANCELAR
             </a>
             <button type="submit" form="form-confirmar" class="btn btn-success shadow-sm fw-bold px-4" style="border-radius: 10px;">
-                ✅ GUARDAR EN EL BANCO
+                ✅ GUARDAR TODO EN EL BANCO
             </button>
         </div>
     </div>
 
-    <form id="form-confirmar" method="POST" action="{% url 'confirmar_importacion' %}">
+    <form id="form-confirmar" method="POST" action="{% url 'evaluar:confirmar_importacion' %}">
         {% csrf_token %}
         <div class="card shadow-sm border-0" style="border-radius: 15px;">
             <div class="card-body p-0">
@@ -26,54 +26,64 @@
                         <thead class="bg-light">
                             <tr>
                                 <th class="ps-4" style="width: 50px;">Incluir</th>
-                                <th style="width: 40%;">Pregunta</th>
-                                <th>Opciones</th>
-                                <th>Correcta</th>
-                                <th>Tema sugerido</th>
-                                <th>Dificultad</th>
+                                <th style="width: 40%;">Pregunta / Enunciado</th>
+                                <th style="width: 30%;">Opciones y Respuesta Correcta</th>
+                                <th>Metadatos (Tema/Nivel)</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for pregunta in preguntas %}
-                            <tr>
+                            <tr id="row-{{ forloop.index0 }}">
                                 <td class="ps-4">
                                     <input type="checkbox" name="incluir_{{ forloop.index0 }}" class="form-check-input" checked style="width: 20px; height: 20px;">
-                                    <input type="hidden" name="enunciado_{{ forloop.index0 }}" value="{{ pregunta.enunciado }}">
-                                    <input type="hidden" name="correcta_{{ forloop.index0 }}" value="{{ pregunta.correcta }}">
-                                    <input type="hidden" name="tema_{{ forloop.index0 }}" value="{{ pregunta.tema }}">
-                                    <input type="hidden" name="dificultad_{{ forloop.index0 }}" value="{{ pregunta.dificultad }}">
-                                    <input type="hidden" name="explicacion_{{ forloop.index0 }}" value="{{ pregunta.explicacion }}">
-                                    {% for opcion in pregunta.opciones %}
-                                        <input type="hidden" name="opcion_{{ forloop.parentloop.index0 }}_{{ forloop.index0 }}" value="{{ opcion }}">
-                                    {% endfor %}
-                                    <input type="hidden" name="total_opciones_{{ forloop.index0 }}" value="{{ pregunta.opciones|length }}">
                                 </td>
                                 <td>
-                                    <div class="fw-bold">{{ pregunta.enunciado }}</div>
-                                    <small class="text-muted italic">{{ pregunta.explicacion }}</small>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold text-muted mb-1">Enunciado de la Pregunta:</label>
+                                        <textarea name="enunciado_{{ forloop.index0 }}" class="form-control form-control-sm" rows="3" required style="border-radius: 8px;">{{ pregunta.enunciado }}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="form-label small fw-bold text-muted mb-1">Explicación Técnica (Opcional):</label>
+                                        <input type="text" name="explicacion_{{ forloop.index0 }}" class="form-control form-control-sm" value="{{ pregunta.explicacion }}" style="border-radius: 8px;">
+                                    </div>
                                 </td>
                                 <td>
-                                    <ul class="small mb-0 list-unstyled">
+                                    <label class="form-label small fw-bold text-muted mb-1">Listado de Opciones:</label>
+                                    <div id="options-container-{{ forloop.index0 }}" class="options-group">
                                         {% for opcion in pregunta.opciones %}
-                                        <li>• {{ opcion }}</li>
+                                        <div class="input-group input-group-sm mb-2 option-row">
+                                            <div class="input-group-text bg-white border-end-0">
+                                                <input type="radio" name="correcta_index_{{ forloop.parentloop.index0 }}" value="{{ forloop.index0 }}" class="form-check-input mt-0" {% if opcion == pregunta.correcta %}checked{% endif %} required>
+                                            </div>
+                                            <input type="text" name="opcion_{{ forloop.parentloop.index0 }}_{{ forloop.index0 }}" class="form-control" value="{{ opcion }}" required>
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
                                         {% endfor %}
-                                    </ul>
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" onclick="agregarOpcion({{ forloop.index0 }})">
+                                        <i class="fas fa-plus-circle me-1"></i> Añadir otra opción
+                                    </button>
                                 </td>
                                 <td>
-                                    <span class="badge bg-success small">{{ pregunta.correcta }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-primary border small">{{ pregunta.tema }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge {% if pregunta.dificultad == 'Básico' %}bg-success{% elif pregunta.dificultad == 'Intermedio' %}bg-warning text-dark{% else %}bg-danger{% endif %} small">
-                                        {{ pregunta.dificultad }}
-                                    </span>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-muted mb-1">Tema Sugerido:</label>
+                                        <input type="text" name="tema_{{ forloop.index0 }}" class="form-control form-control-sm" value="{{ pregunta.tema }}" required style="border-radius: 8px;">
+                                    </div>
+                                    <div>
+                                        <label class="form-label small fw-bold text-muted mb-1">Dificultad:</label>
+                                        <select name="dificultad_{{ forloop.index0 }}" class="form-select form-select-sm" style="border-radius: 8px;">
+                                            <option value="Básico" {% if pregunta.dificultad == 'Básico' %}selected{% endif %}>Básico</option>
+                                            <option value="Intermedio" {% if pregunta.dificultad == 'Intermedio' %}selected{% endif %}>Intermedio</option>
+                                            <option value="Avanzado" {% if pregunta.dificultad == 'Avanzado' %}selected{% endif %}>Avanzado</option>
+                                        </select>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
+                                <td colspan="4" class="text-center py-5 text-muted">
                                     No se detectaron preguntas en el documento. Por favor, revisa el formato e intenta nuevamente.
                                 </td>
                             </tr>
@@ -87,6 +97,49 @@
     </form>
 </div>
 
+<script>
+    function agregarOpcion(preguntaIndex) {
+        const container = document.getElementById(`options-container-${preguntaIndex}`);
+        const currentOptions = container.querySelectorAll('.option-row').length;
+        const newOptionIndex = Date.now(); // Usamos timestamp para evitar colisión de nombres dinámicos
+        
+        const div = document.createElement('div');
+        div.className = 'input-group input-group-sm mb-2 option-row';
+        div.innerHTML = `
+            <div class="input-group-text bg-white border-end-0">
+                <input type="radio" name="correcta_index_${preguntaIndex}" value="${newOptionIndex}" class="form-check-input mt-0" required>
+            </div>
+            <input type="text" name="opcion_${preguntaIndex}_${newOptionIndex}" class="form-control" placeholder="Escriba la opción aquí..." required>
+            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+
+    // Validación antes de enviar
+    document.getElementById('form-confirmar').addEventListener('submit', function(e) {
+        const total = {{ preguntas|length }};
+        for (let i = 0; i < total; i++) {
+            const checkbox = document.querySelector(`input[name="incluir_${i}"]`);
+            if (checkbox && checkbox.checked) {
+                const options = document.querySelectorAll(`#options-container-${i} .option-row`);
+                if (options.length < 2) {
+                    alert(`La pregunta #${i + 1} debe tener al menos 2 opciones para ser guardada.`);
+                    e.preventDefault();
+                    return;
+                }
+                const radio = document.querySelector(`input[name="correcta_index_${i}"]:checked`);
+                if (!radio) {
+                    alert(`Debes seleccionar cuál es la respuesta correcta para la pregunta #${i + 1}.`);
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+    });
+</script>
+
 <style>
     .table thead th {
         font-size: 0.75rem;
@@ -96,7 +149,17 @@
         padding: 1rem;
     }
     .table tbody td {
-        padding: 1rem;
+        padding: 1.2rem 1rem;
+        vertical-align: top;
+    }
+    .form-label {
+        display: block;
+    }
+    .option-row:hover {
+        background-color: #f8f9fa;
+    }
+    .card {
+        margin-bottom: 2rem;
     }
 </style>
 {% endblock %}

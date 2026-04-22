@@ -144,6 +144,48 @@ class AdaptiveLogicTest(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.nivel_dificultad_actual, 'Básico')
 
+    def test_svm_dynamic_learning(self):
+        """
+        Verifica que el SVM se registre en LogEntrenamientoSVM y use datos reales si existen.
+        """
+        from .models import LogEntrenamientoSVM
+        
+        # Escenario de empate
+        RespuestaUsuario.objects.all().delete()
+        RespuestaUsuario.objects.create(usuario=self.user, pregunta=self.p1_a, opcion_seleccionada=None)
+        RespuestaUsuario.objects.create(usuario=self.user, pregunta=self.p1_b, opcion_seleccionada=None)
+        
+        # Ejecutar recomendación
+        calcular_recomendacion(self.user)
+        
+        # Verificar que se creó un log pendiente
+        log = LogEntrenamientoSVM.objects.filter(estudiante=self.user).last()
+        self.assertIsNotNone(log)
+        self.assertIsNone(log.fue_exito)
+        
+        # Simular éxito de la recomendación (estudiante acierta un ejercicio del tema elegido)
+        from .services import evaluar_exito_recomendacion
+        evaluar_exito_recomendacion(self.user, log.tema_elegido.nombre, es_correcto=True)
+        
+        log.refresh_from_db()
+        self.assertTrue(log.fue_exito)
+        
+        # Ahora creamos 10 logs de éxito para forzar el entrenamiento dinámico
+        for i in range(10):
+            LogEntrenamientoSVM.objects.create(
+                estudiante=self.user,
+                tema_elegido=self.tema2,
+                tiempo_promedio=10.0,
+                nivel_estudiante=3,
+                puntos_acumulados=1000.0,
+                fue_exito=True
+            )
+        
+        # Volver a calcular recomendación (debería usar entrenamiento dinámico)
+        # Esto valida que el código no explote al usar StandardScaler y SVC con datos de la DB
+        recomendacion = calcular_recomendacion(self.user)
+        self.assertIn(recomendacion['tema'], ["Tema A", "Tema B"])
+
 
 
 

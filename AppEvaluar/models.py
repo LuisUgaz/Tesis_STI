@@ -121,3 +121,16 @@ class ResultadoEjercicio(models.Model):
     def __str__(self):
         estado = "Correcto" if self.es_correcto else "Incorrecto"
         return f"{self.usuario.username} - {self.ejercicio.id}: {estado}"
+
+class LogEntrenamientoSVM(models.Model):
+    estudiante = models.ForeignKey(User, on_delete=models.CASCADE)
+    tema_elegido = models.ForeignKey(Tema, on_delete=models.CASCADE)
+    tiempo_promedio = models.FloatField()
+    nivel_estudiante = models.IntegerField(help_text="1: Básico, 2: Intermedio, 3: Avanzado")
+    puntos_acumulados = models.FloatField()
+    fue_exito = models.BooleanField(null=True, blank=True)
+    fecha_recomendacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        exito_str = "Pendiente" if self.fue_exito is None else ("Éxito" if self.fue_exito else "Fallo")
+        return f"Log {self.estudiante.username} - {self.tema_elegido.nombre} ({exito_str})"

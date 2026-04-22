@@ -7,7 +7,7 @@ from .models import (
     ResultadoDiagnostico, RecomendacionEstudiante,
     Ejercicio, OpcionEjercicio, ResultadoEjercicio
 )
-from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias, obtener_feedback_ia
+from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias, obtener_feedback_ia, evaluar_exito_recomendacion
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
 from AppTutoria.services import registrar_progreso
 from AppGestionUsuario.models import Profile, MetricasEstudiante
@@ -417,6 +417,9 @@ def validar_respuesta(request):
     # HU15: Intentar ajustar dificultad tras la respuesta
     ajustar_dificultad_estudiante(request.user)
 
+    # HU42: Evaluar éxito de la recomendación para retroalimentar el SVM
+    evaluar_exito_recomendacion(request.user, ejercicio.tema.nombre, opcion.es_correcta)
+
     # Capturar nivel previo para detectar cambio (HU23)
     nivel_previo = request.user.profile.nivel_estudiante
 
@@ -777,7 +780,7 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
                     tema_nombre = request.POST.get(f'tema_{i}')
                     dificultad = request.POST.get(f'dificultad_{i}')
                     explicacion = request.POST.get(f'explicacion_{i}')
-                    correcta_texto = request.POST.get(f'correcta_{i}')
+                    correcta_index = request.POST.get(f'correcta_index_{i}')
                     
                     # Obtener o crear tema
                     tema, _ = Tema.objects.get_or_create(nombre=tema_nombre)
@@ -795,10 +798,12 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
                     opciones_encontradas = [k for k in request.POST.keys() if k.startswith(f'opcion_{i}_')]
                     for k in opciones_encontradas:
                         opcion_texto = request.POST.get(k)
+                        # El índice de la opción es la última parte de la clave (ej. opcion_0_1 -> 1)
+                        idx = k.split('_')[-1]
                         OpcionEjercicio.objects.create(
                             ejercicio=ejercicio,
                             texto=opcion_texto,
-                            es_correcta=(opcion_texto == correcta_texto)
+                            es_correcta=(idx == correcta_index)
                         )
                     preguntas_guardadas += 1
         
