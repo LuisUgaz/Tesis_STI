@@ -237,3 +237,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU47 - Programar repasos automáticos con repetición espaciada**
 *Link: [./tracks/HU47-Repeticion_espaciada/](./tracks/HU47-Repeticion_espaciada/)*
+
+---
+
+- [x] **Track: HU48 - Generar gráficos geométricos automáticamente al importar preguntas sin imagen**
+*Link: [./tracks/HU48-Generacion_graficos_auto/](./tracks/HU48-Generacion_graficos_auto/)*

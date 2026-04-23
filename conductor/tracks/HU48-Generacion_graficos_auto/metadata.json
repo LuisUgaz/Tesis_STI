@@ -1,0 +1,8 @@
+{
+  "track_id": "HU48-Generacion_graficos_auto",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-23T10:00:00Z",
+  "updated_at": "2026-04-23T10:00:00Z",
+  "description": "HU48 - Generar gráficos geométricos automáticamente al importar preguntas sin imagen"
+}

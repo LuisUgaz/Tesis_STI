@@ -835,6 +835,12 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
                         dificultad=dificultad,
                         explicacion_tecnica=explicacion
                     )
+
+                    # HU48: Generación automática de gráficos por IA si no hay imagen
+                    from .services_ia_graphics import procesar_imagen_automatica
+                    # Nota: Por ahora la importación no trae imágenes, 
+                    # así que siempre intentamos generar para temas geométricos.
+                    procesar_imagen_automatica(enunciado, ejercicio)
                     
                     # Crear Opciones
                     # Buscamos todas las claves que empiecen con opcion_{i}_
