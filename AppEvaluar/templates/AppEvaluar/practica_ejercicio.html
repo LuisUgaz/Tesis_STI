@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Práctica: {{ tema.nombre }}</title>
+    <!-- JSXGraph (HU45) -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css" />
+    <script type="text/javascript" charset="UTF-8" src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -277,28 +281,38 @@
             </div>
 
             {% for ejercicio in ejercicios %}
-            <div class="ejercicio-card {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter }}" data-id="{{ ejercicio.id }}">
+            <div class="ejercicio-card {% if forloop.first %}active{% endif %}" 
+                 data-index="{{ forloop.counter }}" 
+                 data-id="{{ ejercicio.id }}"
+                 data-interactivo="{{ ejercicio.es_interactiva|yesno:'true,false' }}"
+                 {% if ejercicio.es_interactiva %}data-meta='{{ ejercicio.meta_geometria|safe }}'{% endif %}>
+                
                 <div class="pregunta-texto">{{ ejercicio.texto }}</div>
                 
-                {% if ejercicio.imagen %}
-                <div style="text-align: center; margin-bottom: 1rem;">
-                    <img src="{{ ejercicio.imagen.url }}" alt="Imagen ejercicio" style="max-width: 100%; border-radius: 10px;">
-                </div>
-                {% endif %}
-
-                <form class="opciones-form">
-                    {% csrf_token %}
-                    <div class="opciones-list">
-                        {% for opcion in ejercicio.opciones.all %}
-                        <div class="opcion-item">
-                            <input type="radio" name="ejercicio_{{ ejercicio.id }}" id="opcion_{{ opcion.id }}" value="{{ opcion.id }}">
-                            <label for="opcion_{{ opcion.id }}" class="opcion-label">
-                                {{ opcion.texto }}
-                            </label>
-                        </div>
-                        {% endfor %}
+                {% if ejercicio.es_interactiva %}
+                <!-- Contenedor JSXGraph (HU45) -->
+                <div id="jxgbox-{{ ejercicio.id }}" class="jxgbox" style="width:100%; height:400px; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #ddd;"></div>
+                {% else %}
+                    {% if ejercicio.imagen %}
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <img src="{{ ejercicio.imagen.url }}" alt="Imagen ejercicio" style="max-width: 100%; border-radius: 10px;">
                     </div>
-                </form>
+                    {% endif %}
+
+                    <form class="opciones-form">
+                        {% csrf_token %}
+                        <div class="opciones-list">
+                            {% for opcion in ejercicio.opciones.all %}
+                            <div class="opcion-item">
+                                <input type="radio" name="ejercicio_{{ ejercicio.id }}" id="opcion_{{ opcion.id }}" value="{{ opcion.id }}">
+                                <label for="opcion_{{ opcion.id }}" class="opcion-label">
+                                    {{ opcion.texto }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </form>
+                {% endif %}
 
                 <div class="feedback-area" id="feedback-{{ ejercicio.id }}"></div>
 
@@ -322,30 +336,149 @@
         let currentIndex = 1;
         const total = {{ total }};
         let startTime = Date.now();
+        const boards = {}; // Almacena los tableros JSXGraph activos
+
+        // Controlador Geométrico (HU45)
+        const GeometricController = {
+            initBoard: function(ejercicioId, meta) {
+                if (boards[ejercicioId]) return;
+
+                const board = JXG.JSXGraph.initBoard(`jxgbox-${ejercicioId}`, {
+                    boundingbox: [-5, 5, 5, -5],
+                    axis: true,
+                    showCopyright: false,
+                    showNavigation: true
+                });
+
+                const elements = {
+                    points: {},
+                    lines: []
+                };
+
+                // Crear puntos iniciales
+                if (meta.elementos_iniciales && meta.elementos_iniciales.puntos) {
+                    meta.elementos_iniciales.puntos.forEach(p => {
+                        const point = board.create('point', [p.x, p.y], {
+                            name: p.id || '',
+                            fixed: p.fixed || false,
+                            size: 4,
+                            color: '#4a90e2'
+                        });
+                        elements.points[p.id] = point;
+                    });
+                }
+
+                // Crear segmentos iniciales
+                if (meta.elementos_iniciales && meta.elementos_iniciales.segmentos) {
+                    meta.elementos_iniciales.segmentos.forEach(s => {
+                        if (elements.points[s.p1] && elements.points[s.p2]) {
+                            const line = board.create('segment', [elements.points[s.p1], elements.points[s.p2]], {
+                                strokeColor: '#2c3e50',
+                                strokeWidth: 2
+                            });
+                            elements.lines.push(line);
+                        }
+                    });
+                }
+
+                boards[ejercicioId] = { board, elements, meta };
+            },
+
+            drawGhostSolution: function(ejercicioId, metaSolucion) {
+                const data = boards[ejercicioId];
+                if (!data || !metaSolucion) return;
+
+                const board = data.board;
+                const ghostStyle = {
+                    strokeColor: '#2ecc71',
+                    strokeOpacity: 0.4,
+                    fillOpacity: 0.2,
+                    strokeWidth: 3,
+                    dash: 2,
+                    fixed: true,
+                    name: ''
+                };
+
+                // Dibujar puntos meta
+                const ghostPoints = {};
+                if (metaSolucion.elementos_iniciales && metaSolucion.elementos_iniciales.puntos) {
+                    metaSolucion.elementos_iniciales.puntos.forEach(p => {
+                        const gp = board.create('point', [p.x, p.y], {
+                            ...ghostStyle,
+                            size: 3,
+                            fillColor: '#2ecc71'
+                        });
+                        ghostPoints[p.id] = gp;
+                    });
+                }
+
+                // Dibujar segmentos meta
+                if (metaSolucion.elementos_iniciales && metaSolucion.elementos_iniciales.segmentos) {
+                    metaSolucion.elementos_iniciales.segmentos.forEach(s => {
+                        if (ghostPoints[s.p1] && ghostPoints[s.p2]) {
+                            board.create('segment', [ghostPoints[s.p1], ghostPoints[s.p2]], ghostStyle);
+                        }
+                    });
+                }
+            },
+
+            getGeometricData: function(ejercicioId) {
+                const data = boards[ejercicioId];
+                if (!data) return null;
+
+                const result = {
+                    tipo: data.meta.tipo_ejercicio,
+                    puntos: {}
+                };
+
+                // Capturar coordenadas actuales de todos los puntos
+                for (let id in data.elements.points) {
+                    const p = data.elements.points[id];
+                    result.puntos[id] = { x: p.X(), y: p.Y() };
+                }
+
+                return result;
+            }
+        };
 
         function updateProgress() {
             const percent = ((currentIndex - 1) / total) * 100;
             document.getElementById('progress-bar').style.width = percent + '%';
             document.getElementById('step-info').innerText = `Pregunta ${currentIndex} de ${total}`;
+            
+            // Inicializar tablero si es interactivo
+            const activeCard = document.querySelector(`.ejercicio-card[data-index="${currentIndex}"]`);
+            if (activeCard.dataset.interactivo === 'true') {
+                const id = activeCard.dataset.id;
+                const meta = JSON.parse(activeCard.dataset.meta);
+                // Pequeño delay para asegurar que el div es visible y JSXGraph calcule bien el tamaño
+                setTimeout(() => GeometricController.initBoard(id, meta), 100);
+            }
         }
 
         async function validarActual(ejercicioId) {
             const card = document.querySelector(`.ejercicio-card[data-index="${currentIndex}"]`);
-            const selectedOpcion = card.querySelector('input[type="radio"]:checked');
+            const isInteractivo = card.dataset.interactivo === 'true';
             
-            if (!selectedOpcion) {
-                alert("Por favor selecciona una opción.");
-                return;
+            let formData = new FormData();
+            formData.append('ejercicio_id', ejercicioId);
+            
+            if (isInteractivo) {
+                const geoData = GeometricController.getGeometricData(ejercicioId);
+                formData.append('datos_geometricos', JSON.stringify(geoData));
+            } else {
+                const selectedOpcion = card.querySelector('input[type="radio"]:checked');
+                if (!selectedOpcion) {
+                    alert("Por favor selecciona una opción.");
+                    return;
+                }
+                formData.append('opcion_id', selectedOpcion.value);
             }
 
             const endTime = Date.now();
             const tiempoEmpleado = Math.round((endTime - startTime) / 1000);
-            
-            const formData = new FormData();
-            formData.append('ejercicio_id', ejercicioId);
-            formData.append('opcion_id', selectedOpcion.value);
             formData.append('tiempo', tiempoEmpleado);
-            formData.append('csrfmiddlewaretoken', card.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
             try {
                 const response = await fetch("{% url 'evaluar:validar_respuesta' %}", {
@@ -380,7 +513,12 @@
                 feedbackArea.innerHTML = feedbackHtml;
                 feedbackArea.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
                 
-                // Mostrar notificación de puntos, nivel e insignias (HU22, HU23, HU24)
+                // Mostrar solución fantasma si aplica (HU45)
+                if (data.meta_solucion && isInteractivo) {
+                    GeometricController.drawGhostSolution(ejercicioId, data.meta_solucion);
+                }
+
+                // Mostrar notificación de puntos
                 if (data.puntos_ganados) {
                     showToast(data.puntos_ganados, data.total_puntos, data.subio_nivel, data.nivel_actual, data.nuevas_insignias);
                 }

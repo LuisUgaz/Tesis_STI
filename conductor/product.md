@@ -202,3 +202,4 @@ Desarrollar una plataforma web educativa basada en un Sistema Tutor Inteligente 
 - **ProgresiÃ³n por Dominio:** Asegurar que el estudiante comprenda un nivel antes de avanzar al siguiente.
 - **EvaluaciÃ³n Formativa:** Uso del error como oportunidad de aprendizaje mediante feedback correctivo inmediato.
 - **PrÃ¡ctica Guiada:** Apoyo con material teÃ³rico y videos recomendados segÃºn la necesidad del tema.
+- **Ejercicios Geométricos Interactivos (HU45):** Resolución de problemas en planos cartesianos dinámicos usando JSXGraph, permitiendo la manipulación de puntos y segmentos con validación matemática en tiempo real y retroalimentación visual avanzada (ghost overlay).

@@ -96,6 +96,8 @@ class Ejercicio(models.Model):
     dificultad = models.CharField(max_length=20, choices=DIFICULTAD_CHOICES, default='Básico')
     explicacion_tecnica = models.TextField(help_text="Explicación teórica general del ejercicio", blank=True, null=True)
     es_activo = models.BooleanField(default=True, help_text="Indica si el ejercicio está disponible para práctica")
+    es_interactiva = models.BooleanField(default=False, help_text="Indica si el ejercicio incluye un plano interactivo")
+    meta_geometria = models.JSONField(null=True, blank=True, help_text="Configuración y objetivos para ejercicios interactivos")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

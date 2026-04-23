@@ -222,3 +222,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU44 - Validación de acceso y redirección al examen diagnóstico**
 *Link: [./tracks/HU44-Validacion_acceso_examen_diagnostico/](./tracks/HU44-Validacion_acceso_examen_diagnostico/)*
+
+---
+
+- [x] **Track: HU45 - Resolver ejercicios de geometría interactiva en plano dinámico**
+*Link: [./tracks/HU45-Ejercicios_interactivos/](./tracks/HU45-Ejercicios_interactivos/)*

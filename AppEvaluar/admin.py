@@ -51,10 +51,19 @@ class OpcionEjercicioInline(admin.TabularInline):
 
 @admin.register(Ejercicio)
 class EjercicioAdmin(admin.ModelAdmin):
-    list_display = ('texto_corto', 'tema', 'dificultad', 'fecha_creacion')
-    list_filter = ('tema', 'dificultad', 'fecha_creacion')
+    list_display = ('texto_corto', 'tema', 'dificultad', 'es_interactiva', 'fecha_creacion')
+    list_filter = ('tema', 'dificultad', 'es_interactiva', 'fecha_creacion')
     search_fields = ('texto',)
     inlines = [OpcionEjercicioInline]
+    fieldsets = (
+        (None, {
+            'fields': ('tema', 'texto', 'imagen', 'dificultad', 'explicacion_tecnica', 'es_activo')
+        }),
+        ('Interactividad (HU45)', {
+            'fields': ('es_interactiva', 'meta_geometria'),
+            'description': 'Configure el plano interactivo JSXGraph y los objetivos geométricos.'
+        }),
+    )
 
     def texto_corto(self, obj):
         return obj.texto[:75] + "..." if len(obj.texto) > 75 else obj.texto

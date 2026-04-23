@@ -14,6 +14,7 @@ Esta es la pila tecnológica oficial seleccionada para el desarrollo y despliegu
 - **HTML5 & CSS3:** Maquetación y estilos modernos.
 - **JavaScript (Vanilla):** Lógica del lado del cliente para interactividad en ejercicios y gamificación.
 - **Chart.js:** Librería para la visualización de métricas y reportes analíticos mediante gráficos interactivos.
+- **JSXGraph (HU45):** Librería especializada para la visualización y manipulación de geometría dinámica en el navegador.
 - **SVG (Scalable Vector Graphics):** Para la visualización de figuras geométricas nítidas y escalables.
 - **SMTP / Django Mail:** Motor de mensajería para el envío de consultas de estudiantes directamente al correo electrónico de los docentes.
 

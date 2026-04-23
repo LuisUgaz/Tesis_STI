@@ -373,24 +373,55 @@ def iniciar_practica(request):
         'total': ejercicios.count()
     })
 
+from .services_geometry import GeometryValidator
+import json
+
 @login_required
 @student_required
 def validar_respuesta(request):
     """
     Endpoint AJAX para validar la opción seleccionada y guardar el resultado.
+    Soporta ejercicios estáticos (opciones) e interactivos (geometría).
     """
     if request.method != 'POST':
         return HttpResponseBadRequest("Método no permitido")
 
     ejercicio_id = request.POST.get('ejercicio_id')
-    opcion_id = request.POST.get('opcion_id')
     tiempo = request.POST.get('tiempo', 0)
-
     ejercicio = get_object_or_404(Ejercicio, id=ejercicio_id)
-    opcion = get_object_or_404(OpcionEjercicio, id=opcion_id, ejercicio=ejercicio)
 
-    # Feedback combinado para persistencia (HU16)
-    feedback_especifico = opcion.retroalimentacion or ("¡Correcto!" if opcion.es_correcta else "Sigue intentándolo.")
+    es_correcto = False
+    feedback_especifico = ""
+    solucion_fantasma = None # Para HU45 Fase 4
+
+    if ejercicio.es_interactiva:
+        # Lógica Interactiva (HU45)
+        datos_json = request.POST.get('datos_geometricos')
+        if not datos_json:
+            return JsonResponse({"error": "No se recibieron datos geométricos"}, status=400)
+        
+        datos_geo = json.loads(datos_json)
+        meta = ejercicio.meta_geometria
+        
+        # Seleccionar método de validación según el tipo
+        tipo = meta.get('tipo_ejercicio', 'construir_angulo')
+        if tipo == 'construir_angulo':
+            es_correcto, error = GeometryValidator.validar_angulo(datos_geo, meta)
+        elif tipo == 'distancia_segmento':
+            es_correcto, error = GeometryValidator.validar_distancia(datos_geo, meta)
+        else:
+            es_correcto = False
+            error = 999
+        
+        feedback_especifico = "¡Geometría correcta!" if es_correcto else f"La construcción no es precisa (Error: {error:.1f}°/u)."
+        # La solución fantasma se enviará en la Fase 4
+    else:
+        # Lógica Estándar (HU14)
+        opcion_id = request.POST.get('opcion_id')
+        opcion = get_object_or_404(OpcionEjercicio, id=opcion_id, ejercicio=ejercicio)
+        es_correcto = opcion.es_correcta
+        feedback_especifico = opcion.retroalimentacion or ("¡Correcto!" if es_correcto else "Sigue intentándolo.")
+
     explicacion_tecnica = ejercicio.explicacion_tecnica or ""
     feedback_completo = f"{feedback_especifico} {explicacion_tecnica}".strip()
 
@@ -398,7 +429,7 @@ def validar_respuesta(request):
     resultado_ej = ResultadoEjercicio.objects.create(
         usuario=request.user,
         ejercicio=ejercicio,
-        es_correcto=opcion.es_correcta,
+        es_correcto=es_correcto,
         tiempo_empleado=int(tiempo),
         feedback_mostrado=feedback_completo
     )
@@ -418,7 +449,7 @@ def validar_respuesta(request):
     ajustar_dificultad_estudiante(request.user)
 
     # HU42: Evaluar éxito de la recomendación para retroalimentar el SVM
-    evaluar_exito_recomendacion(request.user, ejercicio.tema.nombre, opcion.es_correcta)
+    evaluar_exito_recomendacion(request.user, ejercicio.tema.nombre, es_correcto)
 
     # Capturar nivel previo para detectar cambio (HU23)
     nivel_previo = request.user.profile.nivel_estudiante
@@ -426,7 +457,7 @@ def validar_respuesta(request):
     # Asignar puntos e insignias por actividad (HU22 y HU24)
     puntos_ganados, nuevas_insignias = GamificationService.assign_points_exercise(
         request.user, 
-        is_correct=opcion.es_correcta, 
+        is_correct=es_correcto, 
         difficulty=ejercicio.dificultad
     )
 
@@ -440,14 +471,15 @@ def validar_respuesta(request):
     ]
 
     return JsonResponse({
-        'es_correcto': opcion.es_correcta,
+        'es_correcto': es_correcto,
         'feedback': feedback_especifico,
         'explicacion_tecnica': explicacion_tecnica,
         'puntos_ganados': puntos_ganados,
         'total_puntos': request.user.profile.puntos_acumulados,
         'nivel_actual': nivel_actual,
         'subio_nivel': nivel_actual > nivel_previo,
-        'nuevas_insignias': insignias_data
+        'nuevas_insignias': insignias_data,
+        'meta_solucion': ejercicio.meta_geometria if not es_correcto and ejercicio.es_interactiva else None
     })
 
 @login_required
