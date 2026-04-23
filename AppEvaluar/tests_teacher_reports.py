@@ -159,3 +159,29 @@ class TeacherReportsIntegrationTest(TestCase):
         data = response.json()
         self.assertEqual(data['summary']['total_estudiantes'], 0) # No hay estudiantes en 5to B
 
+    def test_risk_data_in_json(self):
+        """Verificar que el JSON incluye los campos de riesgo calculados (HU46)"""
+        self.client.login(username='teacher1', password='pass')
+        
+        # Generar patrón de riesgo (estancamiento: 3 fallos recientes)
+        ej = Ejercicio.objects.get(texto="Q1")
+        for _ in range(3):
+            ResultadoEjercicio.objects.create(
+                usuario=self.student, ejercicio=ej, es_correcto=False, tiempo_empleado=20
+            )
+
+        response = self.client.get(reverse('evaluar:reportes_data_json'))
+        data = response.json()
+        
+        self.assertTrue(len(data['estudiantes']) > 0)
+        est_info = data['estudiantes'][0]
+        
+        self.assertIn('nivel_riesgo', est_info)
+        self.assertIn('color_riesgo', est_info)
+        self.assertIn('motivo_riesgo', est_info)
+        
+        # Verificar valores (estancamiento esperado)
+        self.assertEqual(est_info['nivel_riesgo'], 'alto')
+        self.assertEqual(est_info['color_riesgo'], 'red')
+        self.assertIn('estancamiento', est_info['motivo_riesgo'].lower())
+

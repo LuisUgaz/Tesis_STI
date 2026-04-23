@@ -136,3 +136,19 @@ class LogEntrenamientoSVM(models.Model):
     def __str__(self):
         exito_str = "Pendiente" if self.fue_exito is None else ("Éxito" if self.fue_exito else "Fallo")
         return f"Log {self.estudiante.username} - {self.tema_elegido.nombre} ({exito_str})"
+
+class RepasoProgramado(models.Model):
+    estudiante = models.ForeignKey(User, on_delete=models.CASCADE, related_name='repasos')
+    tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='repasos_programados')
+    fecha_proximo_repaso = models.DateTimeField()
+    intervalo = models.IntegerField(default=1, help_text="Intervalo actual en días")
+    factor_facilidad = models.FloatField(default=2.5, help_text="Factor de facilidad (EF) del algoritmo SM-2")
+    estado = models.BooleanField(default=True, help_text="Indica si el repaso está activo")
+
+    class Meta:
+        verbose_name = "Repaso Programado"
+        verbose_name_plural = "Repasados Programados"
+        unique_together = ('estudiante', 'tema')
+
+    def __str__(self):
+        return f"Repaso {self.tema.nombre} - {self.estudiante.username} ({self.fecha_proximo_repaso.date()})"

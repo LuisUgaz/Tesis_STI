@@ -227,3 +227,13 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: HU45 - Resolver ejercicios de geometría interactiva en plano dinámico**
 *Link: [./tracks/HU45-Ejercicios_interactivos/](./tracks/HU45-Ejercicios_interactivos/)*
+
+---
+
+- [x] **Track: HU46 - Mostrar alertas tempranas de riesgo de aprendizaje en reportes docentes**
+*Link: [./tracks/HU46-Alertas_riesgo/](./tracks/HU46-Alertas_riesgo/)*
+
+---
+
+- [x] **Track: HU47 - Programar repasos automáticos con repetición espaciada**
+*Link: [./tracks/HU47-Repeticion_espaciada/](./tracks/HU47-Repeticion_espaciada/)*

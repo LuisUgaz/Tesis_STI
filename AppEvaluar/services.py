@@ -197,10 +197,41 @@ def evaluar_exito_recomendacion(estudiante: User, tema_nombre: str, es_correcto:
         logger.error(f"Error al evaluar éxito de recomendación: {e}")
 
 def calcular_recomendacion(estudiante: User) -> Optional[Dict]:
-    """Calcula el tema que el estudiante debe reforzar basado en sus respuestas.
+    """
+    Calcula el tema que el estudiante debe reforzar basado en sus respuestas.
+    HU47: Prioriza temas con repaso programado vencido (Repetición Espaciada).
     Incorpora dificultad de pregunta, tiempo de respuesta y SVM para empates (HU42).
     """
+    from .models import RepasoProgramado
+    from django.utils import timezone
+
+    # 1. HU47: Verificar repasos vencidos (Prioridad Alta)
+    repaso_vencido = RepasoProgramado.objects.filter(
+        estudiante=estudiante,
+        estado=True,
+        fecha_proximo_repaso__lte=timezone.now()
+    ).order_by('fecha_proximo_repaso').first()
+
+    if repaso_vencido:
+        # Si hay un repaso vencido, se recomienda ese tema inmediatamente
+        mejor_recomendacion = {
+            'tema': repaso_vencido.tema.nombre,
+            'metrica': 100.0,  # Valor de dominio previo
+            'motivo': 'Repaso programado (Repetición Espaciada)',
+            'es_repaso': True
+        }
+        # Actualizar persistencia de recomendación
+        RecomendacionEstudiante.objects.filter(usuario=estudiante).delete()
+        RecomendacionEstudiante.objects.create(
+            usuario=estudiante,
+            tema=repaso_vencido.tema.nombre,
+            metrica_desempeno=100.0
+        )
+        return mejor_recomendacion
+
+    # 2. Lógica estándar basada en desempeño diagnóstico y de práctica
     if not ResultadoDiagnostico.objects.filter(estudiante=estudiante).exists():
+
         raise SinResultadosError("No hay resultados de diagnóstico.")
     
     respuestas = RespuestaUsuario.objects.filter(

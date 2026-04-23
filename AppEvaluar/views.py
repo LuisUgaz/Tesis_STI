@@ -255,9 +255,13 @@ class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
                              estudiantes_qs.filter(nombres__icontains=nombre) | \
                              estudiantes_qs.filter(apellidos__icontains=nombre)
 
+        from .services_metrics import calcular_riesgo_estudiante
         estudiantes_data = []
         for est in estudiantes_qs.order_by('apellidos', 'nombres'):
             metricas = MetricasEstudiante.objects.filter(usuario=est.user).first()
+            # Calcular riesgo (HU46)
+            riesgo = calcular_riesgo_estudiante(est.user, tema_id=tema_id)
+            
             estudiantes_data.append({
                 'nombre_completo': f"{est.nombres} {est.apellidos}",
                 'username': est.user.username,
@@ -265,7 +269,10 @@ class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
                 'xp': est.puntos_acumulados,
                 'nivel': est.nivel_estudiante,
                 'precision': float(metricas.precision_general) if metricas else 0,
-                'insignias_count': est.logros.count()
+                'insignias_count': est.logros.count(),
+                'nivel_riesgo': riesgo['nivel'],
+                'color_riesgo': riesgo['color'],
+                'motivo_riesgo': riesgo['mensaje']
             })
 
         # 3. Datos de Actividad Reciente (Progresos)
@@ -450,6 +457,10 @@ def validar_respuesta(request):
 
     # HU42: Evaluar éxito de la recomendación para retroalimentar el SVM
     evaluar_exito_recomendacion(request.user, ejercicio.tema.nombre, es_correcto)
+
+    # HU47: Actualizar ciclo de repetición espaciada si aplica
+    from .services_spaced_repetition import actualizar_repaso_post_ejercicio
+    actualizar_repaso_post_ejercicio(request.user, ejercicio.tema, es_correcto)
 
     # Capturar nivel previo para detectar cambio (HU23)
     nivel_previo = request.user.profile.nivel_estudiante

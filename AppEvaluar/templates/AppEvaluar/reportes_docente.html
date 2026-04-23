@@ -226,6 +226,7 @@
                                     <th>XP (Puntos)</th>
                                     <th>Nivel</th>
                                     <th>Precisión</th>
+                                    <th class="text-center">Riesgo</th>
                                     <th class="text-center">Insignias</th>
                                 </tr>
                             </thead>
@@ -252,6 +253,15 @@
                                                 <span class="text-muted small">Sin datos</span>
                                             {% endif %}
                                         {% endwith %}
+                                    </td>
+                                    <td class="text-center">
+                                        <!-- Semáforo de Riesgo (HU46) -->
+                                        <span class="risk-indicator" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="Cargando riesgo...">
+                                            <i class="fas fa-circle" style="color: #dee2e6;"></i>
+                                        </span>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-info" style="font-size: 0.9rem;">
@@ -330,7 +340,7 @@
             
             // 3. Actualizar Tabla Estudiantes
             const estBody = document.getElementById('estudiantes-table-body');
-            estBody.innerHTML = data.estudiantes.length > 0 ? '' : '<tr><td colspan="6" class="text-center py-5 text-muted">Sin resultados.</td></tr>';
+            estBody.innerHTML = data.estudiantes.length > 0 ? '' : '<tr><td colspan="7" class="text-center py-5 text-muted">Sin resultados.</td></tr>';
             data.estudiantes.forEach(est => {
                 estBody.innerHTML += `
                     <tr>
@@ -346,8 +356,19 @@
                                 </div>
                             </div>
                         </td>
+                        <td class="text-center">
+                            <span class="risk-indicator" data-bs-toggle="tooltip" data-bs-placement="top" title="${est.motivo_riesgo}">
+                                <i class="fas fa-circle" style="color: ${est.color_riesgo}; cursor: help;"></i>
+                            </span>
+                        </td>
                         <td class="text-center"><span class="badge bg-info">🏆 ${est.insignias_count}</span></td>
                     </tr>`;
+            });
+
+            // Re-inicializar tooltips tras actualizar la tabla
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
             // 4. Actualizar Progresos

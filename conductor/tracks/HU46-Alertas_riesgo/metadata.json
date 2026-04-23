@@ -1,0 +1,8 @@
+{
+  "track_id": "HU46-Alertas_riesgo",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-23T10:00:00Z",
+  "updated_at": "2026-04-23T10:00:00Z",
+  "description": "HU46 - Mostrar alertas tempranas de riesgo de aprendizaje en reportes docentes"
+}
