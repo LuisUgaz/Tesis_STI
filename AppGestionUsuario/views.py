@@ -25,7 +25,16 @@ class StudentRequiredMixin(UserPassesTestMixin):
 
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.profile.rol == 'Administrador'
+        if not self.request.user.is_authenticated:
+            return False
+        # Un superusuario siempre tiene acceso, incluso sin perfil
+        if self.request.user.is_superuser:
+            return True
+        # Si tiene perfil, verificar si es administrador
+        try:
+            return self.request.user.profile.rol == 'Administrador'
+        except Profile.DoesNotExist:
+            return False
     
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -282,7 +291,7 @@ class HomeView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         pagina, created = PaginaEstatica.objects.get_or_create(
             slug='inicio',
-            defaults={'titulo': 'Inicio', 'contenido_html': '<h3>Bienvenido al Tutor Inteligente de Geometría</h3><p>Explora los temas y mejora tus habilidades.</p>'}
+            defaults={'titulo': 'Inicio', 'contenido_html': ''}
         )
         return pagina
 
@@ -318,3 +327,14 @@ class BadgeManagementDeleteView(AdminRequiredMixin, View):
         badge.delete()
         messages.success(request, f"Insignia '{nombre}' eliminada correctamente.")
         return redirect('admin_badge_list')
+
+class GetUserDataView(AdminRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        user = get_object_or_404(User, pk=pk)
+        data = {
+            'nombres': user.first_name,
+            'apellidos': user.last_name,
+            'grado': getattr(user, 'degree', ''),
+            'seccion': getattr(user, 'section', ''),
+        }
+        return JsonResponse(data)

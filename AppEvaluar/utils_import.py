@@ -32,41 +32,25 @@ def analizar_preguntas_con_gemini(texto, api_key=None):
         return {"error": "API Key de Gemini no configurada. Por favor, confígurala en los ajustes del sistema."}
     
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
     
     prompt = f"""
-    Analiza el siguiente texto de un banco de preguntas de geometría y extráelas en un formato JSON estructurado.
+    Extrae TODAS las preguntas de geometría del siguiente texto en un JSON estructurado.
     
-    Para cada pregunta identifica:
-    1. El enunciado (texto).
-    2. Las opciones (lista de strings).
-    3. Cuál es la opción correcta (el texto exacto de la opción).
-    4. El tema sugerido (debe ser uno de estos: 'Ángulos', 'Triángulos', 'Segmentos'). Si no encaja, usa el más cercano.
-    5. La dificultad (Básico, Intermedio, Avanzado).
-    6. Una explicación técnica breve (opcional).
+    Campos por pregunta:
+    - enunciado: Texto de la pregunta.
+    - opciones: Lista de strings con las alternativas.
+    - correcta: Texto exacto de la opción correcta.
+    - tema: Elegir entre 'Ángulos', 'Triángulos', 'Segmentos'.
+    - dificultad: Básico, Intermedio o Avanzado.
 
-    Texto del documento:
+    Texto:
     {texto}
 
-    REGLAS CRÍTICAS:
-    - Devuelve ÚNICAMENTE un objeto JSON válido.
-    - No incluyas explicaciones fuera del JSON.
-    - Asegúrate de que la 'correcta' esté incluida exactamente igual en la lista de 'opciones'.
-    - Si el texto no contiene preguntas claras, devuelve una lista vacía.
-
-    Esquema esperado:
-    {{
-      "preguntas": [
-        {{
-          "enunciado": "Enunciado de la pregunta",
-          "opciones": ["Opción 1", "Opción 2", "Opción 3", "Opción 4"],
-          "correcta": "Opción 2",
-          "tema": "Triángulos",
-          "dificultad": "Básico",
-          "explicacion": "Explicación breve"
-        }}
-      ]
-    }}
+    REGLAS:
+    - Devuelve ÚNICAMENTE el JSON. Sin introducciones ni explicaciones.
+    - No inventes preguntas, extrae solo las presentes.
+    - Formato: {{"preguntas": [{{...}}, {{...}}]}}
     """
     
     try:

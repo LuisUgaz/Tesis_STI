@@ -12,7 +12,7 @@
                         <p class="text-muted">Sube un archivo PDF o Word con tu banco de preguntas y la IA se encargará de estructurarlas.</p>
                     </div>
 
-                    <form method="POST" enctype="multipart/form-data" class="mt-4">
+                    <form method="POST" enctype="multipart/form-data" class="mt-4" id="importForm">
                         {% csrf_token %}
                         
                         <div class="mb-4">
@@ -49,4 +49,32 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 20px;">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
+                    <span class="visually-hidden">Procesando...</span>
+                </div>
+                <h3 class="fw-bold">Procesando documento...</h3>
+                <p class="text-muted">La Inteligencia Artificial está analizando tus preguntas. Esto puede tardar unos segundos.</p>
+                <div class="progress mt-3" style="height: 10px; border-radius: 5px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('importForm').addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('archivo');
+    if (fileInput.files.length > 0) {
+        var loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        loadingModal.show();
+    }
+});
+</script>
 {% endblock %}

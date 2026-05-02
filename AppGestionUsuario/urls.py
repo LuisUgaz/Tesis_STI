@@ -4,7 +4,8 @@ from .views import (
     ContactoView, UserManagementListView, UserManagementCreateView, 
     UserManagementUpdateView, UserToggleStatusView,
     AdminContentDashboardView, AdminConfigUpdateView, AdminPaginaUpdateView,
-    BadgeManagementListView, BadgeManagementCreateView, BadgeManagementUpdateView, BadgeManagementDeleteView
+    BadgeManagementListView, BadgeManagementCreateView, BadgeManagementUpdateView, BadgeManagementDeleteView,
+    GetUserDataView
 )
 
 urlpatterns = [
@@ -28,4 +29,5 @@ urlpatterns = [
     path('admin/insignias/nueva/', BadgeManagementCreateView.as_view(), name='admin_badge_create'),
     path('admin/insignias/editar/<int:pk>/', BadgeManagementUpdateView.as_view(), name='admin_badge_update'),
     path('admin/insignias/eliminar/<int:pk>/', BadgeManagementDeleteView.as_view(), name='admin_badge_delete'),
+    path('api/user-data/<int:pk>/', GetUserDataView.as_view(), name='get_user_data'),
 ]

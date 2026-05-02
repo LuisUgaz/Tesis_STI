@@ -55,7 +55,7 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             f"Usa un lenguaje motivador, sencillo y directo."
         )
 
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel(model_name='gemini-flash-latest')
         
         # Manejo de imagen (Multimodal)
         if pregunta.imagen:
