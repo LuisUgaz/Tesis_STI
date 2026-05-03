@@ -40,6 +40,12 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.nombres} {self.apellidos} ({self.user.username})"
 
+    def save(self, *args, **kwargs):
+        # Normalizar sección a mayúsculas si existe
+        if self.seccion:
+            self.seccion = self.seccion.upper()
+        super(Profile, self).save(*args, **kwargs)
+
 class Insignia(models.Model):
     RULE_TYPES = [
         ('HITOS', 'Hitos de Actividad'),

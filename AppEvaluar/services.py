@@ -76,22 +76,25 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
         return "No se pudo generar la explicacion IA"
 
 def asignar_preguntas_aleatorias(examen: Examen):
-    """Busca preguntas disponibles para el tema del examen y las asigna aleatoriamente."""
-    preguntas_disponibles = Pregunta.objects.filter(
+    """Busca ejercicios disponibles para el tema del examen y los asigna aleatoriamente."""
+    # Solo seleccionamos ejercicios que estén activos y que NO estén asignados a otro examen
+    # También deben pertenecer al tema solicitado
+    ejercicios_disponibles = Ejercicio.objects.filter(
         tema=examen.tema,
-        examen__isnull=True,
-        examen_tema__isnull=True
+        es_activo=True,
+        examen_asignado__isnull=True
     ).order_by('?')
     
-    if preguntas_disponibles.count() < examen.cantidad_preguntas:
+    if ejercicios_disponibles.count() < examen.cantidad_preguntas:
         raise ValueError(
-            f"No hay suficientes preguntas disponibles para el tema {examen.tema.nombre}."
+            f"No hay suficientes ejercicios disponibles en el banco para el tema {examen.tema.nombre}. "
+            f"Se requieren {examen.cantidad_preguntas} y solo hay {ejercicios_disponibles.count()} libres."
         )
     
-    seleccionadas = preguntas_disponibles[:examen.cantidad_preguntas]
-    for pregunta in seleccionadas:
-        pregunta.examen_tema = examen
-        pregunta.save()
+    seleccionados = ejercicios_disponibles[:examen.cantidad_preguntas]
+    for ejercicio in seleccionados:
+        ejercicio.examen_asignado = examen
+        ejercicio.save()
 
 def resolver_empate_svm(estudiante: User, temas_empatados: list) -> str:
     """

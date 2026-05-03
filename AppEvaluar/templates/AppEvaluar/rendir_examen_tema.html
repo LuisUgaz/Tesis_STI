@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ examen.nombre }} - Evaluación de Tema</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --accent-color: #f5a623;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 4px solid var(--accent-color);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .pregunta-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            border-left: 8px solid var(--primary-color);
+        }
+
+        .pregunta-texto {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .pregunta-imagen {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+
+        .opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .opcion-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .opcion-item:hover {
+            background-color: #f0f7ff;
+            border-color: var(--primary-color);
+        }
+
+        .opcion-item input {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+
+        .btn-enviar {
+            display: block;
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--accent-color), #d98e10);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(245, 166, 35, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 2rem;
+        }
+
+        .btn-enviar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(245, 166, 35, 0.5);
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        @media (max-width: 600px) {
+            .timer {
+                position: sticky;
+                top: 10px;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 15px;
+                border-radius: 10px;
+            }
+        }
+
+        /* Modal y Overlay */
+        .overlay-bloqueante {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .modal-confirmacion {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 20px;
+            max-width: 400px; width: 90%; text-align: center;
+        }
+
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-confirmar { background: var(--accent-color); color: white; }
+        .btn-cancelar { background: #eee; color: #333; }
+    </style>
+</head>
+<body>
+    <div id="overlay" class="overlay-bloqueante">
+        <div class="spinner"></div>
+        <h2 style="color: var(--accent-color);">Finalizando Evaluación...</h2>
+        <p>Estamos registrando tu puntaje y actualizando tu progreso.</p>
+    </div>
+
+    <div id="modal-confirm" class="modal-confirmacion">
+        <div class="modal-content">
+            <h3>¿Finalizar examen?</h3>
+            <p>Asegúrate de haber respondido todos los ejercicios.</p>
+            <div class="modal-buttons">
+                <button id="btn-cancel" class="btn-modal btn-cancelar">Revisar</button>
+                <button id="btn-confirm" class="btn-modal btn-confirmar">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="timer" id="timer">
+        Tiempo restante: <span id="time-display">00:00</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>{{ examen.nombre }}</h1>
+            <p>Tema: <strong>{{ examen.tema.nombre }}</strong> | Cantidad: {{ examen.cantidad_preguntas }} ejercicios</p>
+        </div>
+
+        <form method="post" id="examen-form">
+            {% csrf_token %}
+            {% for ejercicio in ejercicios %}
+                <div class="pregunta-card">
+                    <div class="pregunta-texto">
+                        {{ forloop.counter }}. {{ ejercicio.texto }}
+                    </div>
+
+                    {% if ejercicio.imagen %}
+                        <img src="{{ ejercicio.imagen.url }}" alt="Imagen del ejercicio" class="pregunta-imagen">
+                    {% endif %}
+
+                    <div class="opciones">
+                        {% for opcion in ejercicio.opciones.all %}
+                            <label class="opcion-item">
+                                <input type="radio" name="ejercicio_{{ ejercicio.id }}" value="{{ opcion.id }}" required>
+                                {{ opcion.texto }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-enviar">Finalizar Evaluación</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tiempoLimiteMinutos = {{ examen.tiempo_limite }};
+            let tiempoRestanteSegundos = tiempoLimiteMinutos * 60;
+            const display = document.getElementById('time-display');
+            const form = document.getElementById('examen-form');
+            const modal = document.getElementById('modal-confirm');
+            const overlay = document.getElementById('overlay');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                modal.style.display = 'flex';
+            });
+
+            document.getElementById('btn-cancel').onclick = () => modal.style.display = 'none';
+            document.getElementById('btn-confirm').onclick = () => {
+                modal.style.display = 'none';
+                overlay.style.display = 'flex';
+                form.submit();
+            };
+
+            const timer = setInterval(function() {
+                const min = Math.floor(tiempoRestanteSegundos / 60);
+                const seg = tiempoRestanteSegundos % 60;
+                display.textContent = `${min < 10 ? "0" : ""}${min}:${seg < 10 ? "0" : ""}${seg}`;
+
+                if (tiempoRestanteSegundos <= 0) {
+                    clearInterval(timer);
+                    alert("¡Tiempo agotado! El examen se enviará automáticamente.");
+                    form.submit();
+                }
+                if (tiempoRestanteSegundos <= 60) {
+                    document.getElementById('timer').style.background = "#d0021b";
+                }
+                tiempoRestanteSegundos--;
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

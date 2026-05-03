@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from .models import (
     ExamenDiagnostico, Examen, Pregunta, Opcion, RespuestaUsuario, 
     ResultadoDiagnostico, RecomendacionEstudiante,
-    Ejercicio, OpcionEjercicio, ResultadoEjercicio
+    Ejercicio, OpcionEjercicio, ResultadoEjercicio, ResultadoExamen
 )
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias, obtener_feedback_ia, evaluar_exito_recomendacion
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
@@ -71,13 +71,11 @@ class ExamenDashboardView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Resumen de preguntas disponibles por tema
-        # Preguntas que NO tienen examen diagnóstico ni examen de tema
+        # Resumen de ejercicios disponibles por tema para crear nuevos exámenes (HU41 Refactor)
         temas_con_conteo = Tema.objects.annotate(
             preguntas_disponibles=Count(
-                'preguntas_diagnostico',
-                filter=Q(preguntas_diagnostico__examen__isnull=True, 
-                         preguntas_diagnostico__examen_tema__isnull=True)
+                'ejercicios',
+                filter=Q(ejercicios__es_activo=True, ejercicios__examen_asignado__isnull=True)
             )
         )
         context['temas_indicadores'] = temas_con_conteo
@@ -121,11 +119,11 @@ class ExamenUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
                 self.object = form.save()
                 
                 if tema_cambio or cantidad_cambio:
-                    # Liberar preguntas actuales
-                    self.object.preguntas.update(examen_tema=None)
-                    # Asignar nuevas
+                    # Liberar ejercicios actuales (HU41 Refactor)
+                    self.object.preguntas_ejercicio.update(examen_asignado=None)
+                    # Asignar nuevos
                     asignar_preguntas_aleatorias(self.object)
-                    messages.success(self.request, f"Examen '{self.object.nombre}' actualizado. Se han re-asignado las preguntas debido a cambios en el tema o cantidad.")
+                    messages.success(self.request, f"Examen '{self.object.nombre}' actualizado. Se han re-asignado los ejercicios del banco.")
                 else:
                     messages.success(self.request, f"Examen '{self.object.nombre}' actualizado correctamente.")
                 
@@ -138,8 +136,10 @@ class ExamenDeleteView(LoginRequiredMixin, TeacherRequiredMixin, View):
     def post(self, request, pk):
         examen = get_object_or_404(Examen, pk=pk)
         nombre = examen.nombre
+        # Liberar los ejercicios antes de borrar (HU41 Refactor)
+        examen.preguntas_ejercicio.update(examen_asignado=None)
         examen.delete()
-        messages.success(request, f"Examen '{nombre}' eliminado. Las preguntas asociadas han sido liberadas.")
+        messages.success(request, f"Examen '{nombre}' eliminado. Los ejercicios asociados han sido liberadas.")
         return redirect('evaluar:examen_dashboard')
 
 class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
@@ -358,17 +358,23 @@ def iniciar_practica(request):
     tema = get_object_or_404(Tema, nombre=recomendacion.tema)
 
     # 3. Filtrar ejercicios por Tema y Nivel del Perfil (HU15)
+    # EXCLUIR los que ya están asignados a un examen (HU41 Refactor)
     nivel = request.user.profile.nivel_dificultad_actual
     ejercicios = Ejercicio.objects.filter(
         tema=tema, 
         dificultad=nivel,
-        es_activo=True
-    ).prefetch_related('opciones').order_by('?')[:5]
+        es_activo=True,
+        examen_asignado__isnull=True
+    ).prefetch_related('opciones').order_by('?')[:20]
 
     if not ejercicios.exists():
         messages.info(request, f"Aún no hay ejercicios de nivel {nivel} para el tema: {tema.nombre}")
         # Fallback: Si no hay del nivel, mostrar cualquiera del tema para no bloquear al alumno
-        ejercicios = Ejercicio.objects.filter(tema=tema, es_activo=True).prefetch_related('opciones').order_by('?')[:5]
+        ejercicios = Ejercicio.objects.filter(
+            tema=tema, 
+            es_activo=True,
+            examen_asignado__isnull=True
+        ).prefetch_related('opciones').order_by('?')[:20]
         
     if not ejercicios.exists():
         messages.info(request, f"Aún no hay ejercicios cargados para el tema: {tema.nombre}")
@@ -858,3 +864,97 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
         
         messages.success(request, f"Se han importado exitosamente {preguntas_guardadas} preguntas al banco.")
         return redirect('evaluar:banco_preguntas_list')
+
+@login_required
+@student_required
+def rendir_examen_tema(request, examen_id):
+    """
+    Vista para que el estudiante rinda un examen de tema basado en el banco de ejercicios.
+    """
+    examen = get_object_or_404(Examen, id=examen_id)
+    
+    # Validar si el estudiante ya realizó el examen
+    if ResultadoExamen.objects.filter(estudiante=request.user, examen=examen).exists():
+        messages.error(request, "Ya has realizado este examen de tema.")
+        return redirect('evaluar:ver_resultados_tema', examen_id=examen.id)
+
+    ejercicios = examen.preguntas_ejercicio.all().prefetch_related('opciones')
+    
+    if request.method == 'GET':
+        session_key = f'inicio_examen_tema_{examen_id}'
+        if session_key not in request.session:
+            request.session[session_key] = timezone.now().isoformat()
+    
+    if request.method == 'POST':
+        session_key = f'inicio_examen_tema_{examen_id}'
+        inicio_str = request.session.get(session_key)
+        
+        if inicio_str:
+            inicio = timezone.datetime.fromisoformat(inicio_str)
+            tiempo_maximo = inicio + timedelta(minutes=examen.tiempo_limite + 1)
+            if timezone.now() > tiempo_maximo:
+                messages.error(request, "El tiempo del examen ha expirado.")
+        
+        total_correctas = 0
+        total_ejercicios = ejercicios.count()
+
+        for ejercicio in ejercicios:
+            campo_nombre = f'ejercicio_{ejercicio.id}'
+            valor = request.POST.get(campo_nombre)
+            
+            if valor:
+                try:
+                    opcion = OpcionEjercicio.objects.get(id=valor, ejercicio=ejercicio)
+                    if opcion.es_correcta:
+                        total_correctas += 1
+                    
+                    # Registrar como ResultadoEjercicio para alimentar métricas
+                    ResultadoEjercicio.objects.create(
+                        usuario=request.user,
+                        ejercicio=ejercicio,
+                        es_correcto=opcion.es_correcta,
+                        tiempo_empleado=0,
+                        feedback_mostrado=f"Resultado de Examen: {examen.nombre}"
+                    )
+                except (OpcionEjercicio.DoesNotExist, ValueError):
+                    continue
+        
+        puntaje = (total_correctas / total_ejercicios * 100) if total_ejercicios > 0 else 0
+        
+        ResultadoExamen.objects.create(
+            estudiante=request.user,
+            examen=examen,
+            puntaje=puntaje
+        )
+
+        registrar_progreso(
+            usuario=request.user,
+            tema=examen.tema,
+            tipo_actividad='Examen',
+            referencia_id=examen.id
+        )
+
+        if session_key in request.session:
+            del request.session[session_key]
+            
+        messages.success(request, "¡Examen enviado con éxito!")
+        return redirect('evaluar:ver_resultados_tema', examen_id=examen.id)
+        
+    return render(request, 'AppEvaluar/rendir_examen_tema.html', {
+        'examen': examen,
+        'ejercicios': ejercicios
+    })
+
+@login_required
+@student_required
+def ver_resultados_tema(request, examen_id):
+    """
+    Muestra el resultado final de un examen de tema.
+    """
+    examen = get_object_or_404(Examen, id=examen_id)
+    resultado = get_object_or_404(ResultadoExamen, estudiante=request.user, examen=examen)
+    
+    return render(request, 'AppEvaluar/resultados_tema.html', {
+        'examen': examen,
+        'resultado': resultado
+    })

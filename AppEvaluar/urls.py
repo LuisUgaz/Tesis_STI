@@ -25,6 +25,10 @@ urlpatterns = [
     path('examenes/editar/<int:pk>/', views.ExamenUpdateView.as_view(), name='examen_update'),
     path('examenes/eliminar/<int:pk>/', views.ExamenDeleteView.as_view(), name='examen_delete'),
 
+    # Rendición de Exámenes de Tema (HU41 Refactor)
+    path('examenes/rendir/<int:examen_id>/', views.rendir_examen_tema, name='rendir_examen_tema'),
+    path('examenes/resultados/<int:examen_id>/', views.ver_resultados_tema, name='ver_resultados_tema'),
+
     # Retroalimentación Inteligente (HU40)
     path('ia-feedback/<int:respuesta_id>/', views.IAFeedbackView.as_view(), name='ia_feedback'),
 ]
