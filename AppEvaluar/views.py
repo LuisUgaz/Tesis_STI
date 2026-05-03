@@ -870,13 +870,32 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
 def rendir_examen_tema(request, examen_id):
     """
     Vista para que el estudiante rinda un examen de tema basado en el banco de ejercicios.
+    Incluye validación secuencial: debe haber resuelto el examen anterior del mismo tema.
     """
     examen = get_object_or_404(Examen, id=examen_id)
     
-    # Validar si el estudiante ya realizó el examen
+    # 1. Validar si el estudiante ya realizó el examen
     if ResultadoExamen.objects.filter(estudiante=request.user, examen=examen).exists():
         messages.error(request, "Ya has realizado este examen de tema.")
         return redirect('evaluar:ver_resultados_tema', examen_id=examen.id)
+
+    # 2. Validación Secuencial (HU41 Refactor)
+    # Buscar exámenes del mismo tema creados ANTES que el actual
+    examen_anterior = Examen.objects.filter(
+        tema=examen.tema, 
+        fecha_creacion__lt=examen.fecha_creacion
+    ).order_by('-fecha_creacion').first()
+
+    if examen_anterior:
+        # Verificar si resolvió el anterior
+        resuelto_anterior = ResultadoExamen.objects.filter(
+            estudiante=request.user, 
+            examen=examen_anterior
+        ).exists()
+        
+        if not resuelto_anterior:
+            messages.warning(request, f"Para rendir '{examen.nombre}', primero debes completar '{examen_anterior.nombre}'.")
+            return redirect('tutoria:tema_detalle', slug=examen.tema.slug)
 
     ejercicios = examen.preguntas_ejercicio.all().prefetch_related('opciones')
     

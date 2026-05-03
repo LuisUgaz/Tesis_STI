@@ -377,17 +377,24 @@
                 <span class="icon">🎥</span> Videos
             </a>
             
-            <!-- HU41: Sección de Evaluaciones -->
+            <!-- HU41: Sección de Evaluaciones Secuenciales -->
             {% if examenes %}
             <div style="margin-top: 1rem; padding: 0.5rem 1.2rem;">
                 <small style="color: #999; text-transform: uppercase; font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;">Evaluaciones</small>
             </div>
             {% for examen in examenes %}
-            <a href="{% url 'evaluar:rendir_examen_tema' examen.id %}" class="nav-item" style="color: var(--accent-color); background: rgba(245, 166, 35, 0.05);">
-                <span class="icon">ðŸ“</span> {{ examen.nombre }}
-            </a>
+                {% if examen.esta_bloqueado %}
+                <div class="nav-item disabled" title="Debes completar el examen anterior" style="cursor: not-allowed; background: rgba(0,0,0,0.03);">
+                    <span class="icon">🔒</span> Examen {{ examen.indice }}
+                </div>
+                {% else %}
+                <a href="{% url 'evaluar:rendir_examen_tema' examen.id %}" class="nav-item" 
+                   style="color: {% if examen.ha_resuelto %}var(--secondary-color){% else %}var(--accent-color){% endif %}; background: rgba(245, 166, 35, 0.05);">
+                    <span class="icon">{% if examen.ha_resuelto %}✅{% else %}📝{% endif %}</span> 
+                    Examen {{ examen.indice }} {% if examen.ha_resuelto %}(Completado){% endif %}
+                </a>
+                {% endif %}
             {% endfor %}
-
             {% endif %}
 
             <!-- Botón en la parte interior -->

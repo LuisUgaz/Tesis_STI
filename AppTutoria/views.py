@@ -137,8 +137,39 @@ def tema_detalle(request, slug):
                 tipo_actividad='Teoría'
             )
     
-    # HU41: Obtener exámenes asociados al tema
-    examenes = Examen.objects.filter(tema=tema)
+    # HU41: Obtener exámenes asociados al tema ordenados cronológicamente
+    examenes_qs = Examen.objects.filter(tema=tema).order_by('fecha_creacion')
+    examenes = []
+    
+    if not es_docente:
+        # Lógica de bloqueo secuencial para estudiantes
+        proximo_bloqueado = False
+        from AppEvaluar.models import ResultadoExamen
+        
+        for i, ex en enumerate(examenes_qs):
+            # Verificar si ya resolvió este examen
+            ha_resuelto = ResultadoExamen.objects.filter(estudiante=request.user, examen=ex).exists()
+            
+            # El examen está disponible si:
+            # 1. Es el primero (index 0)
+            # 2. El anterior ya fue resuelto
+            esta_bloqueado = proximo_bloqueado
+            
+            # Si el actual no ha sido resuelto, el siguiente debe bloquearse
+            if not ha_resuelto:
+                proximo_bloqueado = True
+            
+            # Añadir metadatos al objeto para el template
+            ex.esta_bloqueado = esta_bloqueado
+            ex.ha_resuelto = ha_resuelto
+            ex.indice = i + 1 # Para mostrar Examen 1, Examen 2...
+            examenes.append(ex)
+    else:
+        # Los docentes ven todo desbloqueado
+        for i, ex en enumerate(examenes_qs):
+            ex.esta_bloqueado = False
+            ex.indice = i + 1
+            examenes.append(ex)
     
     return render(request, 'AppTutoria/tema_detalle.html', {
         'tema': tema,
