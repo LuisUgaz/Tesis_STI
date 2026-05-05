@@ -317,7 +317,7 @@
                 <div class="feedback-area" id="feedback-{{ ejercicio.id }}"></div>
 
                 <div class="actions">
-                    <button class="btn btn-primary btn-validar" onclick="validarActual({{ ejercicio.id }})">Validar</button>
+                    <button class="btn btn-primary btn-validar" onclick="validarActual({{ ejercicio.id }})">Enviar respuestas</button>
                     <button class="btn btn-success btn-siguiente" onclick="siguiente()" style="display: none;">Siguiente</button>
                 </div>
             </div>
@@ -328,7 +328,19 @@
             <h2 style="color: var(--success-color);">¡Práctica completada!</h2>
             <p>Has terminado la sesión de ejercicios para el tema: <strong>{{ tema.nombre }}</strong>.</p>
             <div style="font-size: 4rem; margin: 2rem 0;">🏆</div>
-            <a href="{% url 'tutoria:lista_temas' %}" class="btn btn-primary" style="text-decoration: none; display: inline-block;">Volver a Temas</a>
+            <a href="{% url 'tutoria:tema_detalle' slug=tema.slug %}" class="btn btn-primary" style="text-decoration: none; display: inline-block;">Volver a Temas</a>
+        </div>
+    </div>
+
+    <!-- Modal de Desbloqueo de Examen (HU14/HU41) -->
+    <div id="modal-desbloqueo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; animation: fadeIn 0.3s ease;">
+        <div style="background: white; padding: 2rem; border-radius: 20px; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🔓</div>
+            <h2 style="color: var(--primary-color); margin-bottom: 1rem;">¡Examen Desbloqueado!</h2>
+            <p style="font-size: 1.1rem; line-height: 1.5; color: #555; margin-bottom: 1.5rem;">
+                Has completado el 80% de tu práctica. Ahora puedes rendir tu primer <b>Examen de Tema</b> para demostrar lo que has aprendido.
+            </p>
+            <button onclick="cerrarModalDesbloqueo()" class="btn btn-primary" style="width: 100%;">¡Genial, continuaré practicando!</button>
         </div>
     </div>
 
@@ -523,6 +535,11 @@
                     showToast(data.puntos_ganados, data.total_puntos, data.subio_nivel, data.nivel_actual, data.nuevas_insignias);
                 }
 
+                // Mostrar modal de desbloqueo (HU14/HU41)
+                if (data.desbloqueo_examen) {
+                    document.getElementById('modal-desbloqueo').style.display = 'flex';
+                }
+
                 // Deshabilitar radios
                 card.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
                 card.querySelector('.btn-validar').style.display = 'none';
@@ -532,6 +549,10 @@
                 console.error("Error al validar:", error);
                 alert("Hubo un error al procesar tu respuesta.");
             }
+        }
+
+        function cerrarModalDesbloqueo() {
+            document.getElementById('modal-desbloqueo').style.display = 'none';
         }
 
         function showToast(puntos, total, subioNivel = false, nuevoNivel = 1, insignias = []) {

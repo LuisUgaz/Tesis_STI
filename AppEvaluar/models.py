@@ -161,3 +161,21 @@ class RepasoProgramado(models.Model):
 
     def __str__(self):
         return f"Repaso {self.tema.nombre} - {self.estudiante.username} ({self.fecha_proximo_repaso.date()})"
+
+class ControlPracticaTema(models.Model):
+    """
+    Gestiona el estado de desbloqueo de exámenes y la restricción de tiempo entre prácticas. (HU14/HU41)
+    """
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='controles_practica')
+    tema = models.ForeignKey(Tema, on_delete=models.CASCADE)
+    examen_desbloqueado = models.BooleanField(default=False, help_text="Indica si el primer examen del tema ha sido desbloqueado")
+    ultima_practica_finalizada = models.DateTimeField(null=True, blank=True, help_text="Fecha y hora de la última vez que terminó una sesión de 20 ejercicios")
+
+    class Meta:
+        unique_together = ('usuario', 'tema')
+        verbose_name = "Control de Práctica"
+        verbose_name_plural = "Controles de Práctica"
+
+    def __str__(self):
+        estado = "Desbloqueado" if self.examen_desbloqueado else "Bloqueado"
+        return f"{self.usuario.username} - {self.tema.nombre} ({estado})"

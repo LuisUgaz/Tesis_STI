@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
-from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico, Examen
+from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico, Examen, ControlPracticaTema
 from AppEvaluar.views import student_required
 from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
 from .services import registrar_progreso
@@ -143,16 +143,21 @@ def tema_detalle(request, slug):
     
     if not es_docente:
         # Lógica de bloqueo secuencial para estudiantes
-        proximo_bloqueado = False
+        control_practica = ControlPracticaTema.objects.filter(usuario=request.user, tema=tema).first()
+        practica_desbloqueada = control_practica.examen_desbloqueado if control_practica else False
+        
+        # El primer examen (índice 0) está bloqueado si la práctica no llegó al 80%
+        # Los siguientes dependen de si el anterior fue resuelto.
+        proximo_bloqueado = not practica_desbloqueada
         from AppEvaluar.models import ResultadoExamen
         
-        for i, ex en enumerate(examenes_qs):
+        for i, ex in enumerate(examenes_qs):
             # Verificar si ya resolvió este examen
             ha_resuelto = ResultadoExamen.objects.filter(estudiante=request.user, examen=ex).exists()
             
             # El examen está disponible si:
-            # 1. Es el primero (index 0)
-            # 2. El anterior ya fue resuelto
+            # 1. Es el primero (index 0) Y la práctica está desbloqueada
+            # 2. Es uno posterior Y el anterior ya fue resuelto
             esta_bloqueado = proximo_bloqueado
             
             # Si el actual no ha sido resuelto, el siguiente debe bloquearse
@@ -166,7 +171,7 @@ def tema_detalle(request, slug):
             examenes.append(ex)
     else:
         # Los docentes ven todo desbloqueado
-        for i, ex en enumerate(examenes_qs):
+        for i, ex in enumerate(examenes_qs):
             ex.esta_bloqueado = False
             ex.indice = i + 1
             examenes.append(ex)

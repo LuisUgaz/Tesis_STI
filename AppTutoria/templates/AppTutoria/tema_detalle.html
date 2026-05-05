@@ -358,6 +358,18 @@
         <span class="lightbox-close">&times;</span>
         <img src="" alt="Fullscreen" class="lightbox-content" id="lightbox-img">
     </div>
+    <!-- Modal de Confirmación de Guardado (HU43) -->
+    <div id="modal-progreso" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; animation: fadeIn 0.3s ease;">
+        <div style="background: white; padding: 2.5rem; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">💾</div>
+            <h2 style="color: var(--primary-color); margin-bottom: 1rem;">¡Progreso Guardado!</h2>
+            <p style="font-size: 1.1rem; line-height: 1.5; color: #555; margin-bottom: 2rem;">
+                Tu avance en el <b>Marco Teórico</b> ha sido registrado correctamente en tu historial.
+            </p>
+            <button onclick="confirmarSalida()" class="btn-download" style="width: 100%; border: none; cursor: pointer; background: var(--success-color);">Entendido</button>
+        </div>
+    </div>
+
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -399,9 +411,15 @@
 
             <!-- Botón en la parte interior -->
             <hr class="my-3 opacity-10">
-            <a href="{% url 'tutoria:lista_temas' %}" class="nav-item text-primary fw-bold">
-                <span class="icon">←</span> Volver a Temas
-            </a>
+            {% if seccion == 'teoria' and not es_docente %}
+                <a href="javascript:void(0)" onclick="guardarYSalir()" class="nav-item text-primary fw-bold">
+                    <span class="icon">←</span> Volver a Temas
+                </a>
+            {% else %}
+                <a href="{% url 'tutoria:lista_temas' %}" class="nav-item text-primary fw-bold">
+                    <span class="icon">←</span> Volver a Temas
+                </a>
+            {% endif %}
         </nav>
     </aside>
 
@@ -591,6 +609,34 @@
             lightbox.addEventListener('click', (e) => {
                 if (e.target === lightbox) lightboxClose.click();
             });
+
+            // Funciones de Guardado Final y Modal (HU43)
+            window.guardarYSalir = function() {
+                // Realizar un último guardado antes de mostrar el modal
+                fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        tema_id: "{{ tema.id }}",
+                        pagina_actual: currentIndex + 1,
+                        total_paginas: total
+                    })
+                })
+                .then(() => {
+                    document.getElementById('modal-progreso').style.display = 'flex';
+                })
+                .catch(() => {
+                    // Si falla el guardado final, igual mostramos el modal para no bloquear al usuario
+                    document.getElementById('modal-progreso').style.display = 'flex';
+                });
+            }
+
+            window.confirmarSalida = function() {
+                window.location.href = "{% url 'tutoria:lista_temas' %}";
+            }
         });
     </script>
 </body>

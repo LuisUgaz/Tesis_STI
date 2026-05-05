@@ -5,7 +5,8 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from .models import (
     ExamenDiagnostico, Examen, Pregunta, Opcion, RespuestaUsuario, 
     ResultadoDiagnostico, RecomendacionEstudiante,
-    Ejercicio, OpcionEjercicio, ResultadoEjercicio, ResultadoExamen
+    Ejercicio, OpcionEjercicio, ResultadoEjercicio, ResultadoExamen,
+    ControlPracticaTema
 )
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias, obtener_feedback_ia, evaluar_exito_recomendacion
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
@@ -346,7 +347,7 @@ class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView
 def iniciar_practica(request):
     """
     Selecciona ejercicios del tema recomendado y nivel del estudiante.
-    Muestra la interfaz de resolución secuencial.
+    Implementa restricción de 8 horas y seguimiento de sesión. (HU14/HU41)
     """
     # 1. Obtener la recomendación actual
     recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
@@ -357,7 +358,20 @@ def iniciar_practica(request):
     # 2. Obtener el tema asociado
     tema = get_object_or_404(Tema, nombre=recomendacion.tema)
 
-    # 3. Filtrar ejercicios por Tema y Nivel del Perfil (HU15)
+    # 3. Verificar restricción de 8 horas (HU14)
+    control, created = ControlPracticaTema.objects.get_or_create(usuario=request.user, tema=tema)
+    if control.ultima_practica_finalizada:
+        tiempo_transcurrido = timezone.now() - control.ultima_practica_finalizada
+        if tiempo_transcurrido < timedelta(hours=8):
+            # Calcular tiempo restante para mostrar al usuario
+            segundos_restantes = (timedelta(hours=8) - tiempo_transcurrido).total_seconds()
+            horas_r = int(segundos_restantes // 3600)
+            minutos_r = int((segundos_restantes % 3600) // 60)
+            
+            messages.warning(request, f"Has completado tu sesión de práctica para este tema. Por favor, espera {horas_r} horas y {minutos_r} minutos para recibir nuevos ejercicios y asegurar una mejor retención.")
+            return redirect('tutoria:tema_detalle', slug=tema.slug)
+
+    # 4. Filtrar ejercicios por Tema y Nivel del Perfil (HU15)
     # EXCLUIR los que ya están asignados a un examen (HU41 Refactor)
     nivel = request.user.profile.nivel_dificultad_actual
     ejercicios = Ejercicio.objects.filter(
@@ -380,6 +394,11 @@ def iniciar_practica(request):
         messages.info(request, f"Aún no hay ejercicios cargados para el tema: {tema.nombre}")
         return redirect('lista_temas')
 
+    # 5. Inicializar sesión de práctica (IDs de ejercicios y contador)
+    request.session['ejercicios_practica_ids'] = [e.id for e in ejercicios]
+    request.session['respuestas_practica_count'] = 0
+    request.session.modified = True
+
     return render(request, 'AppEvaluar/practica_ejercicio.html', {
         'tema': tema,
         'ejercicios': ejercicios,
@@ -394,7 +413,7 @@ import json
 def validar_respuesta(request):
     """
     Endpoint AJAX para validar la opción seleccionada y guardar el resultado.
-    Soporta ejercicios estáticos (opciones) e interactivos (geometría).
+    Gestiona el desbloqueo de exámenes (80%) y fin de sesión (100%).
     """
     if request.method != 'POST':
         return HttpResponseBadRequest("Método no permitido")
@@ -487,6 +506,33 @@ def validar_respuesta(request):
         {'nombre': b.nombre, 'icono': b.icono_clase} for b in nuevas_insignias
     ]
 
+    # --- NUEVA LÓGICA DE CONTROL DE PRÁCTICA (HU14/HU41) ---
+    desbloqueo_examen = False
+    ejercicios_sesion = request.session.get('ejercicios_practica_ids', [])
+    
+    if int(ejercicio_id) in ejercicios_sesion:
+        # Incrementar contador de respuestas en esta sesión
+        count = request.session.get('respuestas_practica_count', 0) + 1
+        request.session['respuestas_practica_count'] = count
+        
+        # Eliminar de la lista para no contar duplicados (seguridad)
+        ejercicios_sesion.remove(int(ejercicio_id))
+        request.session['ejercicios_practica_ids'] = ejercicios_sesion
+        request.session.modified = True
+
+        control, _ = ControlPracticaTema.objects.get_or_create(usuario=request.user, tema=ejercicio.tema)
+        
+        # Regla del 80% (16 de 20)
+        if count >= 16 and not control.examen_desbloqueado:
+            control.examen_desbloqueado = True
+            control.save()
+            desbloqueo_examen = True
+        
+        # Regla del 100% (Fin de sesión y espera de 8 horas)
+        if count >= 20:
+            control.ultima_practica_finalizada = timezone.now()
+            control.save()
+
     return JsonResponse({
         'es_correcto': es_correcto,
         'feedback': feedback_especifico,
@@ -496,6 +542,7 @@ def validar_respuesta(request):
         'nivel_actual': nivel_actual,
         'subio_nivel': nivel_actual > nivel_previo,
         'nuevas_insignias': insignias_data,
+        'desbloqueo_examen': desbloqueo_examen,
         'meta_solucion': ejercicio.meta_geometria if not es_correcto and ejercicio.es_interactiva else None
     })
 
