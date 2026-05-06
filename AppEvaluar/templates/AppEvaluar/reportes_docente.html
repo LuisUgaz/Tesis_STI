@@ -19,20 +19,18 @@
                     <label class="form-label small fw-bold text-muted">GRADO</label>
                     <select name="grado" class="form-select border-0 shadow-sm" style="border-radius: 10px;">
                         <option value="">Todos</option>
-                        <option value="1ro" {% if filtro_grado == '1ro' %}selected{% endif %}>1ro Secundaria</option>
-                        <option value="2do" {% if filtro_grado == '2do' %}selected{% endif %}>2do Secundaria</option>
-                        <option value="3ro" {% if filtro_grado == '3ro' %}selected{% endif %}>3ro Secundaria</option>
-                        <option value="4to" {% if filtro_grado == '4to' %}selected{% endif %}>4to Secundaria</option>
-                        <option value="5to" {% if filtro_grado == '5to' %}selected{% endif %}>5to Secundaria</option>
+                        {% for g in grados_existentes %}
+                            <option value="{{ g }}" {% if filtro_grado == g %}selected{% endif %}>{{ g }} Secundaria</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold text-muted">SECCIÓN</label>
                     <select name="seccion" class="form-select border-0 shadow-sm" style="border-radius: 10px;">
                         <option value="">Todas</option>
-                        <option value="A" {% if filtro_seccion == 'A' %}selected{% endif %}>Sección A</option>
-                        <option value="B" {% if filtro_seccion == 'B' %}selected{% endif %}>Sección B</option>
-                        <option value="C" {% if filtro_seccion == 'C' %}selected{% endif %}>Sección C</option>
+                        {% for s in secciones_existentes %}
+                            <option value="{{ s }}" {% if filtro_seccion == s %}selected{% endif %}>Sección {{ s }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -65,35 +63,28 @@
                     <a href="{% url 'evaluar:reportes_docente' %}" class="btn btn-secondary btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px; background-color: #6c757d; border: none;">
                         <i class="fas fa-undo me-2"></i> Limpiar
                     </a>
-
-                    <a href="{% url 'evaluar:banco_preguntas_create' %}" class="btn btn-primary btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px; background-color: var(--student-color); border: none;">
-                        <i class="fas fa-plus-circle me-2"></i> Nueva Pregunta
-                    </a>
-                    
-                    <a href="{% url 'evaluar:banco_preguntas_list' %}" class="btn btn-dark btn-lg px-4 shadow-sm fw-bold d-flex align-items-center" style="border-radius: 12px;">
-                        <i class="fas fa-database me-2"></i> Gestionar Banco
-                    </a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Resumen de Métricas (HTML/CSS) -->
+    <!-- Resumen de Métricas -->
     <div class="row mb-4 g-4">
         <div class="col-md-4">
             <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #4a90e2 !important;">
                 <div class="card-body d-flex flex-column justify-content-center py-4">
                     <h6 class="text-muted small fw-bold text-uppercase mb-2">Total Estudiantes</h6>
                     <h2 id="summary-total" class="mb-0 fw-bold">{{ summary.total_estudiantes }}</h2>
-                    <div class="small text-primary mt-2">En el periodo seleccionado</div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm border-0 bg-white h-100" style="border-radius: 15px; border-left: 5px solid #50e3c2 !important;">
                 <div class="card-body d-flex flex-column justify-content-center py-4">
-                    <h6 class="text-muted small fw-bold text-uppercase mb-2">Precisión Promedio</h6>
-                    <h2 id="summary-precision" class="mb-0 fw-bold">{{ summary.precision_promedio }}%</h2>
+                    <h6 class="text-muted small fw-bold text-uppercase mb-2">Nota Promedio (0-20)</h6>
+                    <h2 id="summary-precision" class="mb-0 fw-bold">
+                        {% widthratio summary.precision_promedio 100 20 %} / 20
+                    </h2>
                     <div class="progress mt-3" style="height: 6px;">
                         <div id="precision-bar" class="progress-bar" style="width: {{ summary.precision_promedio }}%; background-color: #50e3c2;"></div>
                     </div>
@@ -105,7 +96,6 @@
                 <div class="card-body d-flex flex-column justify-content-center py-4">
                     <h6 class="text-muted small fw-bold text-uppercase mb-2">Puntos (XP) Promedio</h6>
                     <h2 id="summary-puntos" class="mb-0 fw-bold">{{ summary.puntos_promedio }}</h2>
-                    <div class="small text-warning mt-2">🏅 Nivel de compromiso alto</div>
                 </div>
             </div>
         </div>
@@ -116,78 +106,34 @@
         <div class="col-md-6 mb-4">
             <div class="card shadow-lg border-0 h-100" style="border-radius: 20px; background: white;">
                 <div class="card-header bg-white border-0 pt-4 px-4">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-primary text-white p-2 rounded-3 me-3">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-0 fw-bold">Dominio por Temas</h5>
-                            <p class="small text-muted mb-0">Desempeño promedio acumulado</p>
-                        </div>
-                    </div>
+                    <h5 class="mb-0 fw-bold">Dominio por Temas</h5>
+                    <p class="small text-muted mb-0">Desempeño promedio acumulado (%)</p>
                 </div>
                 <div class="card-body px-4 pb-4 d-flex align-items-center justify-content-center" id="chart-container">
-                    {% if progresos %}
-                        <canvas id="topicChart" height="300"></canvas>
-                    {% else %}
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-chart-line fa-3x mb-3 opacity-25"></i>
-                            <p class="mb-0">No hay actividad suficiente para generar estadísticas.</p>
-                        </div>
-                    {% endif %}
+                    <canvas id="topicChart" height="300"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Últimos Progresos (Feed de Actividad) -->
+        <!-- Últimos Progresos -->
         <div class="col-md-6 mb-4">
             <div class="card shadow-lg border-0 h-100" style="border-radius: 20px; background: white;">
                 <div class="card-header bg-white border-0 pt-4 px-4">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-success text-white p-2 rounded-3 me-3">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-0 fw-bold">Actividad Reciente</h5>
-                            <p class="small text-muted mb-0">Flujo de interacciones en tiempo real</p>
-                        </div>
-                    </div>
+                    <h5 class="mb-0 fw-bold">Actividad Reciente</h5>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive" style="max-height: 420px; overflow-y: auto; scrollbar-width: thin;">
+                    <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
                         <table class="table table-hover align-middle mb-0">
                             <tbody id="progresos-table-body">
                                 {% for progreso in progresos %}
-                                <tr class="border-transparent">
-                                    <td class="ps-4" style="width: 50px;">
-                                        <div class="avatar-circle bg-light text-primary fw-bold shadow-sm">
-                                            {{ progreso.usuario.username|first|upper }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold text-dark">{{ progreso.usuario.get_full_name|default:progreso.usuario.username }}</div>
-                                        <div class="small text-muted d-flex align-items-center">
-                                            <i class="far fa-clock me-1"></i> {{ progreso.fecha_registro|date:"d/m H:i" }}
-                                            <span class="mx-2">•</span>
-                                            <span class="text-primary">{{ progreso.grado }} {{ progreso.seccion }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.65rem;">{{ progreso.tema.nombre }}</div>
-                                        <span class="badge 
-                                            {% if progreso.tipo_actividad == 'Examen' %}bg-danger
-                                            {% elif progreso.tipo_actividad == 'Ejercicio' %}bg-success
-                                            {% else %}bg-info{% endif %} px-3 py-2" style="border-radius: 10px; font-size: 0.75rem;">
-                                            {{ progreso.tipo_actividad }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% empty %}
                                 <tr>
-                                    <td colspan="3" class="text-center py-5 text-muted">
-                                        <i class="fas fa-history fa-3x mb-3 opacity-25"></i>
-                                        <p>No hay actividad registrada aún.</p>
+                                    <td class="ps-4">
+                                        <div class="fw-bold">{{ progreso.usuario.get_full_name|default:progreso.usuario.username }}</div>
+                                        <div class="small text-muted">{{ progreso.fecha_registro|date:"d/m H:i" }}</div>
                                     </td>
+                                    <td><span class="badge bg-light text-dark border">{{ progreso.grado }} {{ progreso.seccion }}</span></td>
+                                    <td>{{ progreso.tema.nombre }}</td>
+                                    <td><span class="badge bg-info">{{ progreso.tipo_actividad }}</span></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -198,23 +144,12 @@
         </div>
     </div>
 
-    <style>
-        .avatar-circle {
-            width: 40px; height: 40px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; border: 1px solid rgba(0,0,0,0.05);
-        }
-        .table > :not(caption) > * > * { border-bottom-width: 1px; border-color: rgba(0,0,0,0.03); padding: 1.2rem 0.5rem; }
-        #progresos-table-body tr:hover { background-color: #f8faff; }
-    </style>
-
-    <!-- Listado Detallado de Estudiantes (HU26) -->
+    <!-- Listado de Estudiantes -->
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card shadow-sm border-0" style="border-radius: 15px;">
                 <div class="card-header bg-white border-0 pt-4">
-                    <h5 class="mb-0 fw-bold">Listado Detallado de Estudiantes</h5>
-                    <p class="small text-muted">Métricas individuales y logros alcanzados</p>
+                    <h5 class="mb-0 fw-bold">Listado de Estudiantes</h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -222,12 +157,12 @@
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-4">Estudiante</th>
-                                    <th>Grado/Secc</th>
-                                    <th>XP (Puntos)</th>
+                                    <th>Aula</th>
+                                    <th>XP</th>
                                     <th>Nivel</th>
-                                    <th>Precisión</th>
+                                    <th>Nota (0-20)</th>
                                     <th class="text-center">Riesgo</th>
-                                    <th class="text-center">Insignias</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="estudiantes-table-body">
@@ -238,40 +173,23 @@
                                         <div class="small text-muted">@{{ est.user.username }}</div>
                                     </td>
                                     <td>{{ est.grado }} {{ est.seccion }}</td>
-                                    <td><span class="fw-bold">{{ est.puntos_acumulados }}</span></td>
-                                    <td><span class="badge bg-warning text-dark">⭐ Nivel {{ est.nivel_estudiante }}</span></td>
+                                    <td>{{ est.puntos_acumulados }}</td>
+                                    <td><span class="badge bg-warning text-dark">Lvl {{ est.nivel_estudiante }}</span></td>
                                     <td>
-                                        {% with metricas=est.user.metricas.first %}
-                                            {% if metricas %}
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span>{{ metricas.precision_general|floatformat:1 }}%</span>
-                                                    <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
-                                                        <div class="progress-bar" style="width: {{ metricas.precision_general }}%; background-color: #50e3c2;"></div>
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <span class="text-muted small">Sin datos</span>
-                                            {% endif %}
-                                        {% endwith %}
+                                        {% if est.user.metricas %}
+                                            {% widthratio est.user.metricas.precision_general 100 20 %} / 20
+                                        {% else %}
+                                            0 / 20
+                                        {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <!-- Semáforo de Riesgo (HU46) -->
-                                        <span class="risk-indicator" 
-                                              data-bs-toggle="tooltip" 
-                                              data-bs-placement="top" 
-                                              title="Cargando riesgo...">
-                                            <i class="fas fa-circle" style="color: #dee2e6;"></i>
-                                        </span>
+                                        <i class="fas fa-circle" style="color: #dee2e6;"></i>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge bg-info" style="font-size: 0.9rem;">
-                                            🏆 {{ est.logros.count }}
-                                        </span>
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 view-detail-btn" data-user-id="{{ est.user.id }}">
+                                            <i class="fas fa-eye me-1"></i> Ver Historial
+                                        </button>
                                     </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="text-center py-5 text-muted">No se encontraron estudiantes con los filtros aplicados.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -283,32 +201,120 @@
     </div>
 </div>
 
-<!-- Scripts Analíticos -->
+<!-- Modal Detalle Estudiante -->
+<div class="modal fade" id="studentDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalStudentName">Detalle del Estudiante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-muted text-uppercase small border-bottom pb-2">Examen Diagnóstico</h6>
+                        <div id="modal-diag-list"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-muted text-uppercase small border-bottom pb-2">Exámenes de Tema</h6>
+                        <div id="modal-exam-list"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="fw-bold text-muted text-uppercase small border-bottom pb-2">Práctica Reciente (Ejercicios)</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tema</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-ej-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     let myChart = null;
 
-    function initChart(data) {
+    function initChart(labels, values) {
         const ctx = document.getElementById('topicChart').getContext('2d');
         if (myChart) myChart.destroy();
         
         myChart = new Chart(ctx, {
-            type: 'radar',
+            type: 'bar',
             data: {
-                labels: data.labels,
+                labels: labels,
                 datasets: [{
-                    label: 'Dominio Promedio (%)',
-                    data: data.values,
-                    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                    label: 'Dominio (%)',
+                    data: values,
+                    backgroundColor: 'rgba(74, 144, 226, 0.6)',
                     borderColor: 'rgba(74, 144, 226, 1)',
-                    borderWidth: 2
+                    borderWidth: 1
                 }]
             },
             options: {
-                scales: { r: { beginAtZero: true, max: 100 } },
+                scales: { 
+                    y: { beginAtZero: true, max: 100 }
+                },
                 plugins: { legend: { display: false } }
             }
         });
+    }
+
+    async function showStudentDetail(userId) {
+        try {
+            // Usar una URL base generada por Django para evitar errores de prefijo
+            const baseUrl = "{% url 'evaluar:reporte_estudiante_detalle' 0 %}".replace('0', userId);
+            const response = await fetch(baseUrl);
+            
+            if (!response.ok) throw new Error('Error al obtener datos del estudiante');
+            
+            const data = await response.json();
+            
+            document.getElementById('modalStudentName').innerText = `${data.estudiante} (@${data.username})`;
+            
+            // Cargar Diagnósticos
+            const diagDiv = document.getElementById('modal-diag-list');
+            diagDiv.innerHTML = data.diagnosticos.length ? '' : '<p class="text-muted small">No realizado</p>';
+            data.diagnosticos.forEach(d => {
+                diagDiv.innerHTML += `<div class="d-flex justify-content-between mb-1"><span>${d.examen}</span><span class="fw-bold text-primary">${d.puntaje} / 20</span></div>`;
+            });
+
+            // Cargar Exámenes
+            const examDiv = document.getElementById('modal-exam-list');
+            examDiv.innerHTML = data.examenes.length ? '' : '<p class="text-muted small">Ninguno aún</p>';
+            data.examenes.forEach(e => {
+                examDiv.innerHTML += `<div class="mb-2"><div class="small fw-bold">${e.tema}</div><div class="d-flex justify-content-between"><span>${e.nombre}</span><span class="fw-bold text-success">${e.puntaje} / 20</span></div></div>`;
+            });
+
+            // Cargar Ejercicios
+            const ejBody = document.getElementById('modal-ej-list');
+            ejBody.innerHTML = '';
+            if (data.ejercicios.length === 0) {
+                ejBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted small">Sin actividad reciente</td></tr>';
+            } else {
+                data.ejercicios.forEach(ej => {
+                    ejBody.innerHTML += `<tr><td>${ej.tema}</td><td><span class="badge ${ej.es_correcto ? 'bg-success' : 'bg-danger'}">${ej.es_correcto ? 'Correcto' : 'Incorrecto'}</span></td><td>${ej.fecha}</td></tr>`;
+                });
+            }
+
+            const modalElement = document.getElementById('studentDetailModal');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } catch (error) {
+            console.error(error);
+            alert("No se pudo cargar el detalle del estudiante. Por favor, intente de nuevo.");
+        }
     }
 
     async function updateDashboard() {
@@ -316,95 +322,62 @@
         const formData = new FormData(form);
         const params = new URLSearchParams(formData);
         
-        try {
-            const response = await fetch(`{% url 'evaluar:reportes_data_json' %}?${params.toString()}`);
-            const data = await response.json();
-            
-            // 1. Actualizar Resumen
-            document.getElementById('summary-total').innerText = data.summary.total_estudiantes;
-            document.getElementById('summary-precision').innerText = data.summary.precision_promedio + '%';
-            document.getElementById('precision-bar').style.width = data.summary.precision_promedio + '%';
-            document.getElementById('summary-puntos').innerText = data.summary.puntos_promedio;
-            
-            // 2. Actualizar Gráfico
-            if (data.chart_data.labels.length > 0) {
-                document.getElementById('chart-container').innerHTML = '<canvas id="topicChart" height="300"></canvas>';
-                initChart(data.chart_data);
-            } else {
-                document.getElementById('chart-container').innerHTML = `
-                    <div class="text-center py-5 text-muted">
-                        <i class="fas fa-chart-line fa-3x mb-3 opacity-25"></i>
-                        <p class="mb-0">No hay actividad suficiente para generar estadísticas.</p>
-                    </div>`;
-            }
-            
-            // 3. Actualizar Tabla Estudiantes
-            const estBody = document.getElementById('estudiantes-table-body');
-            estBody.innerHTML = data.estudiantes.length > 0 ? '' : '<tr><td colspan="7" class="text-center py-5 text-muted">Sin resultados.</td></tr>';
-            data.estudiantes.forEach(est => {
-                estBody.innerHTML += `
-                    <tr>
-                        <td class="ps-4"><div class="fw-bold text-primary">${est.nombre_completo}</div><div class="small text-muted">@${est.username}</div></td>
-                        <td>${est.aula}</td>
-                        <td><span class="fw-bold">${est.xp}</span></td>
-                        <td><span class="badge bg-warning text-dark">⭐ Nivel ${est.nivel}</span></td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <span>${est.precision}%</span>
-                                <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
-                                    <div class="progress-bar" style="width: ${est.precision}%; background-color: #50e3c2;"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <span class="risk-indicator" data-bs-toggle="tooltip" data-bs-placement="top" title="${est.motivo_riesgo}">
-                                <i class="fas fa-circle" style="color: ${est.color_riesgo}; cursor: help;"></i>
-                            </span>
-                        </td>
-                        <td class="text-center"><span class="badge bg-info">🏆 ${est.insignias_count}</span></td>
-                    </tr>`;
-            });
+        const response = await fetch(`{% url 'evaluar:reportes_data_json' %}?${params.toString()}`);
+        const data = await response.json();
+        
+        document.getElementById('summary-total').innerText = data.summary.total_estudiantes;
+        const notaPromedio = Math.round(data.summary.precision_promedio * 20 / 100);
+        document.getElementById('summary-precision').innerText = notaPromedio + ' / 20';
+        document.getElementById('precision-bar').style.width = data.summary.precision_promedio + '%';
+        document.getElementById('summary-puntos').innerText = data.summary.puntos_promedio;
+        
+        initChart(data.chart_data.labels, data.chart_data.values);
+        
+        const estBody = document.getElementById('estudiantes-table-body');
+        estBody.innerHTML = '';
+        data.estudiantes.forEach(est => {
+            estBody.innerHTML += `
+                <tr>
+                    <td class="ps-4"><div class="fw-bold text-primary">${est.nombre_completo}</div><div class="small text-muted">@${est.username}</div></td>
+                    <td>${est.aula}</td>
+                    <td>${est.xp}</td>
+                    <td><span class="badge bg-warning text-dark">Lvl ${est.nivel}</span></td>
+                    <td>${est.precision} / 20</td>
+                    <td class="text-center"><i class="fas fa-circle" style="color: ${est.color_riesgo}"></i></td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 view-detail-btn" data-user-id="${est.id}">
+                            <i class="fas fa-eye me-1"></i> Ver Historial
+                        </button>
+                    </td>
+                </tr>`;
+        });
 
-            // Re-inicializar tooltips tras actualizar la tabla
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-
-            // 4. Actualizar Progresos
-            const progBody = document.getElementById('progresos-table-body');
-            progBody.innerHTML = data.progresos.length > 0 ? '' : '<tr><td colspan="4" class="text-center py-5 text-muted">Sin actividad.</td></tr>';
-            data.progresos.forEach(p => {
-                progBody.innerHTML += `
-                    <tr>
-                        <td><div class="fw-bold">${p.estudiante}</div><div class="small text-muted">${p.fecha}</div></td>
-                        <td><span class="badge bg-light text-dark border">${p.aula}</span></td>
-                        <td>${p.tema}</td>
-                        <td><span class="badge bg-info">${p.actividad}</span></td>
-                    </tr>`;
-            });
-
-        } catch (error) {
-            console.error("Error al actualizar:", error);
-        }
+        const progBody = document.getElementById('progresos-table-body');
+        progBody.innerHTML = '';
+        data.progresos.forEach(p => {
+            progBody.innerHTML += `<tr><td class="ps-4"><div class="fw-bold">${p.estudiante}</div><div class="small text-muted">${p.fecha}</div></td><td><span class="badge bg-light text-dark border">${p.aula}</span></td><td>${p.tema}</td><td><span class="badge bg-info">${p.actividad}</span></td></tr>`;
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         const initialData = {{ chart_data_json|safe }};
-        initChart({labels: initialData.labels, values: initialData.datasets[0].data});
+        initChart(initialData.labels, initialData.datasets[0].data);
         
         document.getElementById('filterForm').addEventListener('submit', function(e) {
             e.preventDefault();
             updateDashboard();
         });
 
-        // Lógica para exportar a Excel (HU28)
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.view-detail-btn')) {
+                const userId = e.target.closest('.view-detail-btn').dataset.userId;
+                showStudentDetail(userId);
+            }
+        });
+
         document.getElementById('exportBtn').addEventListener('click', function() {
             const form = document.getElementById('filterForm');
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
-            
-            // Redirigir a la URL de exportación con los parámetros actuales
+            const params = new URLSearchParams(new FormData(form));
             window.location.href = `{% url 'evaluar:exportar_reporte_excel' %}?${params.toString()}`;
         });
     });

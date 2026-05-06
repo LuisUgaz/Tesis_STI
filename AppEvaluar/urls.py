@@ -11,6 +11,7 @@ urlpatterns = [
     path('historial/', views.HistorialResultadosView.as_view(), name='historial_resultados'),
     path('reportes/', views.ReportesDocenteView.as_view(), name='reportes_docente'),
     path('reportes/data/', views.ReportesDataJSONView.as_view(), name='reportes_data_json'),
+    path('reportes/estudiante/<int:user_id>/', views.EstudianteDetalleJSONView.as_view(), name='reporte_estudiante_detalle'),
     path('reportes/exportar/', views.ExportarReporteExcelView.as_view(), name='exportar_reporte_excel'),
     path('banco-preguntas/', views.BancoPreguntasListView.as_view(), name='banco_preguntas_list'),
     path('banco-preguntas/nuevo/', views.BancoPreguntasCreateView.as_view(), name='banco_preguntas_create'),

@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -160,9 +161,13 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         if seccion:
             queryset = queryset.filter(seccion=seccion)
         if nombre:
-            queryset = queryset.filter(usuario__username__icontains=nombre) | \
-                       queryset.filter(usuario__first_name__icontains=nombre) | \
-                       queryset.filter(usuario__last_name__icontains=nombre)
+            queryset = queryset.filter(
+                Q(usuario__username__icontains=nombre) | 
+                Q(usuario__first_name__icontains=nombre) | 
+                Q(usuario__last_name__icontains=nombre) |
+                Q(usuario__profile__nombres__icontains=nombre) |
+                Q(usuario__profile__apellidos__icontains=nombre)
+            )
             
         return queryset.select_related('usuario', 'tema').order_by('-fecha_registro')[:50]
 
@@ -170,6 +175,10 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['temas'] = Tema.objects.all()
         
+        # Obtener grados y secciones dinámicos
+        context['grados_existentes'] = Profile.objects.filter(rol='Estudiante').exclude(grado__isnull=True).exclude(grado='').values_list('grado', flat=True).distinct().order_by('grado')
+        context['secciones_existentes'] = Profile.objects.filter(rol='Estudiante').exclude(seccion__isnull=True).exclude(seccion='').values_list('seccion', flat=True).distinct().order_by('seccion')
+
         grado = self.request.GET.get('grado', '')
         seccion = self.request.GET.get('seccion', '')
         nombre = self.request.GET.get('nombre', '')
@@ -177,7 +186,7 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         fecha_inicio = self.request.GET.get('fecha_inicio', '')
         fecha_fin = self.request.GET.get('fecha_fin', '')
         
-        # Obtener Resumen de Aula Inicial (Carga de pÃ¡gina)
+        # Obtener Resumen de Aula Inicial (Carga de página)
         summary = get_classroom_performance_summary(
             grado=grado, seccion=seccion, 
             fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, 
@@ -194,15 +203,13 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
             'datasets': [{
                 'label': 'Dominio Promedio (%)',
                 'data': data,
-                'backgroundColor': 'rgba(74, 144, 226, 0.2)',
+                'backgroundColor': 'rgba(74, 144, 226, 0.5)',
                 'borderColor': 'rgba(74, 144, 226, 1)',
-                'borderWidth': 2,
-                'pointBackgroundColor': 'rgba(74, 144, 226, 1)'
+                'borderWidth': 1
             }]
         })
 
         # Listado de Estudiantes (HU26)
-        from AppGestionUsuario.models import Profile
         estudiantes = Profile.objects.filter(rol='Estudiante').select_related('user').prefetch_related('user__metricas', 'logros')
         
         if grado:
@@ -210,9 +217,11 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         if seccion:
             estudiantes = estudiantes.filter(seccion=seccion)
         if nombre:
-            estudiantes = estudiantes.filter(user__username__icontains=nombre) | \
-                          estudiantes.filter(nombres__icontains=nombre) | \
-                          estudiantes.filter(apellidos__icontains=nombre)
+            estudiantes = estudiantes.filter(
+                Q(user__username__icontains=nombre) | 
+                Q(nombres__icontains=nombre) | 
+                Q(apellidos__icontains=nombre)
+            )
         
         context['estudiantes'] = estudiantes.order_by('apellidos', 'nombres')
         
@@ -246,15 +255,16 @@ class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         )
 
         # 2. Listado de Estudiantes
-        from AppGestionUsuario.models import Profile
         estudiantes_qs = Profile.objects.filter(rol='Estudiante').select_related('user').prefetch_related('user__metricas', 'logros')
         
         if grado: estudiantes_qs = estudiantes_qs.filter(grado=grado)
         if seccion: estudiantes_qs = estudiantes_qs.filter(seccion=seccion)
         if nombre:
-            estudiantes_qs = estudiantes_qs.filter(user__username__icontains=nombre) | \
-                             estudiantes_qs.filter(nombres__icontains=nombre) | \
-                             estudiantes_qs.filter(apellidos__icontains=nombre)
+            estudiantes_qs = estudiantes_qs.filter(
+                Q(user__username__icontains=nombre) | 
+                Q(nombres__icontains=nombre) | 
+                Q(apellidos__icontains=nombre)
+            )
 
         from .services_metrics import calcular_riesgo_estudiante
         estudiantes_data = []
@@ -263,13 +273,20 @@ class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
             # Calcular riesgo (HU46)
             riesgo = calcular_riesgo_estudiante(est.user, tema_id=tema_id)
             
+            # Convertir precisión a base 20 con redondeo
+            precision_20 = 0
+            if metricas:
+                valor_20 = float(metricas.precision_general) * 20 / 100
+                precision_20 = int(valor_20 + 0.5)
+
             estudiantes_data.append({
+                'id': est.user.id,
                 'nombre_completo': f"{est.nombres} {est.apellidos}",
                 'username': est.user.username,
                 'aula': f"{est.grado} {est.seccion}",
                 'xp': est.puntos_acumulados,
                 'nivel': est.nivel_estudiante,
-                'precision': float(metricas.precision_general) if metricas else 0,
+                'precision': precision_20,
                 'insignias_count': est.logros.count(),
                 'nivel_riesgo': riesgo['nivel'],
                 'color_riesgo': riesgo['color'],
@@ -288,7 +305,7 @@ class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
                 'aula': f"{p.grado} {p.seccion}",
                 'tema': p.tema.nombre,
                 'actividad': p.tipo_actividad,
-                'fecha': p.fecha_registro.strftime("%d/%m %H:%i")
+                'fecha': p.fecha_registro.strftime("%d/%m %H:%M")
             })
 
         return JsonResponse({
@@ -299,6 +316,47 @@ class ReportesDataJSONView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
                 'labels': list(summary['desempeno_por_tema'].keys()),
                 'values': list(summary['desempeno_por_tema'].values())
             }
+        })
+
+class EstudianteDetalleJSONView(LoginRequiredMixin, TeacherRequiredMixin, View):
+    """
+    Devuelve el historial detallado de un estudiante para el modal de reportes.
+    """
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        
+        # 1. Diagnóstico
+        diagnosticos = ResultadoDiagnostico.objects.filter(estudiante=user).select_related('examen')
+        diag_data = [{
+            'examen': d.examen.nombre,
+            'puntaje': int((float(d.puntaje) * 20 / 100) + 0.5),
+            'fecha': d.fecha_realizacion.strftime("%d/%m/%Y")
+        } for d in diagnosticos]
+
+        # 2. Exámenes de Tema
+        examenes = ResultadoExamen.objects.filter(estudiante=user).select_related('examen', 'examen__tema')
+        exam_data = [{
+            'tema': e.examen.tema.nombre,
+            'nombre': e.examen.nombre,
+            'puntaje': int((float(e.puntaje) * 20 / 100) + 0.5),
+            'fecha': e.fecha_realizacion.strftime("%d/%m/%Y")
+        } for e in examenes]
+
+        # 3. Progreso en Ejercicios
+        ejercicios = ResultadoEjercicio.objects.filter(usuario=user).select_related('ejercicio', 'ejercicio__tema').order_by('-fecha_resolucion')[:20]
+        ej_data = [{
+            'tema': r.ejercicio.tema.nombre,
+            'ejercicio': r.ejercicio.texto[:50] + "...",
+            'es_correcto': r.es_correcto,
+            'fecha': r.fecha_resolucion.strftime("%d/%m %H:%M")
+        } for r in ejercicios]
+
+        return JsonResponse({
+            'estudiante': f"{user.profile.nombres} {user.profile.apellidos}",
+            'username': user.username,
+            'diagnosticos': diag_data,
+            'examenes': exam_data,
+            'ejercicios': ej_data
         })
 
 class HistorialResultadosView(LoginRequiredMixin, StudentRequiredMixin, ListView):
@@ -695,20 +753,24 @@ def ver_resultados(request, examen_id):
         for tema, datos in resumen_temas.items():
             datos['porcentaje'] = round((datos['correctas'] / datos['total']) * 100, 2)
 
-    # El puntaje total lo tomamos del persistido si existe, si no, lo calculamos (compatibilidad)
-    if resultado_persistido:
-        # El modelo guarda sobre 100, pero la vista actual muestra sobre 20
-        puntaje_total = round(float(resultado_persistido.puntaje) * 20 / 100, 2)
-    else:
-        puntaje_total = round((total_correctas / total_preguntas) * 20, 2) if total_preguntas > 0 else 0
+        # El puntaje total lo tomamos del persistido si existe, si no, lo calculamos (compatibilidad)
+        if resultado_persistido:
+            # El modelo guarda sobre 100, pero la vista actual muestra sobre 20
+            # Regla: 0.5 o más redondea hacia arriba (int(x + 0.5))
+            valor_base_20 = float(resultado_persistido.puntaje) * 20 / 100
+            puntaje_total = int(valor_base_20 + 0.5)
+        else:
+            valor_base_20 = (total_correctas / total_preguntas) * 20 if total_preguntas > 0 else 0
+            puntaje_total = int(valor_base_20 + 0.5)
 
-    return render(request, 'AppEvaluar/resultados.html', {
-        'examen': examen,
-        'puntaje_total': puntaje_total,
-        'total_correctas': total_correctas,
-        'total_preguntas': total_preguntas,
-        'resumen_temas': resumen_temas
-    })
+        return render(request, 'AppEvaluar/resultados.html', {
+            'examen': examen,
+            'respuestas': respuestas,
+            'puntaje_total': puntaje_total,
+            'total_correctas': total_correctas,
+            'total_preguntas': total_preguntas,
+            'resumen_temas': resumen_temas
+        })
 
 class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
     model = Ejercicio
@@ -1020,7 +1082,12 @@ def ver_resultados_tema(request, examen_id):
     examen = get_object_or_404(Examen, id=examen_id)
     resultado = get_object_or_404(ResultadoExamen, estudiante=request.user, examen=examen)
     
+    # Calcular puntaje en base 20 con redondeo (0.5 o más hacia arriba)
+    valor_base_20 = float(resultado.puntaje) * 20 / 100
+    puntaje_20 = int(valor_base_20 + 0.5)
+
     return render(request, 'AppEvaluar/resultados_tema.html', {
         'examen': examen,
-        'resultado': resultado
+        'resultado': resultado,
+        'puntaje_20': puntaje_20
     })
