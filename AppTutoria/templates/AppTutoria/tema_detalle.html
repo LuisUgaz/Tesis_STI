@@ -1,422 +1,374 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ tema.nombre }} - {{ seccion|capfirst }}</title>
-    <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #50e3c2;
-            --accent-color: #f5a623;
-            --bg-color: #f0f4f8;
-            --card-bg: #ffffff;
-            --text-color: #333;
-            --recommendation-color: #7ed321;
-            --sidebar-width: 250px;
-        }
+{% extends 'home.html' %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-            color: var(--text-color);
-            line-height: 1.6;
-            display: flex;
-            min-height: 100vh;
-        }
+{% block content %}
+<style>
+    :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #50e3c2;
+        --accent-color: #f5a623;
+        --bg-color: #f0f4f8;
+        --card-bg: #ffffff;
+        --text-color: #333;
+        --recommendation-color: #7ed321;
+        --sidebar-width: 250px;
+        --success-color: #28a745;
+    }
 
-        /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--card-bg);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-            display: flex;
+    /* Ajuste para que el contenido de home.html use todo el ancho pero respete el sidebar */
+    .content-wrapper {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Ocultar la barra de navegación global en esta vista específica */
+    .navbar {
+        display: none !important;
+    }
+
+    .detail-container {
+        display: flex;
+        min-height: 100vh;
+        margin-top: 0;
+    }
+
+    /* Sidebar Styles */
+    .sidebar-tema {
+        width: var(--sidebar-width);
+        background: var(--card-bg);
+        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        padding: 2rem 1rem;
+        height: auto;
+        border-right: 1px solid #eee;
+    }
+
+    .sidebar-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .sidebar-header h2 {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        margin: 0;
+        font-weight: 800;
+    }
+
+    .nav-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-item-sidebar {
+        text-decoration: none;
+        color: #666;
+        padding: 0.8rem 1.2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .nav-item-sidebar:hover:not(.disabled) {
+        background: #f0f7ff;
+        color: var(--primary-color);
+        transform: translateX(5px);
+    }
+
+    .nav-item-sidebar.active {
+        background: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+    }
+
+    .nav-item-sidebar.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        color: #999;
+    }
+
+    .nav-item-sidebar .icon {
+        font-size: 1.2rem;
+    }
+
+    /* Main Content Styles */
+    .main-content-tema {
+        flex: 1;
+        padding: 2rem 4rem;
+        max-width: 1100px;
+    }
+
+    .header-tema {
+        margin-bottom: 2.5rem;
+        padding: 2rem;
+        background: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border-bottom: 5px solid var(--primary-color);
+    }
+
+    .header-tema h1 {
+        color: var(--primary-color);
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .content-card-tema {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        min-height: 400px;
+    }
+
+    .content-body {
+        font-size: 1.1rem;
+        color: #444;
+    }
+
+    .content-body h2, .content-body h3, .content-body h4 {
+        color: var(--primary-color);
+        margin-top: 1.5rem;
+        font-weight: 700;
+    }
+
+    /* Carrusel de Imágenes */
+    .carousel-container {
+        position: relative;
+        background: #2c3e50;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .carousel-viewport {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1a1a1a;
+        position: relative;
+        cursor: zoom-in;
+    }
+
+    .carousel-image {
+        max-width: 100%;
+        max-height: 600px;
+        display: none;
+        user-select: none;
+    }
+
+    .carousel-image.active {
+        display: block;
+        animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .carousel-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+        background: var(--card-bg);
+        border-top: 1px solid #eee;
+    }
+
+    .carousel-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .carousel-btn:hover:not(:disabled) {
+        background: #357abd;
+        transform: translateY(-2px);
+    }
+
+    .carousel-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .carousel-progress {
+        font-weight: bold;
+        color: #666;
+        font-size: 1rem;
+    }
+
+    /* Lightbox Styles */
+    .lightbox {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+        cursor: zoom-out;
+    }
+
+    .lightbox.active {
+        display: flex;
+    }
+
+    .lightbox-content {
+        max-width: 95%;
+        max-height: 95%;
+        border-radius: 5px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 3rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .material-box {
+        background: #fff8e1;
+        border-left: 5px solid var(--accent-color);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-top: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .btn-download {
+        background: var(--accent-color);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: transform 0.2s;
+        border: none;
+    }
+
+    .btn-download:hover {
+        transform: scale(1.05);
+        color: white;
+    }
+
+    @media (max-width: 992px) {
+        .detail-container {
             flex-direction: column;
-            padding: 2rem 1rem;
-            position: fixed;
-            height: 100vh;
-            z-index: 100;
         }
-
-        .sidebar-header {
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .sidebar-header h2 {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            margin: 0;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .nav-item {
-            text-decoration: none;
-            color: #666;
-            padding: 0.8rem 1.2rem;
-            border-radius: 12px;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .nav-item:hover:not(.disabled) {
-            background: #f0f7ff;
-            color: var(--primary-color);
-            transform: translateX(5px);
-        }
-
-        .nav-item.active {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-        }
-
-        .nav-item.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            color: #999;
-        }
-
-        .nav-item .icon {
-            font-size: 1.2rem;
-        }
-
-        /* Main Content Styles */
-        .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 2rem 3rem;
-            max-width: 1000px;
-        }
-
-        .nav-back {
-            margin-bottom: 2rem;
-        }
-
-        .nav-back a {
-            text-decoration: none;
-            color: #666;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: color 0.2s;
-        }
-
-        .nav-back a:hover {
-            color: var(--primary-color);
-        }
-
-        .header {
-            margin-bottom: 2.5rem;
-            padding: 2.5rem;
-            background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border-bottom: 5px solid var(--primary-color);
-        }
-
-        h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 2.5rem;
-        }
-
-        .content-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-            min-height: 400px;
-        }
-
-        .content-body {
-            font-size: 1.15rem;
-            color: #444;
-        }
-
-        .content-body h2, .content-body h3, .content-body h4 {
-            color: var(--primary-color);
-            margin-top: 1.5rem;
-        }
-
-        .content-body p {
-            margin-bottom: 1.2rem;
-        }
-
-        .content-body ul {
-            margin-bottom: 1.2rem;
-        }
-
-        /* Placeholder Styles */
-        .placeholder {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #999;
-        }
-
-        .placeholder-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .placeholder h2 {
-            color: #ccc;
-            margin-bottom: 0.5rem;
-        }
-
-        .material-box {
-            background: #fff8e1;
-            border-left: 5px solid var(--accent-color);
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-top: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .material-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-download {
-            background: var(--accent-color);
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-
-        .btn-download:hover {
-            transform: scale(1.05);
-        }
-
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 1rem;
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-        }
-
-        /* Carousel Styles (HU43) */
-        .carousel-container {
-            position: relative;
-            background: #2c3e50;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .carousel-viewport {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #1a1a1a;
-            position: relative;
-            cursor: zoom-in;
-        }
-
-        .carousel-image {
-            max-width: 100%;
-            max-height: 600px;
-            display: none;
-            user-select: none;
-        }
-
-        .carousel-image.active {
-            display: block;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .carousel-controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 2rem;
-            background: var(--card-bg);
-            border-top: 1px solid #eee;
-        }
-
-        .carousel-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .carousel-btn:hover:not(:disabled) {
-            background: #357abd;
-            transform: translateY(-2px);
-        }
-
-        .carousel-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .carousel-progress {
-            font-weight: bold;
-            color: #666;
-            font-size: 1.1rem;
-        }
-
-        /* Lightbox Styles */
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
+        .sidebar-tema {
             width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            cursor: zoom-out;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid #eee;
+            flex-direction: row;
+            overflow-x: auto;
+            padding: 1rem;
+            white-space: nowrap;
         }
+        .sidebar-header { display: none; }
+        .nav-menu { flex-direction: row; gap: 1rem; }
+        .main-content-tema { padding: 1.5rem; }
+    }
+</style>
 
-        .lightbox.active {
-            display: flex;
-        }
+<!-- Lightbox for Fullscreen -->
+<div id="lightbox" class="lightbox">
+    <span class="lightbox-close">&times;</span>
+    <img src="" alt="Fullscreen" class="lightbox-content" id="lightbox-img">
+</div>
 
-        .lightbox-content {
-            max-width: 95%;
-            max-height: 95%;
-            border-radius: 5px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            color: white;
-            font-size: 3rem;
-            cursor: pointer;
-            line-height: 1;
-        }
-
-        .no-content-msg {
-            text-align: center;
-            padding: 3rem;
-            background: #fff3cd;
-            border-radius: 15px;
-            border: 1px solid #ffeeba;
-            color: #856404;
-        }
-    </style>
-</head>
-<body>
-    <!-- Lightbox for Fullscreen (HU43) -->
-    <div id="lightbox" class="lightbox">
-        <span class="lightbox-close">&times;</span>
-        <img src="" alt="Fullscreen" class="lightbox-content" id="lightbox-img">
+<!-- Modal de Confirmación de Guardado -->
+<div id="modal-progreso" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 2.5rem; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">💾</div>
+        <h2 style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 800;">¡Progreso Guardado!</h2>
+        <p style="font-size: 1.1rem; line-height: 1.5; color: #555; margin-bottom: 2rem;">
+            Tu avance en el <b>Marco Teórico</b> ha sido registrado correctamente en tu historial.
+        </p>
+        <button onclick="confirmarSalida()" class="btn-download" style="width: 100%; background: var(--success-color); cursor: pointer;">Entendido</button>
     </div>
-    <!-- Modal de Confirmación de Guardado (HU43) -->
-    <div id="modal-progreso" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; animation: fadeIn 0.3s ease;">
-        <div style="background: white; padding: 2.5rem; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.2);">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">💾</div>
-            <h2 style="color: var(--primary-color); margin-bottom: 1rem;">¡Progreso Guardado!</h2>
-            <p style="font-size: 1.1rem; line-height: 1.5; color: #555; margin-bottom: 2rem;">
-                Tu avance en el <b>Marco Teórico</b> ha sido registrado correctamente en tu historial.
-            </p>
-            <button onclick="confirmarSalida()" class="btn-download" style="width: 100%; border: none; cursor: pointer; background: var(--success-color);">Entendido</button>
-        </div>
-    </div>
+</div>
 
+<div class="detail-container">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
+    <aside class="sidebar-tema">
         <div class="sidebar-header">
             <h2>{{ tema.nombre }}</h2>
         </div>
         <nav class="nav-menu">
-            <a href="?seccion=resumen" class="nav-item {% if seccion == 'resumen' %}active{% endif %}">
+            <a href="?seccion=resumen" class="nav-item-sidebar {% if seccion == 'resumen' %}active{% endif %}">
                 <span class="icon">📋</span> Resumen
             </a>
-            <a href="?seccion=teoria" class="nav-item {% if seccion == 'teoria' %}active{% endif %}">
+            <a href="?seccion=teoria" class="nav-item-sidebar {% if seccion == 'teoria' %}active{% endif %}">
                 <span class="icon">📖</span> Marco Teórico
             </a>
-            <a href="#" class="nav-item disabled">
+            <a href="#" class="nav-item-sidebar disabled">
                 <span class="icon">✏️</span> Ejercicios
             </a>
-            <a href="{% url 'tutoria:video_list' tema.slug %}" class="nav-item">
+            <a href="{% url 'tutoria:video_list' tema.slug %}" class="nav-item-sidebar">
                 <span class="icon">🎥</span> Videos
             </a>
             
-            <!-- HU41: Sección de Evaluaciones Secuenciales -->
+            <!-- Evaluaciones Secuenciales -->
             {% if examenes %}
-            <div style="margin-top: 1rem; padding: 0.5rem 1.2rem;">
-                <small style="color: #999; text-transform: uppercase; font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;">Evaluaciones</small>
+            <div class="mt-3 d-none d-lg-block" style="padding: 0.5rem 1.2rem;">
+                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">Evaluaciones</small>
             </div>
             {% for examen in examenes %}
                 {% if examen.esta_bloqueado %}
-                <div class="nav-item disabled" title="Debes completar el examen anterior" style="cursor: not-allowed; background: rgba(0,0,0,0.03);">
+                <div class="nav-item-sidebar disabled" title="Debes completar el examen anterior" style="background: rgba(0,0,0,0.02);">
                     <span class="icon">🔒</span> Examen {{ examen.indice }}
                 </div>
                 {% else %}
-                <a href="{% url 'evaluar:rendir_examen_tema' examen.id %}" class="nav-item" 
-                   style="color: {% if examen.ha_resuelto %}var(--secondary-color){% else %}var(--accent-color){% endif %}; background: rgba(245, 166, 35, 0.05);">
+                <a href="{% url 'evaluar:rendir_examen_tema' examen.id %}" class="nav-item-sidebar" 
+                   style="color: {% if examen.ha_resuelto %}#28a745{% else %}#f5a623{% endif %}; background: rgba(245, 166, 35, 0.03);">
                     <span class="icon">{% if examen.ha_resuelto %}✅{% else %}📝{% endif %}</span> 
-                    Examen {{ examen.indice }} {% if examen.ha_resuelto %}(Completado){% endif %}
+                    Examen {{ examen.indice }}
                 </a>
                 {% endif %}
             {% endfor %}
             {% endif %}
 
-            <!-- Botón en la parte interior -->
-            <hr class="my-3 opacity-10">
+            <hr class="my-3 opacity-10 d-none d-lg-block">
             {% if seccion == 'teoria' and not es_docente %}
-                <a href="javascript:void(0)" onclick="guardarYSalir()" class="nav-item text-primary fw-bold">
+                <a href="javascript:void(0)" onclick="guardarYSalir()" class="nav-item-sidebar text-primary">
                     <span class="icon">←</span> Volver a Temas
                 </a>
             {% else %}
-                <a href="{% url 'tutoria:lista_temas' %}" class="nav-item text-primary fw-bold">
+                <a href="{% url 'tutoria:lista_temas' %}" class="nav-item-sidebar text-primary">
                     <span class="icon">←</span> Volver a Temas
                 </a>
             {% endif %}
@@ -424,8 +376,8 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="main-content">
-        <div class="header">
+    <main class="main-content-tema">
+        <div class="header-tema">
             <h1>
                 {% if seccion == 'resumen' %}Resumen: {{ tema.nombre }}
                 {% elif seccion == 'teoria' %}Marco Teórico: {{ tema.nombre }}
@@ -435,25 +387,34 @@
             </h1>
         </div>
 
-        <div class="content-card">
+        <div class="content-card-tema shadow-sm">
             <div class="content-body">
                 {% if seccion == 'resumen' %}
-                    <p>{{ tema.descripcion }}</p>
-                    <div style="margin-top: 2rem; padding: 2rem; background: #f0f7ff; border-radius: 15px; text-align: center;">
-                        <h3 style="margin-top: 0;">¡Bienvenido al estudio de {{ tema.nombre }}!</h3>
-                        <p>Usa el menú lateral para navegar por los contenidos disponibles para este tema.</p>
-                        <a href="?seccion=teoria" class="btn-download" style="background: var(--primary-color); display: inline-block;">Comenzar con la Teoría</a>
+                    <div class="mb-4 p-4 bg-white border-start border-primary border-4 rounded-3 shadow-sm">
+                        <h4 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i> Descripción del Tema</h4>
+                        <p class="lead mb-0 text-dark">{{ tema.descripcion|default:"No hay descripción disponible para este tema actualmente." }}</p>
+                    </div>
+
+                    <div class="mt-5 p-5 bg-light rounded-4 text-center border shadow-sm">
+                        <div class="mb-4">
+                            <i class="fas fa-graduation-cap fa-4x text-primary opacity-25"></i>
+                        </div>
+                        <h3 class="text-primary mb-3 fw-bold">¡Bienvenido al estudio de {{ tema.nombre }}!</h3>
+                        <p class="text-muted">Usa el menú lateral para explorar la teoría, ver videos explicativos y poner a prueba tus conocimientos con los exámenes disponibles.</p>
+                        <a href="?seccion=teoria" class="btn btn-primary btn-round px-5 py-3 mt-3 shadow">
+                            <i class="fas fa-book-reader me-2"></i> Comenzar con el Marco Teórico
+                        </a>
                     </div>
 
                 {% elif seccion == 'teoria' %}
                     {% if contenido %}
-                        <div class="content-text" style="margin-bottom: 2rem;">
+                        <div class="content-text mb-4">
                             {{ contenido.cuerpo_html|safe }}
                         </div>
 
                         <!-- Carrusel de Imágenes (HU43) -->
-                        <div id="carousel-section">
-                            <h3 style="color: var(--primary-color); margin-bottom: 1.5rem;">📚 Visualización Interactiva</h3>
+                        <div id="carousel-section" class="mt-5">
+                            <h3 class="text-primary mb-4"><i class="fas fa-layer-group me-2"></i> Visualización Interactiva</h3>
                             
                             {% if contenido.imagenes.all %}
                                 <div class="carousel-container">
@@ -467,177 +428,154 @@
                                     </div>
                                     <div class="carousel-controls">
                                         <button class="carousel-btn" id="prev-btn" disabled>
-                                            <span>⬅️</span> Anterior
+                                            <i class="fas fa-chevron-left me-1"></i> Anterior
                                         </button>
                                         <div class="carousel-progress" id="carousel-progress">
                                             Página 1 de {{ contenido.imagenes.count }}
                                         </div>
                                         <button class="carousel-btn" id="next-btn" {% if contenido.imagenes.count <= 1 %}disabled{% endif %}>
-                                            Siguiente <span>➡️</span>
+                                            Siguiente <i class="fas fa-chevron-right ms-1"></i>
                                         </button>
                                     </div>
                                 </div>
                             {% else %}
-                                <div class="no-content-msg">
-                                    <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">⚠️</span>
+                                <div class="alert alert-warning rounded-4 border-0 p-4">
                                     No hay contenido visual disponible para este tema.
                                 </div>
                             {% endif %}
                         </div>
                         
                         {% if contenido.material_pdf %}
-                            <div class="material-box">
-                                <div class="material-info">
-                                    <span style="font-size: 1.5rem;">📄</span>
+                            <div class="material-box mt-5">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="fas fa-file-pdf fa-2x text-danger"></i>
                                     <div>
-                                        <strong style="color: #856404;">Material Complementario</strong>
-                                        <p style="margin: 0; font-size: 0.9rem; color: #856404;">Guía de estudio en PDF</p>
+                                        <strong class="text-dark">Material Complementario</strong>
+                                        <p class="text-muted small mb-0">Guía de estudio oficial en PDF</p>
                                     </div>
                                 </div>
-                                <a href="{{ contenido.material_pdf.url }}" class="btn-download" target="_blank">Descargar PDF</a>
+                                <a href="{{ contenido.material_pdf.url }}" class="btn btn-warning btn-round fw-bold" target="_blank">
+                                    <i class="fas fa-download me-1"></i> Descargar
+                                </a>
                             </div>
                         {% endif %}
                     {% else %}
-                        <p>El contenido teórico para este tema aún no está disponible.</p>
+                        <div class="text-center py-5">
+                            <p class="text-muted">El contenido teórico para este tema aún no está disponible.</p>
+                        </div>
                     {% endif %}
 
                 {% elif seccion == 'ejercicios' or seccion == 'videos' %}
-                    <div class="placeholder">
-                        <span class="placeholder-icon">🚀</span>
-                        <h2>Próximamente</h2>
-                        <p>Esta sección estará disponible muy pronto para ayudarte en tu aprendizaje.</p>
+                    <div class="text-center py-5">
+                        <i class="fas fa-rocket fa-4x text-muted mb-3 opacity-25"></i>
+                        <h2 class="text-muted">Próximamente</h2>
+                        <p class="text-muted">Esta sección estará disponible muy pronto para ayudarte en tu aprendizaje.</p>
                     </div>
                 {% endif %}
             </div>
         </div>
     </main>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const images = document.querySelectorAll('.carousel-image');
-            if (images.length === 0) return;
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('.carousel-image');
+        if (images.length === 0) return;
 
-            let currentIndex = 0;
-            const total = images.length;
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const progressText = document.getElementById('carousel-progress');
-            const viewport = document.getElementById('carousel-viewport');
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightbox-img');
-            const lightboxClose = document.querySelector('.lightbox-close');
+        let currentIndex = 0;
+        const total = images.length;
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressText = document.getElementById('carousel-progress');
+        const viewport = document.getElementById('carousel-viewport');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.querySelector('.lightbox-close');
 
-            // Configuración CSRF para peticiones AJAX
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
                     }
                 }
-                return cookieValue;
             }
-            const csrftoken = getCookie('csrftoken');
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
 
-            function updateCarousel(index) {
-                images.forEach(img => img.classList.remove('active'));
-                images[index].classList.add('active');
-                
-                currentIndex = index;
-                progressText.innerText = `Página ${index + 1} de ${total}`;
-                
-                prevBtn.disabled = index === 0;
-                nextBtn.disabled = index === total - 1;
+        function updateCarousel(index) {
+            images.forEach(img => img.classList.remove('active'));
+            images[index].classList.add('active');
+            
+            currentIndex = index;
+            progressText.innerText = `Página ${index + 1} de ${total}`;
+            
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === total - 1;
 
-                // Actualizar progreso en el servidor (HU43)
-                {% if not es_docente %}
-                fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({
-                        tema_id: "{{ tema.id }}",
-                        pagina_actual: index + 1,
-                        total_paginas: total
-                    })
+            {% if not es_docente %}
+            fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    tema_id: "{{ tema.id }}",
+                    pagina_actual: index + 1,
+                    total_paginas: total
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log(`Progreso actualizado: ${data.porcentaje}%`);
-                    }
-                })
-                .catch(error => console.error('Error al actualizar progreso:', error));
-                {% endif %}
-            }
+            })
+            .catch(error => console.error('Error:', error));
+            {% endif %}
+        }
 
-            nextBtn.addEventListener('click', () => {
-                if (currentIndex < total - 1) updateCarousel(currentIndex + 1);
-            });
-
-            prevBtn.addEventListener('click', () => {
-                if (currentIndex > 0) updateCarousel(currentIndex - 1);
-            });
-
-            // Soporte de Teclado (HU43)
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowRight' && !nextBtn.disabled) nextBtn.click();
-                if (e.key === 'ArrowLeft' && !prevBtn.disabled) prevBtn.click();
-                if (e.key === 'Escape' && lightbox.classList.contains('active')) lightboxClose.click();
-            });
-
-            // Lightbox / Pantalla Completa (HU43)
-            viewport.addEventListener('click', () => {
-                const activeImg = images[currentIndex];
-                lightboxImg.src = activeImg.src;
-                lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden'; // Evitar scroll
-            });
-
-            lightboxClose.addEventListener('click', () => {
-                lightbox.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            });
-
-            lightbox.addEventListener('click', (e) => {
-                if (e.target === lightbox) lightboxClose.click();
-            });
-
-            // Funciones de Guardado Final y Modal (HU43)
-            window.guardarYSalir = function() {
-                // Realizar un último guardado antes de mostrar el modal
-                fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({
-                        tema_id: "{{ tema.id }}",
-                        pagina_actual: currentIndex + 1,
-                        total_paginas: total
-                    })
-                })
-                .then(() => {
-                    document.getElementById('modal-progreso').style.display = 'flex';
-                })
-                .catch(() => {
-                    // Si falla el guardado final, igual mostramos el modal para no bloquear al usuario
-                    document.getElementById('modal-progreso').style.display = 'flex';
-                });
-            }
-
-            window.confirmarSalida = function() {
-                window.location.href = "{% url 'tutoria:lista_temas' %}";
-            }
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < total - 1) updateCarousel(currentIndex + 1);
         });
-    </script>
-</body>
-</html>
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) updateCarousel(currentIndex - 1);
+        });
+
+        viewport.addEventListener('click', () => {
+            const activeImg = images[currentIndex];
+            lightboxImg.src = activeImg.src;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        lightboxClose.addEventListener('click', () => {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+
+        window.guardarYSalir = function() {
+            fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    tema_id: "{{ tema.id }}",
+                    pagina_actual: currentIndex + 1,
+                    total_paginas: total
+                })
+            })
+            .finally(() => {
+                document.getElementById('modal-progreso').style.display = 'flex';
+            });
+        }
+
+        window.confirmarSalida = function() {
+            window.location.href = "{% url 'tutoria:lista_temas' %}";
+        }
+    });
+</script>
+{% endblock %}

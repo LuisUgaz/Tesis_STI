@@ -8,6 +8,7 @@ from AppEvaluar.models import RecomendacionEstudiante, ExamenDiagnostico, Examen
 from AppEvaluar.views import student_required
 from .models import Tema, ContenidoTema, VideoTema, VisualizacionVideo, ProgresoEstudiante
 from .services import registrar_progreso
+from .utils import validar_estado_acceso_tema
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
@@ -111,15 +112,16 @@ def tema_detalle(request, slug):
     tema = get_object_or_404(Tema, slug=slug)
     es_docente = request.user.profile.rol == 'Docente'
 
-    # 3. Verificar recomendación solo para estudiantes
+    # 3. Verificar acceso solo para estudiantes (HU08 / Refactor Validacion)
     if not es_docente:
-        esta_recomendado = RecomendacionEstudiante.objects.filter(
-            usuario=request.user, 
-            tema=tema.nombre
-        ).exists()
-
-        if not esta_recomendado:
-            messages.info(request, "Para acceder a este tema, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+        permitido, error_code, tema_pendiente = validar_estado_acceso_tema(request.user, tema)
+        
+        if not permitido:
+            if error_code == 'FALTA_DIAGNOSTICO':
+                messages.info(request, "Para acceder a este tema, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+            elif error_code == 'TEMA_PENDIENTE':
+                messages.info(request, f"Para acceder a este contenido, primero debes completar tu tema recomendado: {tema_pendiente}.", extra_tags='needs_complete_recommended')
+            
             return redirect('tutoria:lista_temas')
 
     # 4. Obtener la sección solicitada (por defecto 'resumen')
@@ -196,15 +198,16 @@ def video_list(request, slug):
     tema = get_object_or_404(Tema, slug=slug)
     es_docente = request.user.profile.rol == 'Docente'
 
-    # 3. Validar recomendación solo para estudiantes
+    # 3. Validar acceso solo para estudiantes (HU08 / Refactor Validacion)
     if not es_docente:
-        esta_recomendado = RecomendacionEstudiante.objects.filter(
-            usuario=request.user, 
-            tema=tema.nombre
-        ).exists()
-
-        if not esta_recomendado:
-            messages.info(request, "Para acceder a los videos, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+        permitido, error_code, tema_pendiente = validar_estado_acceso_tema(request.user, tema)
+        
+        if not permitido:
+            if error_code == 'FALTA_DIAGNOSTICO':
+                messages.info(request, "Para acceder a los videos, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+            elif error_code == 'TEMA_PENDIENTE':
+                messages.info(request, f"Para acceder a los videos de este tema, primero debes completar tu tema recomendado: {tema_pendiente}.", extra_tags='needs_complete_recommended')
+            
             return redirect('tutoria:lista_temas')
 
     # 4. Obtener los videos asociados al tema (solo activos)
@@ -229,13 +232,10 @@ def registrar_visualizacion(request):
     video = get_object_or_404(VideoTema, id=video_id)
 
     # Validar permiso (mismo que en video_list)
-    esta_recomendado = RecomendacionEstudiante.objects.filter(
-        usuario=request.user, 
-        tema=video.tema.nombre
-    ).exists()
+    permitido, _, _ = validar_estado_acceso_tema(request.user, video.tema)
 
-    if not esta_recomendado:
-        return JsonResponse({'error': 'Acceso denegado. Debes realizar el examen diagnóstico.'}, status=403)
+    if not permitido:
+        return JsonResponse({'error': 'Acceso denegado. Debes completar tus requisitos previos.'}, status=403)
 
     # Registrar o actualizar contador
     visualizacion, created = VisualizacionVideo.objects.get_or_create(

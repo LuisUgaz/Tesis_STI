@@ -12,6 +12,7 @@ from .models import (
 from .services import calcular_recomendacion, ajustar_dificultad_estudiante, asignar_preguntas_aleatorias, obtener_feedback_ia, evaluar_exito_recomendacion
 from .services_metrics import actualizar_metricas_estudiante, get_classroom_performance_summary
 from AppTutoria.services import registrar_progreso
+from AppTutoria.utils import validar_estado_acceso_tema
 from AppGestionUsuario.models import Profile, MetricasEstudiante
 from django.db.models import Count, Q
 import json
@@ -407,14 +408,22 @@ def iniciar_practica(request):
     Selecciona ejercicios del tema recomendado y nivel del estudiante.
     Implementa restricción de 8 horas y seguimiento de sesión. (HU14/HU41)
     """
-    # 1. Obtener la recomendación actual
+    # 1. Obtener el tema asociado (HU08)
     recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
-    
     if not recomendacion:
-        raise PermissionDenied("Debes rendir tu examen diagnóstico para recibir recomendaciones de práctica.")
+        messages.info(request, "Para iniciar una práctica, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+        return redirect('tutoria:lista_temas')
 
-    # 2. Obtener el tema asociado
     tema = get_object_or_404(Tema, nombre=recomendacion.tema)
+
+    # 2. Validar acceso (Refactor Validacion)
+    permitido, error_code, tema_pendiente = validar_estado_acceso_tema(request.user, tema)
+    if not permitido:
+        if error_code == 'FALTA_DIAGNOSTICO':
+            messages.info(request, "Para acceder a la práctica, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+        elif error_code == 'TEMA_PENDIENTE':
+            messages.info(request, f"Para iniciar una práctica de este tema, primero debes completar tu tema recomendado: {tema_pendiente}.", extra_tags='needs_complete_recommended')
+        return redirect('tutoria:lista_temas')
 
     # 3. Verificar restricción de 8 horas (HU14)
     control, created = ControlPracticaTema.objects.get_or_create(usuario=request.user, tema=tema)
