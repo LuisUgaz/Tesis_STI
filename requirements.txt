@@ -9,6 +9,7 @@ matplotlib==3.9.0
 numpy==2.3.5
 scikit-learn==1.5.1
 django-jazzmin==2.6.0
+django-csp
 asgiref==3.7.1
 sqlparse==0.4.2
 tzdata==2024.1
