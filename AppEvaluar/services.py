@@ -25,7 +25,14 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
     """
     Genera una explicación pedagógica usando Gemini 1.5 Flash para una respuesta específica.
     """
+    if not hasattr(settings, 'GEMINI_API_KEY') or not settings.GEMINI_API_KEY:
+        logger.error("GEMINI_API_KEY no está configurada en settings.")
+        return "Configuración de IA incompleta."
+
     try:
+        # Re-configurar para asegurar que toma la API KEY (HU40 Fix)
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        
         pregunta = respuesta.pregunta
         opcion_correcta = Opcion.objects.filter(pregunta=pregunta, es_correcta=True).first()
         
@@ -55,7 +62,7 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             f"Usa un lenguaje motivador, sencillo y directo."
         )
 
-        model = genai.GenerativeModel(model_name='gemini-flash-latest')
+        model = genai.GenerativeModel(model_name='gemini-1.5-flash')
         
         # Manejo de imagen (Multimodal)
         if pregunta.imagen:
@@ -69,7 +76,9 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
         else:
             response = model.generate_content(prompt)
 
-        return response.text.strip()
+        if response and response.text:
+            return response.text.strip()
+        return "No se pudo generar una explicación coherente."
 
     except Exception as e:
         logger.error(f"Error al obtener feedback de IA: {e}")

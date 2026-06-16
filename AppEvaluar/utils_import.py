@@ -32,7 +32,7 @@ def analizar_preguntas_con_gemini(texto, api_key=None):
         return {"error": "API Key de Gemini no configurada. Por favor, confígurala en los ajustes del sistema."}
     
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-flash-latest')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
     prompt = f"""
     Extrae TODAS las preguntas de geometría del siguiente texto en un JSON estructurado.
@@ -55,6 +55,9 @@ def analizar_preguntas_con_gemini(texto, api_key=None):
     
     try:
         response = model.generate_content(prompt)
+        if not response or not response.text:
+            return {"error": "La IA no devolvió contenido válido."}
+            
         text_response = response.text
         # Limpiar posibles delimitadores de markdown
         if "```json" in text_response:
