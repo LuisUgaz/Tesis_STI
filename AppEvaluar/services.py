@@ -62,6 +62,7 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             f"Usa un lenguaje motivador, sencillo y directo."
         )
 
+        logger.info(f"Iniciando generación de feedback IA para respuesta ID: {respuesta.id}")
         model = genai.GenerativeModel(model_name='gemini-1.5-flash')
         
         # Manejo de imagen (Multimodal)
@@ -69,19 +70,34 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             try:
                 from PIL import Image
                 img = Image.open(pregunta.imagen.path)
+                logger.info(f"Generando contenido multimodal para pregunta con imagen: {pregunta.imagen.path}")
                 response = model.generate_content([prompt, img])
             except Exception as e:
                 logger.error(f"Error procesando imagen para IA: {e}")
                 response = model.generate_content(prompt)
         else:
+            logger.info("Generando contenido de texto para pregunta sin imagen.")
             response = model.generate_content(prompt)
 
-        if response and response.text:
-            return response.text.strip()
-        return "No se pudo generar una explicación coherente."
+        if response:
+            try:
+                if response.text:
+                    logger.info(f"Feedback generado exitosamente para respuesta ID: {respuesta.id}")
+                    return response.text.strip()
+            except (ValueError, AttributeError) as e:
+                # Caso donde la respuesta está bloqueada por seguridad o no tiene texto
+                logger.warning(f"La respuesta de la IA fue bloqueada o no contiene texto (Respuesta ID {respuesta.id}): {e}")
+                if hasattr(response, 'candidates') and response.candidates:
+                    # Intentar obtener el motivo del bloqueo si es posible
+                    block_reason = response.candidates[0].finish_reason
+                    logger.warning(f"Motivo de finalización/bloqueo: {block_reason}")
+                return "La IA no pudo generar una respuesta segura en este momento. Intenta revisar la teoría."
+        
+        logger.warning(f"La IA devolvió una respuesta nula para la respuesta ID: {respuesta.id}")
+        return "No se pudo generar una explicación coherente en este momento."
 
     except Exception as e:
-        logger.error(f"Error al obtener feedback de IA: {e}")
+        logger.error(f"Error crítico al obtener feedback de IA para respuesta {respuesta.id}: {str(e)}", exc_info=True)
         return "No se pudo generar la explicacion IA"
 
 def asignar_preguntas_aleatorias(examen: Examen):

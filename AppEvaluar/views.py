@@ -772,13 +772,17 @@ def ver_resultados(request, examen_id):
             valor_base_20 = (total_correctas / total_preguntas) * 20 if total_preguntas > 0 else 0
             puntaje_total = int(valor_base_20 + 0.5)
 
+        # Obtener recomendación generada (HU08)
+        recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
+
         return render(request, 'AppEvaluar/resultados.html', {
             'examen': examen,
             'respuestas': respuestas,
             'puntaje_total': puntaje_total,
             'total_correctas': total_correctas,
             'total_preguntas': total_preguntas,
-            'resumen_temas': resumen_temas
+            'resumen_temas': resumen_temas,
+            'recomendacion': recomendacion
         })
 
 class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):

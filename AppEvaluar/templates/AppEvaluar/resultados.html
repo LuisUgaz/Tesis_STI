@@ -257,6 +257,13 @@
                 {{ puntaje_total }} / 20
             </div>
             <p>Respondiste correctamente {{ total_correctas }} de {{ total_preguntas }} preguntas.</p>
+            
+            {% if recomendacion %}
+                <div style="margin-top: 20px; padding: 15px; background: rgba(245, 166, 35, 0.1); border-radius: 15px; border: 1px dashed var(--accent-color);">
+                    <h3 style="margin: 0; color: var(--accent-color); font-size: 1.1rem; text-transform: uppercase;">Tema Recomendado para Reforzar:</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 1.4rem; font-weight: bold; color: var(--primary-color);">{{ recomendacion.tema }}</p>
+                </div>
+            {% endif %}
         </div>
 
         <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1.5rem;">Resumen por Temas</h2>
