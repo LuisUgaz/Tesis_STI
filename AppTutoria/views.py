@@ -129,6 +129,10 @@ def tema_detalle(request, slug):
 
     # 5. Obtener el contenido asociado
     contenido = None
+    ejercicios = []
+    total_ejercicios = 0
+    videos = []
+    
     if seccion == 'teoria':
         contenido = get_object_or_404(ContenidoTema, tema=tema)
         # Registrar progreso SOLO para estudiantes
@@ -138,7 +142,66 @@ def tema_detalle(request, slug):
                 tema=tema,
                 tipo_actividad='Teoría'
             )
-    
+    elif seccion == 'videos':
+        videos = VideoTema.objects.filter(tema=tema, es_activo=True)
+        # Registrar progreso para estudiantes
+        if not es_docente:
+            registrar_progreso(
+                usuario=request.user,
+                tema=tema,
+                tipo_actividad='Lista Videos'
+            )
+    elif seccion == 'ejercicios':
+        # Lógica de inicio de práctica (HU15)
+        if not es_docente:
+            recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
+            if not recomendacion:
+                messages.info(request, "Para iniciar una práctica, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
+                return redirect('tutoria:tema_detalle', slug=tema.slug)
+            
+            if tema.nombre != recomendacion.tema:
+                messages.warning(request, f"Para iniciar una práctica de este tema, primero debes completar tu tema recomendado: {recomendacion.tema}.", extra_tags='needs_complete_recommended')
+                return redirect('tutoria:tema_detalle', slug=tema.slug)
+
+            # Verificar restricción de 8 horas (HU14)
+            control, created = ControlPracticaTema.objects.get_or_create(usuario=request.user, tema=tema)
+            if control.ultima_practica_finalizada:
+                from django.utils import timezone
+                from datetime import timedelta
+                tiempo_transcurrido = timezone.now() - control.ultima_practica_finalizada
+                if tiempo_transcurrido < timedelta(hours=8):
+                    segundos_restantes = (timedelta(hours=8) - tiempo_transcurrido).total_seconds()
+                    horas_r = int(segundos_restantes // 3600)
+                    minutos_r = int((segundos_restantes % 3600) // 60)
+                    messages.warning(request, f"Has completado tu sesión de práctica. Por favor, espera {horas_r} h y {minutos_r} min para recibir nuevos ejercicios.")
+                    return redirect('tutoria:tema_detalle', slug=tema.slug)
+
+            # Filtrar ejercicios
+            from AppEvaluar.models import Ejercicio
+            nivel = request.user.profile.nivel_dificultad_actual
+            ejercicios_qs = Ejercicio.objects.filter(
+                tema=tema, 
+                dificultad=nivel,
+                es_activo=True,
+                examen_asignado__isnull=True
+            ).prefetch_related('opciones').order_by('?')[:20]
+
+            if not ejercicios_qs.exists():
+                ejercicios_qs = Ejercicio.objects.filter(tema=tema, es_activo=True, examen_asignado__isnull=True).prefetch_related('opciones').order_by('?')[:20]
+            
+            ejercicios = ejercicios_qs
+            total_ejercicios = ejercicios.count()
+            
+            # Inicializar sesión
+            request.session['ejercicios_practica_ids'] = [e.id for e in ejercicios]
+            request.session['respuestas_practica_count'] = 0
+            request.session.modified = True
+        else:
+            # Los docentes pueden ver ejercicios de muestra
+            from AppEvaluar.models import Ejercicio
+            ejercicios = Ejercicio.objects.filter(tema=tema, es_activo=True).prefetch_related('opciones')[:10]
+            total_ejercicios = ejercicios.count()
+
     # HU41: Obtener exámenes asociados al tema ordenados cronológicamente
     examenes_qs = Examen.objects.filter(tema=tema).order_by('fecha_creacion')
     examenes = []
@@ -183,7 +246,10 @@ def tema_detalle(request, slug):
         'contenido': contenido,
         'seccion': seccion,
         'es_docente': es_docente,
-        'examenes': examenes
+        'examenes': examenes,
+        'ejercicios': ejercicios,
+        'total_ejercicios': total_ejercicios,
+        'videos': videos
     })
 
 @login_required

@@ -1,6 +1,9 @@
 {% extends 'home.html' %}
 
 {% block content %}
+<!-- JSXGraph (HU45) -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css" />
+<script type="text/javascript" charset="UTF-8" src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
 <style>
     :root {
         --primary-color: #4a90e2;
@@ -12,6 +15,66 @@
         --recommendation-color: #7ed321;
         --sidebar-width: 250px;
         --success-color: #28a745;
+        --error-color: #e74c3c;
+    }
+
+    /* Estilos unificados para Ejercicios */
+    .progress-container-ejercicio {
+        background: #eee;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    .progress-bar-ejercicio {
+        background: var(--primary-color);
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    .ejercicio-card { display: none; }
+    .ejercicio-card.active { display: block; animation: fadeIn 0.5s ease; }
+    .pregunta-texto { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; }
+    .opcion-label {
+        display: block; padding: 1rem; border: 2px solid #eee; border-radius: 12px;
+        cursor: pointer; transition: all 0.2s; margin-bottom: 1rem;
+    }
+    .opcion-label:hover { background: #f9f9f9; border-color: var(--primary-color); }
+    input[type="radio"] { display: none; }
+    input[type="radio"]:checked + .opcion-label {
+        border-color: var(--primary-color); background: #ebf3ff; font-weight: 600;
+    }
+    .feedback-area {
+        margin-top: 1.5rem; padding: 1.2rem; border-radius: 12px; display: none;
+        border-left: 5px solid transparent;
+    }
+    .feedback-area.success { display: block; background: #e8f5e9; color: #2e7d32; border-color: var(--success-color); }
+    .feedback-area.error { display: block; background: #ffebee; color: #c62828; border-color: var(--error-color); }
+
+    /* Estilos unificados para Videos */
+    .video-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem;
+    }
+    .video-card {
+        background: var(--card-bg); border-radius: 15px; overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.3s;
+        display: flex; flex-direction: column; height: 100%;
+    }
+    .video-thumbnail {
+        width: 100%; height: 180px; background: #000; position: relative;
+        display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .video-thumbnail img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+    .btn-play {
+        background: var(--primary-color); color: white; padding: 0.6rem 1.5rem;
+        border-radius: 12px; font-weight: bold; border: none; cursor: pointer;
+    }
+
+    /* Modal Video */
+    .modal-video {
+        display: none; position: fixed; z-index: 4000; left: 0; top: 0;
+        width: 100%; height: 100%; background: rgba(0,0,0,0.9);
+        align-items: center; justify-content: center;
     }
 
     /* Ajuste para que el contenido de home.html use todo el ancho pero respete el sidebar */
@@ -335,10 +398,10 @@
             <a href="?seccion=teoria" class="nav-item-sidebar {% if seccion == 'teoria' %}active{% endif %}">
                 <span class="icon">📖</span> Marco Teórico
             </a>
-            <a href="#" class="nav-item-sidebar disabled">
+            <a href="?seccion=ejercicios" class="nav-item-sidebar {% if seccion == 'ejercicios' %}active{% endif %}">
                 <span class="icon">✏️</span> Ejercicios
             </a>
-            <a href="{% url 'tutoria:video_list' tema.slug %}" class="nav-item-sidebar">
+            <a href="?seccion=videos" class="nav-item-sidebar {% if seccion == 'videos' %}active{% endif %}">
                 <span class="icon">🎥</span> Videos
             </a>
             
@@ -465,11 +528,96 @@
                         </div>
                     {% endif %}
 
-                {% elif seccion == 'ejercicios' or seccion == 'videos' %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-rocket fa-4x text-muted mb-3 opacity-25"></i>
-                        <h2 class="text-muted">Próximamente</h2>
-                        <p class="text-muted">Esta sección estará disponible muy pronto para ayudarte en tu aprendizaje.</p>
+                {% elif seccion == 'ejercicios' %}
+                    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 5000;"></div>
+                    <div id="practica-ui">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span id="step-info" class="fw-bold">Pregunta 1 de {{ total_ejercicios }}</span>
+                            {% if not es_docente %}
+                            <div class="total-points-display d-flex gap-3 align-items-center">
+                                <span class="badge bg-light text-primary border p-2">✨ <span id="current-total-points">{{ user.profile.puntos_acumulados }}</span> pts</span>
+                                <span class="badge bg-warning text-dark p-2">Nivel <span id="current-level">{{ user.profile.nivel_estudiante }}</span></span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="progress-container-ejercicio">
+                            <div class="progress-bar-ejercicio" id="progress-bar-ejercicio"></div>
+                        </div>
+
+                        {% for ejercicio in ejercicios %}
+                        <div class="ejercicio-card {% if forloop.first %}active{% endif %}" 
+                             data-index="{{ forloop.counter }}" 
+                             data-id="{{ ejercicio.id }}"
+                             data-interactivo="{{ ejercicio.es_interactiva|yesno:'true,false' }}"
+                             {% if ejercicio.es_interactiva %}data-meta='{{ ejercicio.meta_geometria|safe }}'{% endif %}>
+                            
+                            <div class="pregunta-texto">{{ ejercicio.texto }}</div>
+                            
+                            {% if ejercicio.es_interactiva %}
+                                <div id="jxgbox-{{ ejercicio.id }}" class="jxgbox" style="width:100%; height:400px; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #ddd;"></div>
+                            {% else %}
+                                {% if ejercicio.imagen %}
+                                <div class="text-center mb-4">
+                                    <img src="{{ ejercicio.imagen.url }}" class="img-fluid rounded-3 shadow-sm" style="max-height: 300px;">
+                                </div>
+                                {% endif %}
+
+                                <div class="opciones-list">
+                                    {% for opcion in ejercicio.opciones.all %}
+                                    <div class="opcion-item">
+                                        <input type="radio" name="ejercicio_{{ ejercicio.id }}" id="opcion_{{ opcion.id }}" value="{{ opcion.id }}">
+                                        <label for="opcion_{{ opcion.id }}" class="opcion-label">
+                                            {{ opcion.texto }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="feedback-area" id="feedback-{{ ejercicio.id }}"></div>
+
+                            <div class="d-flex justify-content-end mt-4 gap-3">
+                                <button class="btn btn-primary px-4 fw-bold btn-validar" onclick="validarActual({{ ejercicio.id }})">Enviar respuesta</button>
+                                <button class="btn btn-success px-4 fw-bold btn-siguiente" onclick="siguienteEjercicio()" style="display: none;">Siguiente Pregunta <i class="fas fa-arrow-right ms-2"></i></button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="finish-screen" class="text-center py-5" style="display: none;">
+                        <div class="mb-4"><i class="fas fa-trophy fa-5x text-warning"></i></div>
+                        <h2 class="fw-bold text-success">¡Práctica Completada!</h2>
+                        <p class="lead text-muted">Has terminado tu sesión personalizada para <b>{{ tema.nombre }}</b>.</p>
+                        <a href="?seccion=resumen" class="btn btn-primary btn-round px-5 mt-3 shadow">Volver al Resumen</a>
+                    </div>
+
+                {% elif seccion == 'videos' %}
+                    <div class="video-grid">
+                        {% for video in videos %}
+                            <div class="video-card">
+                                <div class="video-thumbnail">
+                                    {% if video.url_miniatura %}<img src="{{ video.url_miniatura }}">
+                                    {% elif video.miniatura %}<img src="{{ video.miniatura.url }}">
+                                    {% else %}<div class="bg-dark w-100 h-100 d-flex align-items-center justify-content-center text-white"><i class="fas fa-video fa-3x opacity-25"></i></div>
+                                    {% endif %}
+                                    <div class="position-absolute translate-middle top-50 start-50 text-white opacity-75"><i class="fas fa-play-circle fa-4x"></i></div>
+                                </div>
+                                <div class="p-4 flex-grow-1 d-flex flex-direction-column justify-content-between">
+                                    <div>
+                                        <h5 class="fw-bold text-primary mb-2">{{ video.titulo }}</h5>
+                                        <p class="small text-muted mb-4">{{ video.descripcion|truncatechars:100 }}</p>
+                                    </div>
+                                    <button class="btn-play w-100" onclick="{% if video.url_video %}window.open('{{ video.url_video }}','_blank'); registrarVista({{ video.id }}){% else %}openLocalVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}', {{ video.id }}){% endif %}">
+                                        Ver Video
+                                    </button>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12 text-center py-5">
+                                <i class="fas fa-video-slash fa-4x text-muted mb-3 opacity-25"></i>
+                                <h4 class="text-muted">No hay videos disponibles aún.</h4>
+                            </div>
+                        {% endfor %}
                     </div>
                 {% endif %}
             </div>
@@ -479,103 +627,201 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const images = document.querySelectorAll('.carousel-image');
-        if (images.length === 0) return;
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : "{{ csrf_token }}";
+        const seccionActual = "{{ seccion }}";
 
-        let currentIndex = 0;
-        const total = images.length;
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const progressText = document.getElementById('carousel-progress');
-        const viewport = document.getElementById('carousel-viewport');
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        const lightboxClose = document.querySelector('.lightbox-close');
+        // --- LÓGICA DE TEORÍA (CARRUSEL) ---
+        if (seccionActual === 'teoria') {
+            const images = document.querySelectorAll('.carousel-image');
+            if (images.length > 0) {
+                let currentTheoryIndex = 0;
+                const totalTheory = images.length;
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                const progressText = document.getElementById('carousel-progress');
+                const viewport = document.getElementById('carousel-viewport');
 
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+                function updateCarousel(index) {
+                    images.forEach(img => img.classList.remove('active'));
+                    images[index].classList.add('active');
+                    currentTheoryIndex = index;
+                    progressText.innerText = `Página ${index + 1} de ${totalTheory}`;
+                    prevBtn.disabled = index === 0;
+                    nextBtn.disabled = index === totalTheory - 1;
+
+                    {% if not es_docente %}
+                    fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                        body: JSON.stringify({ tema_id: "{{ tema.id }}", pagina_actual: index + 1, total_paginas: totalTheory })
+                    }).catch(error => console.error('Error:', error));
+                    {% endif %}
                 }
+
+                nextBtn.addEventListener('click', () => { if (currentTheoryIndex < totalTheory - 1) updateCarousel(currentTheoryIndex + 1); });
+                prevBtn.addEventListener('click', () => { if (currentTheoryIndex > 0) updateCarousel(currentTheoryIndex - 1); });
+                viewport.addEventListener('click', () => {
+                    const activeImg = images[currentTheoryIndex];
+                    document.getElementById('lightbox-img').src = activeImg.src;
+                    document.getElementById('lightbox').classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
             }
-            return cookieValue;
         }
-        const csrftoken = getCookie('csrftoken');
 
-        function updateCarousel(index) {
-            images.forEach(img => img.classList.remove('active'));
-            images[index].classList.add('active');
-            
-            currentIndex = index;
-            progressText.innerText = `Página ${index + 1} de ${total}`;
-            
-            prevBtn.disabled = index === 0;
-            nextBtn.disabled = index === total - 1;
+        // --- LÓGICA DE EJERCICIOS (STI) ---
+        if (seccionActual === 'ejercicios') {
+            let currentIndexEjercicio = 1;
+            const totalEjercicios = {{ total_ejercicios|default:0 }};
+            let startTime = Date.now();
+            const boards = {};
 
-            {% if not es_docente %}
-            fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
+            const GeometricController = {
+                initBoard: function(ejercicioId, meta) {
+                    if (boards[ejercicioId]) return;
+                    const board = JXG.JSXGraph.initBoard(`jxgbox-${ejercicioId}`, {
+                        boundingbox: [-5, 5, 5, -5], axis: true, showCopyright: false, showNavigation: true
+                    });
+                    const elements = { points: {}, lines: [] };
+                    if (meta.elementos_iniciales && meta.elementos_iniciales.puntos) {
+                        meta.elementos_iniciales.puntos.forEach(p => {
+                            elements.points[p.id] = board.create('point', [p.x, p.y], { name: p.id || '', fixed: p.fixed || false, size: 4, color: '#4a90e2' });
+                        });
+                    }
+                    if (meta.elementos_iniciales && meta.elementos_iniciales.segmentos) {
+                        meta.elementos_iniciales.segmentos.forEach(s => {
+                            if (elements.points[s.p1] && elements.points[s.p2]) {
+                                elements.lines.push(board.create('segment', [elements.points[s.p1], elements.points[s.p2]], { strokeColor: '#2c3e50', strokeWidth: 2 }));
+                            }
+                        });
+                    }
+                    boards[ejercicioId] = { board, elements, meta };
                 },
-                body: JSON.stringify({
-                    tema_id: "{{ tema.id }}",
-                    pagina_actual: index + 1,
-                    total_paginas: total
-                })
-            })
-            .catch(error => console.error('Error:', error));
-            {% endif %}
+                getGeometricData: function(ejercicioId) {
+                    const data = boards[ejercicioId];
+                    if (!data) return null;
+                    const result = { tipo: data.meta.tipo_ejercicio, puntos: {} };
+                    for (let id in data.elements.points) {
+                        const p = data.elements.points[id];
+                        result.puntos[id] = { x: p.X(), y: p.Y() };
+                    }
+                    return result;
+                }
+            };
+
+            window.updateProgressEjercicio = function() {
+                const percent = ((currentIndexEjercicio - 1) / totalEjercicios) * 100;
+                document.getElementById('progress-bar-ejercicio').style.width = percent + '%';
+                document.getElementById('step-info').innerText = `Pregunta ${currentIndexEjercicio} de ${totalEjercicios}`;
+                const activeCard = document.querySelector(`.ejercicio-card[data-index="${currentIndexEjercicio}"]`);
+                if (activeCard && activeCard.dataset.interactivo === 'true') {
+                    const id = activeCard.dataset.id;
+                    const meta = JSON.parse(activeCard.dataset.meta);
+                    setTimeout(() => GeometricController.initBoard(id, meta), 100);
+                }
+            };
+
+            window.validarActual = async function(ejercicioId) {
+                const card = document.querySelector(`.ejercicio-card[data-index="${currentIndexEjercicio}"]`);
+                const isInteractivo = card.dataset.interactivo === 'true';
+                let formData = new FormData();
+                formData.append('ejercicio_id', ejercicioId);
+                if (isInteractivo) {
+                    formData.append('datos_geometricos', JSON.stringify(GeometricController.getGeometricData(ejercicioId)));
+                } else {
+                    const selectedOpcion = card.querySelector('input[type="radio"]:checked');
+                    if (!selectedOpcion) { alert("Por favor selecciona una opción."); return; }
+                    formData.append('opcion_id', selectedOpcion.value);
+                }
+                formData.append('tiempo', Math.round((Date.now() - startTime) / 1000));
+                formData.append('csrfmiddlewaretoken', csrftoken);
+
+                try {
+                    const response = await fetch("{% url 'evaluar:validar_respuesta' %}", { method: 'POST', body: formData });
+                    const data = await response.json();
+                    const feedbackArea = document.getElementById(`feedback-${ejercicioId}`);
+                    feedbackArea.innerHTML = `
+                        <div class="fw-bold mb-2">${data.es_correcto ? '✅ ¡Muy bien!' : '❌ ¡Sigue practicando!'}</div>
+                        <div>${data.feedback}</div>
+                        ${data.explicacion_tecnica ? `<div class="mt-2 pt-2 border-top small text-muted"><b>💡 Explicación:</b> ${data.explicacion_tecnica}</div>` : ''}
+                    `;
+                    feedbackArea.className = 'feedback-area ' + (data.es_correcto ? 'success' : 'error');
+                    if (data.puntos_ganados) showToast(data.puntos_ganados, data.total_puntos, data.subio_nivel, data.nivel_actual);
+                    card.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+                    card.querySelector('.btn-validar').style.display = 'none';
+                    card.querySelector('.btn-siguiente').style.display = 'block';
+                } catch (error) { console.error("Error:", error); alert("Error al procesar respuesta."); }
+            };
+
+            window.siguienteEjercicio = function() {
+                if (currentIndexEjercicio < totalEjercicios) {
+                    document.querySelector(`.ejercicio-card[data-index="${currentIndexEjercicio}"]`).classList.remove('active');
+                    currentIndexEjercicio++;
+                    document.querySelector(`.ejercicio-card[data-index="${currentIndexEjercicio}"]`).classList.add('active');
+                    startTime = Date.now();
+                    updateProgressEjercicio();
+                } else {
+                    document.getElementById('practica-ui').style.display = 'none';
+                    document.getElementById('finish-screen').style.display = 'block';
+                }
+            };
+
+            updateProgressEjercicio();
         }
 
-        nextBtn.addEventListener('click', () => {
-            if (currentIndex < total - 1) updateCarousel(currentIndex + 1);
-        });
+        // --- LÓGICA DE VIDEOS ---
+        window.openLocalVideo = function(url, title, videoId) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-video active';
+            modal.innerHTML = `
+                <div style="width: 90%; max-width: 900px; background: #000; border-radius: 15px; overflow: hidden; position: relative;">
+                    <span style="position: absolute; top: 10px; right: 20px; color: white; font-size: 2rem; cursor: pointer;" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                    <video src="${url}" controls autoplay style="width: 100%"></video>
+                    <div style="color: white; padding: 1rem; background: #222;">${title}</div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('video').onended = () => registrarVista(videoId);
+        };
 
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) updateCarousel(currentIndex - 1);
-        });
+        window.registrarVista = function(videoId) {
+            const formData = new FormData();
+            formData.append('video_id', videoId);
+            formData.append('csrfmiddlewaretoken', csrftoken);
+            fetch("{% url 'tutoria:registrar_visualizacion' %}", { method: 'POST', body: formData });
+        };
 
-        viewport.addEventListener('click', () => {
-            const activeImg = images[currentIndex];
-            lightboxImg.src = activeImg.src;
-            lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-
-        lightboxClose.addEventListener('click', () => {
-            lightbox.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        });
+        // --- GENERAL ---
+        function showToast(puntos, total, subioNivel, nuevoNivel) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.style = "background: #2c3e50; color: white; padding: 1rem; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #28a745; animation: fadeIn 0.3s;";
+            toast.innerHTML = `<div>¡Ganaste <b>+${puntos} pts</b>!</div>`;
+            container.appendChild(toast);
+            document.getElementById('current-total-points').innerText = total;
+            if (subioNivel) {
+                const toastLevel = document.createElement('div');
+                toastLevel.style = "background: linear-gradient(135deg, #f5a623, #f1c40f); color: white; padding: 1rem; border-radius: 12px; margin-bottom: 10px;";
+                toastLevel.innerHTML = `<b>¡SUBISTE DE NIVEL!</b><div>Ahora eres Nivel ${nuevoNivel}</div>`;
+                container.appendChild(toastLevel);
+                document.getElementById('current-level').innerText = nuevoNivel;
+                setTimeout(() => toastLevel.remove(), 5000);
+            }
+            setTimeout(() => toast.remove(), 3000);
+        }
 
         window.guardarYSalir = function() {
-            fetch("{% url 'tutoria:actualizar_progreso_teoria' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({
-                    tema_id: "{{ tema.id }}",
-                    pagina_actual: currentIndex + 1,
-                    total_paginas: total
-                })
-            })
-            .finally(() => {
-                document.getElementById('modal-progreso').style.display = 'flex';
-            });
-        }
+            document.getElementById('modal-progreso').style.display = 'flex';
+        };
 
         window.confirmarSalida = function() {
             window.location.href = "{% url 'tutoria:lista_temas' %}";
-        }
+        };
+        
+        document.querySelector('.lightbox-close')?.addEventListener('click', () => {
+            document.getElementById('lightbox').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
     });
 </script>
 {% endblock %}

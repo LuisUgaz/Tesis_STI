@@ -408,16 +408,26 @@ def iniciar_practica(request):
     Selecciona ejercicios del tema recomendado y nivel del estudiante.
     Implementa restricción de 8 horas y seguimiento de sesión. (HU14/HU41)
     """
+    user = request.user
+    tema_id_req = request.GET.get('tema_id')
+    
     # 1. Obtener el tema asociado (HU08)
-    recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
+    recomendacion = RecomendacionEstudiante.objects.filter(usuario=user).first()
     if not recomendacion:
         messages.info(request, "Para iniciar una práctica, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
         return redirect('tutoria:lista_temas')
 
-    tema = get_object_or_404(Tema, nombre=recomendacion.tema)
+    # Si se pasa un tema_id, verificamos que sea el recomendado
+    if tema_id_req:
+        tema = get_object_or_404(Tema, id=tema_id_req)
+        if tema.nombre != recomendacion.tema:
+            messages.warning(request, f"Para iniciar una práctica de este tema, primero debes completar tu tema recomendado: {recomendacion.tema}.", extra_tags='needs_complete_recommended')
+            return redirect('tutoria:tema_detalle', slug=tema.slug)
+    else:
+        tema = get_object_or_404(Tema, nombre=recomendacion.tema)
 
     # 2. Validar acceso (Refactor Validacion)
-    permitido, error_code, tema_pendiente = validar_estado_acceso_tema(request.user, tema)
+    permitido, error_code, tema_pendiente = validar_estado_acceso_tema(user, tema)
     if not permitido:
         if error_code == 'FALTA_DIAGNOSTICO':
             messages.info(request, "Para acceder a la práctica, primero debes realizar tu examen diagnóstico inicial.", extra_tags='needs_exam')
@@ -702,7 +712,7 @@ def rendir_examen(request, examen_id):
                 registrar_progreso(
                     usuario=request.user,
                     tema=tema_obj,
-                    tipo_actividad='Examen',
+                    tipo_actividad='Examen Diagnóstico',
                     referencia_id=examen.id
                 )
 
@@ -1071,7 +1081,7 @@ def rendir_examen_tema(request, examen_id):
         registrar_progreso(
             usuario=request.user,
             tema=examen.tema,
-            tipo_actividad='Examen',
+            tipo_actividad='Examen Temático',
             referencia_id=examen.id
         )
 

@@ -105,7 +105,8 @@
     .badge-ejercicio { background-color: #e1f5fe; color: #01579b; }
     .badge-video { background-color: #fff3e0; color: #e65100; }
     .badge-teoria { background-color: #e8f5e9; color: #1b5e20; }
-    .badge-examen { background-color: #f3e5f5; color: #4a148c; }
+    .badge-examen-diagnostico { background-color: #f3e5f5; color: #4a148c; border: 1px solid #ce93d8; }
+    .badge-examen-tematico { background-color: #e8eaf6; color: #1a237e; border: 1px solid #9fa8da; }
     
     .resultado-correcto { color: #2e7d32; font-weight: bold; }
     .resultado-incorrecto { color: #c62828; font-weight: bold; }
@@ -176,7 +177,7 @@
                     <td>{{ progreso.fecha_registro|date:"d/m/Y H:i" }}</td>
                     <td><strong>{{ progreso.tema.nombre }}</strong></td>
                     <td>
-                        <span class="badge badge-{{ progreso.tipo_actividad|lower }}">
+                        <span class="badge badge-{{ progreso.tipo_actividad|lower|slugify }}">
                             {{ progreso.tipo_actividad }}
                         </span>
                     </td>

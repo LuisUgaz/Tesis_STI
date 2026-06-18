@@ -26,17 +26,36 @@ class Command(BaseCommand):
         for ej in ejercicios:
             self.stdout.write(f"Enriqueciendo ejercicio ID {ej.id}...")
             
-            res = generar_representacion_formal(ej)
-            if res:
-                ej.meta_geometria = res
-                ej.save()
-                exitos += 1
-                self.stdout.write(self.style.SUCCESS(f"Éxito: ID {ej.id}"))
-            else:
-                errores += 1
-                self.stdout.write(self.style.ERROR(f"Fallo: ID {ej.id}"))
+            intentos = 0
+            max_intentos = 3
+            exito_ejercicio = False
+            espera = 10
             
-            # Pequeña pausa para no saturar la API en el Free Tier
-            time.sleep(1)
+            while intentos < max_intentos and not exito_ejercicio:
+                try:
+                    res = generar_representacion_formal(ej)
+                    if res:
+                        ej.meta_geometria = res
+                        ej.save()
+                        exitos += 1
+                        self.stdout.write(self.style.SUCCESS(f"Éxito: ID {ej.id}"))
+                        exito_ejercicio = True
+                    else:
+                        raise ValueError("La API devolvió una respuesta vacía o no válida.")
+                except Exception as e:
+                    intentos += 1
+                    error_msg = str(e)
+                    self.stdout.write(self.style.WARNING(f"Fallo para ID {ej.id}: {error_msg}"))
+                    
+                    if intentos < max_intentos:
+                        self.stdout.write(f"Reintentando en {espera}s (Intento {intentos}/{max_intentos})...")
+                        time.sleep(espera)
+                        espera *= 2  # Retroceso exponencial inteligente
+                    else:
+                        errores += 1
+                        self.stdout.write(self.style.ERROR(f"Fallo definitivo: ID {ej.id} tras {max_intentos} intentos."))
+            
+            # Pausa base para respetar los límites de la API
+            time.sleep(2)
 
         self.stdout.write(self.style.SUCCESS(f"Finalizado. Éxitos: {exitos}, Errores: {errores}"))

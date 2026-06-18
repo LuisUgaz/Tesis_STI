@@ -255,7 +255,14 @@
 
 <div class="temas-container">
     <div class="header-temas">
-        <h1><i class="fas fa-th-large me-3"></i>Mis Temas de Geometría</h1>
+        <h1>
+            <i class="fas fa-th-large me-3"></i>
+            {% if user.profile.rol == 'Docente' %}
+                Ver Temas de Geometría
+            {% else %}
+                Mis Temas de Geometría
+            {% endif %}
+        </h1>
     </div>
 
     {% if user.profile.rol == 'Estudiante' %}

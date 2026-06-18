@@ -21,17 +21,20 @@ class SinResultadosError(Exception):
     """Excepción lanzada cuando un estudiante no tiene resultados de diagnóstico."""
     pass
 
+from google import genai
+from google.genai import types
+
 def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
     """
-    Genera una explicación pedagógica usando Gemini 1.5 Flash para una respuesta específica.
+    Genera una explicación pedagógica para una respuesta específica.
     """
-    if not hasattr(settings, 'GEMINI_API_KEY') or not settings.GEMINI_API_KEY:
-        logger.error("GEMINI_API_KEY no está configurada en settings.")
+    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    if not api_key:
+        logger.error("GEMINI_API_KEY no está configurada.")
         return "Configuración de IA incompleta."
 
     try:
-        # Re-configurar para asegurar que toma la API KEY (HU40 Fix)
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        client = genai.Client(api_key=api_key)
         
         pregunta = respuesta.pregunta
         opcion_correcta = Opcion.objects.filter(pregunta=pregunta, es_correcta=True).first()
@@ -45,7 +48,6 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
         else:
             respuesta_alumno = respuesta.respuesta_texto
 
-        # Construir el prompt pedagógico refinado (HU40 Refactor)
         status_msg = "¡Respuesta Correcta!" if es_correcta else "Respuesta Incorrecta"
         prompt = (
             f"Eres un tutor de geometría experto para secundaria. Tu meta es la claridad pedagógica.\n\n"
@@ -53,51 +55,25 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             f"- Pregunta: {pregunta.texto}\n"
             f"- El estudiante eligió: {respuesta_alumno} ({status_msg})\n"
             f"- Respuesta correcta real: {opcion_correcta.texto if opcion_correcta else 'N/A'}\n"
-            f"- Tema: {pregunta.tema.nombre if pregunta.tema else 'Geometría'}\n"
-            f"- Dificultad: {pregunta.dificultad}\n\n"
-            f"TAREA:\n"
-            f"Genera una explicación de EXACTAMENTE 3 líneas.\n"
-            f"1. Si acertó: Felicita brevemente y explica por qué esa es la respuesta usando la propiedad geométrica.\n"
-            f"2. Si falló: Identifica el error lógico más probable basado en su opción y guíalo paso a paso hacia la verdad.\n"
-            f"Usa un lenguaje motivador, sencillo y directo."
+            f"- Tema: {pregunta.tema.nombre if pregunta.tema else 'Geometría'}\n\n"
+            f"TAREA: Genera una explicación pedagógica de 3 líneas motivadoras."
         )
 
-        logger.info(f"Iniciando generación de feedback IA para respuesta ID: {respuesta.id}")
-        model = genai.GenerativeModel(model_name='gemini-1.5-flash')
-        
-        # Manejo de imagen (Multimodal)
+        contents = [prompt]
         if pregunta.imagen:
             try:
-                from PIL import Image
-                img = Image.open(pregunta.imagen.path)
-                logger.info(f"Generando contenido multimodal para pregunta con imagen: {pregunta.imagen.path}")
-                response = model.generate_content([prompt, img])
-            except Exception as e:
-                logger.error(f"Error procesando imagen para IA: {e}")
-                response = model.generate_content(prompt)
-        else:
-            logger.info("Generando contenido de texto para pregunta sin imagen.")
-            response = model.generate_content(prompt)
+                with open(pregunta.imagen.path, "rb") as f:
+                    contents.append(types.Part.from_bytes(data=f.read(), mime_type="image/png"))
+            except: pass
 
-        if response:
-            try:
-                if response.text:
-                    logger.info(f"Feedback generado exitosamente para respuesta ID: {respuesta.id}")
-                    return response.text.strip()
-            except (ValueError, AttributeError) as e:
-                # Caso donde la respuesta está bloqueada por seguridad o no tiene texto
-                logger.warning(f"La respuesta de la IA fue bloqueada o no contiene texto (Respuesta ID {respuesta.id}): {e}")
-                if hasattr(response, 'candidates') and response.candidates:
-                    # Intentar obtener el motivo del bloqueo si es posible
-                    block_reason = response.candidates[0].finish_reason
-                    logger.warning(f"Motivo de finalización/bloqueo: {block_reason}")
-                return "La IA no pudo generar una respuesta segura en este momento. Intenta revisar la teoría."
-        
-        logger.warning(f"La IA devolvió una respuesta nula para la respuesta ID: {respuesta.id}")
-        return "No se pudo generar una explicación coherente en este momento."
+        response = client.models.generate_content(model='gemini-2.0-flash', contents=contents)
+
+        if response and response.text:
+            return response.text.strip()
+        return "La IA no pudo generar una respuesta en este momento."
 
     except Exception as e:
-        logger.error(f"Error crítico al obtener feedback de IA para respuesta {respuesta.id}: {str(e)}", exc_info=True)
+        logger.error(f"Error crítico en feedback IA: {e}")
         return "No se pudo generar la explicacion IA"
 
 def asignar_preguntas_aleatorias(examen: Examen):

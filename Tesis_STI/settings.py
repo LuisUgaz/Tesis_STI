@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Cargar variables de entorno desde .env
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -193,9 +193,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Content Security Policy (CSP)
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://use.fontawesome.com")
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com")
-CSP_IMG_SRC = ("'self'", "data:", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net")
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.youtube.com", "https://s.ytimg.com")
+CSP_IMG_SRC = ("'self'", "data:", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://i.ytimg.com", "https://img.youtube.com")
 CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://use.fontawesome.com")
+CSP_FRAME_SRC = ("'self'", "https://www.youtube.com", "https://youtube.com")
+CSP_MEDIA_SRC = ("'self'", "https://www.youtube.com", "https://youtube.com")
 CSP_FRAME_ANCESTORS = ("'none'",)  # Máxima protección contra Clickjacking
 CSP_INCLUDE_NONCE_IN = ["script-src"]
 

@@ -75,7 +75,8 @@ class ProgresoEstudiante(models.Model):
         ('Ejercicio', 'Ejercicio'),
         ('Video', 'Video'),
         ('Teoría', 'Teoría'),
-        ('Examen', 'Examen'),
+        ('Examen Diagnóstico', 'Examen Diagnóstico'),
+        ('Examen Temático', 'Examen Temático'),
     ]
 
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progresos')
@@ -98,16 +99,22 @@ class ProgresoEstudiante(models.Model):
     def get_resultado_detalle(self):
         """
         Retorna el resultado detallado dependiendo del tipo de actividad.
+        Diferencia entre Examen Diagnóstico (ResultadoDiagnostico) y Temático (ResultadoExamen).
         """
-        from AppEvaluar.models import ResultadoEjercicio, ResultadoDiagnostico
+        from AppEvaluar.models import ResultadoEjercicio, ResultadoDiagnostico, ResultadoExamen
         
         if self.tipo_actividad == 'Ejercicio' and self.referencia_id:
             res = ResultadoEjercicio.objects.filter(usuario=self.usuario, ejercicio_id=self.referencia_id).order_by('-fecha_resolucion').first()
             if res:
                 return "Correcto" if res.es_correcto else "Incorrecto"
         
-        elif self.tipo_actividad == 'Examen' and self.referencia_id:
+        elif self.tipo_actividad == 'Examen Diagnóstico' and self.referencia_id:
             res = ResultadoDiagnostico.objects.filter(estudiante=self.usuario, examen_id=self.referencia_id).first()
+            if res:
+                return f"Puntaje: {res.puntaje}%"
+
+        elif self.tipo_actividad == 'Examen Temático' and self.referencia_id:
+            res = ResultadoExamen.objects.filter(estudiante=self.usuario, examen_id=self.referencia_id).order_by('-fecha_realizacion').first()
             if res:
                 return f"Puntaje: {res.puntaje}%"
         
