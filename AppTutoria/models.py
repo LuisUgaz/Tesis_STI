@@ -106,17 +106,24 @@ class ProgresoEstudiante(models.Model):
         if self.tipo_actividad == 'Ejercicio' and self.referencia_id:
             res = ResultadoEjercicio.objects.filter(usuario=self.usuario, ejercicio_id=self.referencia_id).order_by('-fecha_resolucion').first()
             if res:
-                return "Correcto" if res.es_correcto else "Incorrecto"
+                if res.es_correcto:
+                    diff = res.ejercicio.dificultad
+                    xp = 10 if diff == 'Básico' else (20 if diff == 'Intermedio' else 30)
+                    return f"Nota: 20 (+{xp} XP)"
+                else:
+                    return "Nota: 00 (+2 XP)"
         
         elif self.tipo_actividad == 'Examen Diagnóstico' and self.referencia_id:
             res = ResultadoDiagnostico.objects.filter(estudiante=self.usuario, examen_id=self.referencia_id).first()
             if res:
-                return f"Puntaje: {res.puntaje}%"
+                nota_20 = int((float(res.puntaje) * 20 / 100) + 0.5)
+                return f"Nota: {nota_20} / 20"
 
         elif self.tipo_actividad == 'Examen Temático' and self.referencia_id:
             res = ResultadoExamen.objects.filter(estudiante=self.usuario, examen_id=self.referencia_id).order_by('-fecha_realizacion').first()
             if res:
-                return f"Puntaje: {res.puntaje}%"
+                nota_20 = int((float(res.puntaje) * 20 / 100) + 0.5)
+                return f"Nota: {nota_20} / 20"
         
         elif self.tipo_actividad == 'Video':
             return "Visualizado"

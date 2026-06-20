@@ -85,5 +85,5 @@ class EvaluarViewsTest(TestCase):
         response = self.client.get(url_resultados)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'AppEvaluar/resultados.html')
-        self.assertContains(response, "20.0") # Puntaje total (1 de 1 correcta = 20)
+        self.assertContains(response, "20 / 20") # Puntaje total (1 de 1 correcta = 20)
         self.assertContains(response, "Gral") # Tema

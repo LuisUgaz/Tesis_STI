@@ -28,6 +28,10 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
     """
     Genera una explicación pedagógica para una respuesta específica.
     """
+    # Si ya se generó la retroalimentación previamente, retornarla directamente
+    if respuesta.feedback_ia:
+        return respuesta.feedback_ia
+
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
     if not api_key:
         logger.error("GEMINI_API_KEY no está configurada.")
@@ -47,7 +51,7 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             respuesta_alumno = respuesta.opcion_seleccionada.texto if respuesta.opcion_seleccionada else "Sin respuesta"
         else:
             respuesta_alumno = respuesta.respuesta_texto
-
+        
         status_msg = "¡Respuesta Correcta!" if es_correcta else "Respuesta Incorrecta"
         prompt = (
             f"Eres un tutor de geometría experto para secundaria. Tu meta es la claridad pedagógica.\n\n"
@@ -69,7 +73,12 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
         response = client.models.generate_content(model='gemini-2.0-flash', contents=contents)
 
         if response and response.text:
-            return response.text.strip()
+            feedback_texto = response.text.strip()
+            # Persistir el feedback en la respuesta del usuario
+            respuesta.feedback_ia = feedback_texto
+            respuesta.save(update_fields=['feedback_ia'])
+            return feedback_texto
+            
         return "La IA no pudo generar una respuesta en este momento."
 
     except Exception as e:

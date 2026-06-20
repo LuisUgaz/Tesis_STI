@@ -183,7 +183,7 @@
                     </td>
                     <td>
                         {% with res=progreso.get_resultado_detalle %}
-                            <span class="{% if res == 'Correcto' %}resultado-correcto{% elif res == 'Incorrecto' %}resultado-incorrecto{% endif %}">
+                            <span class="{% if 'Nota: 20' in res or res == 'Correcto' %}resultado-correcto{% elif 'Nota: 00' in res or res == 'Incorrecto' %}resultado-incorrecto{% endif %}">
                                 {{ res }}
                             </span>
                         {% endwith %}

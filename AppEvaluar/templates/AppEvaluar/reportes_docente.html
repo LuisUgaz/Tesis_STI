@@ -183,7 +183,9 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <i class="fas fa-circle" style="color: #dee2e6;"></i>
+                                        <span class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ est.motivo_riesgo|default:'Sin datos suficientes' }}">
+                                            <i class="fas fa-circle" style="color: {{ est.color_riesgo|default:'#dee2e6' }}; cursor: help;"></i>
+                                        </span>
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3 view-detail-btn" data-user-id="{{ est.user.id }}">
@@ -224,11 +226,13 @@
                     <div class="col-12">
                         <h6 class="fw-bold text-muted text-uppercase small border-bottom pb-2">Práctica Reciente (Ejercicios)</h6>
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
+                            <table class="table table-sm table-hover align-middle">
                                 <thead>
                                     <tr>
                                         <th>Tema</th>
-                                        <th>Estado</th>
+                                        <th class="text-center">Nota</th>
+                                        <th class="text-center">Experiencia</th>
+                                        <th class="text-center">Dificultad</th>
                                         <th>Fecha</th>
                                     </tr>
                                 </thead>
@@ -301,10 +305,19 @@
             const ejBody = document.getElementById('modal-ej-list');
             ejBody.innerHTML = '';
             if (data.ejercicios.length === 0) {
-                ejBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted small">Sin actividad reciente</td></tr>';
+                ejBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted small">Sin actividad reciente</td></tr>';
             } else {
                 data.ejercicios.forEach(ej => {
-                    ejBody.innerHTML += `<tr><td>${ej.tema}</td><td><span class="badge ${ej.es_correcto ? 'bg-success' : 'bg-danger'}">${ej.es_correcto ? 'Correcto' : 'Incorrecto'}</span></td><td>${ej.fecha}</td></tr>`;
+                    const badgeClass = ej.es_correcto ? 'bg-success' : 'bg-danger';
+                    const xpBadgeClass = ej.es_correcto ? 'bg-light text-success border border-success' : 'bg-light text-secondary border';
+                    ejBody.innerHTML += `
+                        <tr>
+                            <td><strong>${ej.tema}</strong></td>
+                            <td class="text-center"><span class="badge ${badgeClass}">${ej.nota}</span></td>
+                            <td class="text-center"><span class="badge ${xpBadgeClass}">${ej.xp}</span></td>
+                            <td class="text-center"><span class="badge bg-secondary text-light">${ej.dificultad}</span></td>
+                            <td>${ej.fecha}</td>
+                        </tr>`;
                 });
             }
 
@@ -315,6 +328,15 @@
             console.error(error);
             alert("No se pudo cargar el detalle del estudiante. Por favor, intente de nuevo.");
         }
+    }
+
+    function initTooltips() {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(el => {
+            const inst = bootstrap.Tooltip.getInstance(el);
+            if (inst) inst.dispose();
+            new bootstrap.Tooltip(el);
+        });
     }
 
     async function updateDashboard() {
@@ -343,7 +365,11 @@
                     <td>${est.xp}</td>
                     <td><span class="badge bg-warning text-dark">Lvl ${est.nivel}</span></td>
                     <td>${est.precision} / 20</td>
-                    <td class="text-center"><i class="fas fa-circle" style="color: ${est.color_riesgo}"></i></td>
+                    <td class="text-center">
+                        <span class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="${est.motivo_riesgo || 'Sin datos suficientes'}">
+                            <i class="fas fa-circle" style="color: ${est.color_riesgo || '#dee2e6'}; cursor: help;"></i>
+                        </span>
+                    </td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3 view-detail-btn" data-user-id="${est.id}">
                             <i class="fas fa-eye me-1"></i> Ver Historial
@@ -357,11 +383,17 @@
         data.progresos.forEach(p => {
             progBody.innerHTML += `<tr><td class="ps-4"><div class="fw-bold">${p.estudiante}</div><div class="small text-muted">${p.fecha}</div></td><td><span class="badge bg-light text-dark border">${p.aula}</span></td><td>${p.tema}</td><td><span class="badge bg-info">${p.actividad}</span></td></tr>`;
         });
+
+        // Reinicializar los tooltips después de actualizar la tabla
+        initTooltips();
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         const initialData = {{ chart_data_json|safe }};
         initChart(initialData.labels, initialData.datasets[0].data);
+        
+        // Inicializar tooltips en la carga inicial
+        initTooltips();
         
         document.getElementById('filterForm').addEventListener('submit', function(e) {
             e.preventDefault();

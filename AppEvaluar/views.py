@@ -224,7 +224,16 @@ class ReportesDocenteView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
                 Q(apellidos__icontains=nombre)
             )
         
-        context['estudiantes'] = estudiantes.order_by('apellidos', 'nombres')
+        # Calcular y adjuntar el riesgo académico para cada estudiante en la carga inicial
+        from .services_metrics import calcular_riesgo_estudiante
+        estudiantes_lista = list(estudiantes.order_by('apellidos', 'nombres'))
+        for est in estudiantes_lista:
+            riesgo = calcular_riesgo_estudiante(est.user, tema_id=tema_id if tema_id else None)
+            est.color_riesgo = riesgo['color']
+            est.nivel_riesgo = riesgo['nivel']
+            est.motivo_riesgo = riesgo['mensaje']
+
+        context['estudiantes'] = estudiantes_lista
         
         # Filtros para el template
         context['filtro_grado'] = grado
@@ -345,12 +354,23 @@ class EstudianteDetalleJSONView(LoginRequiredMixin, TeacherRequiredMixin, View):
 
         # 3. Progreso en Ejercicios
         ejercicios = ResultadoEjercicio.objects.filter(usuario=user).select_related('ejercicio', 'ejercicio__tema').order_by('-fecha_resolucion')[:20]
-        ej_data = [{
-            'tema': r.ejercicio.tema.nombre,
-            'ejercicio': r.ejercicio.texto[:50] + "...",
-            'es_correcto': r.es_correcto,
-            'fecha': r.fecha_resolucion.strftime("%d/%m %H:%M")
-        } for r in ejercicios]
+        ej_data = []
+        for r in ejercicios:
+            diff = r.ejercicio.dificultad
+            if not r.es_correcto:
+                xp = 2
+            else:
+                xp = 10 if diff == 'Básico' else (20 if diff == 'Intermedio' else 30)
+            
+            ej_data.append({
+                'tema': r.ejercicio.tema.nombre,
+                'ejercicio': r.ejercicio.texto[:50] + "...",
+                'es_correcto': r.es_correcto,
+                'nota': '20 / 20' if r.es_correcto else '00 / 20',
+                'xp': f"+{xp} XP",
+                'dificultad': diff,
+                'fecha': r.fecha_resolucion.strftime("%d/%m %H:%M")
+            })
 
         return JsonResponse({
             'estudiante': f"{user.profile.nombres} {user.profile.apellidos}",

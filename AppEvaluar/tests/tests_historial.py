@@ -124,7 +124,7 @@ class HistorialResultadosTests(TestCase):
         ProgresoEstudiante.objects.create(
             usuario=self.user1,
             tema=self.tema_triangulos,
-            tipo_actividad='Examen',
+            tipo_actividad='Examen Diagnóstico',
             grado='2',
             seccion='A',
             referencia_id=examen.id
@@ -133,5 +133,5 @@ class HistorialResultadosTests(TestCase):
         self.client.login(username='student1', password='password123')
         response = self.client.get(self.url_historial)
         
-        self.assertContains(response, "Correcto")
-        self.assertContains(response, "Puntaje: 85")
+        self.assertContains(response, "Nota: 20 (+10 XP)")
+        self.assertContains(response, "Nota: 17 / 20")

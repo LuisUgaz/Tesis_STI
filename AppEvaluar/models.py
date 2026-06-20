@@ -60,6 +60,7 @@ class RespuestaUsuario(models.Model):
     respuesta_texto = models.TextField(null=True, blank=True)
     tiempo_respuesta = models.FloatField(null=True, blank=True, help_text="Tiempo en segundos")
     fecha_respuesta = models.DateTimeField(auto_now_add=True)
+    feedback_ia = models.TextField(null=True, blank=True, help_text="Retroalimentación pedagógica generada por la IA")
 
     def __str__(self):
         return f"Respuesta de {self.usuario.username} a {self.pregunta.id}"
