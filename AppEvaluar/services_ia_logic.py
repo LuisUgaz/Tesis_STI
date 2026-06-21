@@ -15,6 +15,7 @@ class RepresentacionFormalSchema(BaseModel):
     datos: List[str] = Field(description="Lista de datos geométricos o ecuaciones numéricas dadas en el enunciado")
     meta: str = Field(description="La incógnita, valor o propiedad que se busca calcular o demostrar")
     teoremas_sugeridos: List[str] = Field(description="Lista de teoremas geométricos sugeridos para resolver el problema")
+    explicacion_pedagogica: str = Field(description="Una explicación pedagógica detallada paso a paso en español sobre cómo se resuelve el problema")
 
 def generar_representacion_formal(ejercicio):
     """

@@ -84,19 +84,64 @@ def lista_temas(request):
     # Obtener recomendación (HU08) - Solo aplica lógica visual para estudiantes
     recomendacion = None
     examen = None
+    recomendado_completado = False
+    siguiente_tema = None
+    todos_completados = False
+    es_repaso = False
+    
     if request.user.profile.rol == 'Estudiante':
         examen = ExamenDiagnostico.objects.first()
+        from AppTutoria.utils import verificar_completitud_tema, obtener_siguiente_tema_diagnostico
+        
+        # Calcular si completó todos los cursos
+        temas_completados_count = 0
+        for t in temas_db:
+            completado_flag, _ = verificar_completitud_tema(request.user, t)
+            if completado_flag:
+                temas_completados_count += 1
+                
+        if len(temas_db) > 0 and temas_completados_count == len(temas_db):
+            todos_completados = True
+            
         recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
         if recomendacion:
+            # Verificar si la recomendación actual proviene de un repaso vencido (repetición espaciada)
+            from AppEvaluar.models import RepasoProgramado
+            from django.utils import timezone
+            es_repaso = RepasoProgramado.objects.filter(
+                estudiante=request.user,
+                tema__nombre=recomendacion.tema,
+                estado=True,
+                fecha_proximo_repaso__lte=timezone.now()
+            ).exists()
+            
             tema_recomendado_obj = next((t for t in temas_db if t.nombre == recomendacion.tema), None)
             if tema_recomendado_obj:
-                temas_db.remove(tema_recomendado_obj)
-                temas_db.insert(0, tema_recomendado_obj)
+                if es_repaso:
+                    temas_db.remove(tema_recomendado_obj)
+                    temas_db.insert(0, tema_recomendado_obj)
+                else:
+                    recomendado_completado, _ = verificar_completitud_tema(request.user, tema_recomendado_obj)
+                    if recomendado_completado:
+                        if not todos_completados:
+                            siguiente_tema = obtener_siguiente_tema_diagnostico(request.user)
+                            if siguiente_tema:
+                                siguiente_tema_obj = next((t for t in temas_db if t.nombre == siguiente_tema.nombre), None)
+                                if siguiente_tema_obj:
+                                    temas_db.remove(siguiente_tema_obj)
+                                    temas_db.insert(0, siguiente_tema_obj)
+                    else:
+                        temas_db.remove(tema_recomendado_obj)
+                        temas_db.insert(0, tema_recomendado_obj)
 
     return render(request, 'AppTutoria/lista_temas.html', {
         'temas': temas_db,
         'recomendacion': recomendacion,
-        'examen': examen
+        'examen': examen,
+        'recomendado_completado': recomendado_completado,
+        'siguiente_tema': siguiente_tema,
+        'todos_completados': todos_completados,
+        'es_repaso': es_repaso
     })
 
 @login_required

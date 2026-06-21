@@ -60,7 +60,7 @@ class IAFeedbackServiceTest(TestCase):
         
         feedback = obtener_feedback_ia(self.respuesta)
         
-        self.assertEqual(feedback, "No se pudo generar la explicacion IA")
+        self.assertIn("Elegiste la respuesta", feedback)
 
     @patch('AppEvaluar.services.genai.Client')
     def test_obtener_feedback_ia_persists_and_caches(self, mock_client_class):

@@ -100,6 +100,11 @@
         background: #f1f8e9;
     }
 
+    .tema-card-v2.recomendado-repaso {
+        border-color: #ff9800;
+        background: #fff8e1;
+    }
+
     .badge-recomendado-v2 {
         position: absolute;
         top: -15px;
@@ -266,7 +271,26 @@
     </div>
 
     {% if user.profile.rol == 'Estudiante' %}
-        {% if not recomendacion %}
+        {% if es_repaso %}
+            <div class="info-box-temas" style="background: #fff3e0; border-color: #ff9800;">
+                <i class="fas fa-history fa-2x" style="color: #ff9800;"></i>
+                <div class="flex-grow-1">
+                    <p style="color: #e65100; margin: 0; font-size: 1.1rem; font-weight: 800;">
+                        ¡Es hora de repasar! Te recomendamos realizar ejercicios del tema: 
+                        <a href="{% url 'tutoria:tema_detalle' slug=recomendacion.tema|slugify %}" style="color: #e65100; font-weight: 900; text-decoration: underline;"><strong>{{ recomendacion.tema }}</strong></a> (Repetición Espaciada).
+                    </p>
+                </div>
+            </div>
+        {% elif todos_completados %}
+            <div class="info-box-temas" style="background: #e8f5e9; border-color: #4caf50;">
+                <i class="fas fa-trophy fa-2x" style="color: #4caf50;"></i>
+                <div>
+                    <p style="color: #2e7d32; margin: 0; font-size: 1.15rem; font-weight: 800;">
+                        Felicidades haz completado todos los cursos
+                    </p>
+                </div>
+            </div>
+        {% elif not recomendacion %}
             <div class="info-box-temas">
                 <i class="fas fa-info-circle fa-2x text-primary"></i>
                 <div class="flex-grow-1">
@@ -275,6 +299,20 @@
                 {% if examen %}
                     <a href="{% url 'evaluar:rendir_examen' examen_id=examen.id %}" class="btn-diagnostico-temas">Rendir Diagnóstico</a>
                 {% endif %}
+            </div>
+        {% elif recomendado_completado %}
+            <div class="info-box-temas" style="background: #fff3e0; border-color: #ff9800;">
+                <i class="fas fa-exclamation-circle fa-2x" style="color: #ff9800;"></i>
+                <div>
+                    <p style="color: #e65100; margin: 0; font-size: 1.05rem;">
+                        {% if siguiente_tema %}
+                            El siguiente curso con el que tuviste dificultad fue: 
+                            <a href="{% url 'tutoria:tema_detalle' slug=siguiente_tema.slug %}" style="color: #e65100; font-weight: 800; text-decoration: underline;"><strong>{{ siguiente_tema.nombre }}</strong></a>
+                        {% else %}
+                            ¡Has completado tu tema recomendado original! Explora el resto de cursos disponibles a continuación.
+                        {% endif %}
+                    </p>
+                </div>
             </div>
         {% else %}
             <div class="info-box-temas" style="background: #f1f8e9; border-color: var(--recommendation-color);">
@@ -288,9 +326,25 @@
 
     <div class="temas-grid">
         {% for tema in temas %}
-            <div class="tema-card-v2 {% if recomendacion and recomendacion.tema == tema.nombre %}recomendado{% endif %}">
-                {% if recomendacion and recomendacion.tema == tema.nombre %}
-                    <div class="badge-recomendado-v2">Recomendado</div>
+            <div class="tema-card-v2 
+                {% if es_repaso and recomendacion.tema == tema.nombre %}
+                    recomendado-repaso
+                {% elif not todos_completados %}
+                    {% if recomendacion and not recomendado_completado and recomendacion.tema == tema.nombre %}
+                        recomendado
+                    {% elif recomendado_completado and siguiente_tema and siguiente_tema.nombre == tema.nombre %}
+                        recomendado
+                    {% endif %}
+                {% endif %}">
+                
+                {% if es_repaso and recomendacion.tema == tema.nombre %}
+                    <div class="badge-recomendado-v2" style="background: #ff9800; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);">Repaso</div>
+                {% elif not todos_completados %}
+                    {% if recomendacion and not recomendado_completado and recomendacion.tema == tema.nombre %}
+                        <div class="badge-recomendado-v2">Recomendado</div>
+                    {% elif recomendado_completado and siguiente_tema and siguiente_tema.nombre == tema.nombre %}
+                        <div class="badge-recomendado-v2">Recomendado</div>
+                    {% endif %}
                 {% endif %}
                 
                 <div class="tema-nombre-v2">{{ tema.nombre }}</div>

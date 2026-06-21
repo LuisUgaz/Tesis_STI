@@ -41,6 +41,7 @@ class Pregunta(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='OPCION_MULTIPLE')
     tema = models.ForeignKey(Tema, on_delete=models.SET_NULL, null=True, related_name='preguntas_diagnostico')
     dificultad = models.CharField(max_length=20, choices=DIFICULTAD_CHOICES, default='Básico')
+    explicacion_tecnica = models.TextField(help_text="Explicación teórica general de la pregunta", blank=True, null=True)
 
     def __str__(self):
         return self.texto
@@ -49,6 +50,7 @@ class Opcion(models.Model):
     pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE, related_name='opciones')
     texto = models.CharField(max_length=200)
     es_correcta = models.BooleanField(default=False)
+    retroalimentacion = models.TextField(help_text="Mensaje que se muestra al estudiante tras elegir esta opción", blank=True, null=True)
 
     def __str__(self):
         return self.texto

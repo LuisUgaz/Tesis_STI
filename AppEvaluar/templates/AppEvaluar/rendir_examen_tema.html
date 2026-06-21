@@ -60,8 +60,11 @@
         }
 
         .pregunta-imagen {
-            max-width: 100%;
+            max-width: 350px;
+            max-height: 250px;
+            width: auto;
             height: auto;
+            object-fit: contain;
             border-radius: 10px;
             margin-bottom: 1.5rem;
             display: block;
@@ -206,9 +209,11 @@
         </div>
     </div>
 
+    {% if not es_docente %}
     <div class="timer" id="timer">
         Tiempo restante: <span id="time-display">00:00</span>
     </div>
+    {% endif %}
 
     <div class="container">
         <div class="header">
@@ -231,7 +236,7 @@
                     <div class="opciones">
                         {% for opcion in ejercicio.opciones.all %}
                             <label class="opcion-item">
-                                <input type="radio" name="ejercicio_{{ ejercicio.id }}" value="{{ opcion.id }}" required>
+                                <input type="radio" name="ejercicio_{{ ejercicio.id }}" value="{{ opcion.id }}" {% if es_docente %}disabled{% else %}required{% endif %}>
                                 {{ opcion.texto }}
                             </label>
                         {% endfor %}
@@ -239,12 +244,19 @@
                 </div>
             {% endfor %}
 
-            <button type="submit" class="btn-enviar">Finalizar Evaluación</button>
+            {% if es_docente %}
+                <a href="{% url 'tutoria:tema_detalle' examen.tema.slug %}" class="btn-enviar" style="background:#6c757d; text-align:center; text-decoration:none; line-height:1.5; display:block;">Volver al Tema</a>
+            {% else %}
+                <button type="submit" class="btn-enviar">Finalizar Evaluación</button>
+            {% endif %}
         </form>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            {% if es_docente %}
+            return;
+            {% endif %}
             const tiempoLimiteMinutos = {{ examen.tiempo_limite }};
             let tiempoRestanteSegundos = tiempoLimiteMinutos * 60;
             const display = document.getElementById('time-display');

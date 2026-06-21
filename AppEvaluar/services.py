@@ -24,6 +24,72 @@ class SinResultadosError(Exception):
 from google import genai
 from google.genai import types
 
+def obtener_feedback_diagnostico_local(respuesta: RespuestaUsuario) -> str:
+    from .models import Opcion
+    pregunta = respuesta.pregunta
+    texto = pregunta.texto.lower()
+    tema = pregunta.tema.nombre if pregunta.tema else "Geometría"
+    
+    opcion_correcta = Opcion.objects.filter(pregunta=pregunta, es_correcta=True).first()
+    es_correcta = False
+    respuesta_alumno = ""
+    retro_opcion = None
+    if pregunta.tipo == 'OPCION_MULTIPLE':
+        es_correcta = respuesta.opcion_seleccionada and respuesta.opcion_seleccionada.es_correcta
+        respuesta_alumno = respuesta.opcion_seleccionada.texto if respuesta.opcion_seleccionada else "Sin respuesta"
+        if respuesta.opcion_seleccionada and hasattr(respuesta.opcion_seleccionada, 'retroalimentacion') and respuesta.opcion_seleccionada.retroalimentacion:
+            retro_opcion = respuesta.opcion_seleccionada.retroalimentacion
+    else:
+        respuesta_alumno = respuesta.respuesta_texto
+        
+    correcta_txt = opcion_correcta.texto if opcion_correcta else "N/A"
+    
+    if es_correcta:
+        msg_resultado = f"¡Excelente trabajo! Elegiste la respuesta correcta: {respuesta_alumno}."
+    else:
+        msg_resultado = f"Elegiste la respuesta '{respuesta_alumno}'. Sin embargo, la respuesta correcta es '{correcta_txt}'."
+
+    # 1. Si hay una explicación técnica específica cargada en la pregunta
+    if hasattr(pregunta, 'explicacion_tecnica') and pregunta.explicacion_tecnica:
+        explicacion_base = pregunta.explicacion_tecnica
+        if retro_opcion:
+            return f"{msg_resultado} {retro_opcion}\n\n{explicacion_base}"
+        return f"{msg_resultado}\n\n{explicacion_base}"
+
+    # 2. Fallback a la heurística basada en palabras clave
+    explicacion_base = ""
+    if tema == "Segmentos":
+        if "punto medio" in texto:
+            explicacion_base = "Propiedad de Punto Medio: El punto medio divide al segmento en dos segmentos de igual medida (AM = MB)."
+        elif "consecutivos" in texto or "colineales" in texto:
+            explicacion_base = "Adición de Segmentos: La longitud del segmento completo es igual a la suma de las partes colineales constitutivas (AB + BC = AC)."
+        else:
+            explicacion_base = "Operaciones con Segmentos: Plantea una ecuación igualando las sumas o restas de segmentos conocidos."
+    elif tema == "Ángulos" or tema == "Angulos":
+        if "paralelas" in texto or "l1" in texto or "l2" in texto:
+            explicacion_base = "Rectas Paralelas secadas por una secante: Aplica ángulos alternos internos (igual medida) o conjugados internos (suman 180°)."
+        elif "bisectriz" in texto:
+            explicacion_base = "Bisectriz de un ángulo: El rayo divide el ángulo en dos ángulos adyacentes de la misma medida."
+        elif "suplemento" in texto or "suplementario" in texto:
+            explicacion_base = "Ángulos Suplementarios: Dos ángulos son suplementarios si suman 180°. El suplemento de x es 180 - x."
+        elif "complemento" in texto or "complementario" in texto:
+            explicacion_base = "Ángulos Complementarios: Dos ángulos son complementarios si suman 90°. El complemento de x es 90 - x."
+        else:
+            explicacion_base = "Ángulos adyacentes: Identifica si forman un ángulo llano (180°), recto (90°) o de una vuelta entera (360°)."
+    elif tema == "Triángulos" or tema == "Triangulos":
+        if "isósceles" in texto or "isosceles" in texto:
+            explicacion_base = "Triángulo Isósceles: Tiene dos lados de igual longitud y sus ángulos opuestos congruentes a lados congruentes."
+        elif "equilátero" in texto or "equilatero" in texto:
+            explicacion_base = "Triángulo Equilátero: Posee tres lados iguales y sus tres ángulos internos miden exactamente 60° cada uno."
+        elif "rectángulo" in texto or "rectangulo" in texto:
+            explicacion_base = "Triángulo Rectángulo: Tiene un ángulo recto (90°). Se puede aplicar el Teorema de Pitágoras (a² + b² = c²)."
+        else:
+            explicacion_base = "Suma de Ángulos Internos: En todo triángulo, la suma de las medidas de sus tres ángulos internos es siempre igual a 180°."
+    else:
+        explicacion_base = "Repasa las relaciones de segmentos, medidas de ángulos o teoremas de triángulos según el enunciado."
+
+    return f"{msg_resultado} {explicacion_base}"
+
 def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
     """
     Genera una explicación pedagógica para una respuesta específica.
@@ -34,13 +100,17 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
 
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
     if not api_key:
-        logger.error("GEMINI_API_KEY no está configurada.")
-        return "Configuración de IA incompleta."
+        logger.error("GEMINI_API_KEY no está configurada. Usando fallback local.")
+        feedback_texto = obtener_feedback_diagnostico_local(respuesta)
+        respuesta.feedback_ia = feedback_texto
+        respuesta.save(update_fields=['feedback_ia'])
+        return feedback_texto
 
     try:
         client = genai.Client(api_key=api_key)
         
         pregunta = respuesta.pregunta
+        from .models import Opcion
         opcion_correcta = Opcion.objects.filter(pregunta=pregunta, es_correcta=True).first()
         
         # Determinar si el alumno acertó
@@ -79,11 +149,18 @@ def obtener_feedback_ia(respuesta: RespuestaUsuario) -> str:
             respuesta.save(update_fields=['feedback_ia'])
             return feedback_texto
             
-        return "La IA no pudo generar una respuesta en este momento."
+        # Si la API retorna vacío, usar fallback local
+        feedback_texto = obtener_feedback_diagnostico_local(respuesta)
+        respuesta.feedback_ia = feedback_texto
+        respuesta.save(update_fields=['feedback_ia'])
+        return feedback_texto
 
     except Exception as e:
-        logger.error(f"Error crítico en feedback IA: {e}")
-        return "No se pudo generar la explicacion IA"
+        logger.error(f"Error crítico en feedback IA: {e}. Usando fallback local.")
+        feedback_texto = obtener_feedback_diagnostico_local(respuesta)
+        respuesta.feedback_ia = feedback_texto
+        respuesta.save(update_fields=['feedback_ia'])
+        return feedback_texto
 
 def asignar_preguntas_aleatorias(examen: Examen):
     """Busca ejercicios disponibles para el tema del examen y los asigna aleatoriamente."""

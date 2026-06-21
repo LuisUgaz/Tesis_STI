@@ -75,7 +75,7 @@ class ContactoViewTests(TestCase):
         self.assertEqual(email.subject, 'Consulta de Prueba')
         self.assertIn('Este es un mensaje de prueba', email.body)
         self.assertIn(self.user.username, email.body)
-        self.assertEqual(email.to, ['luisugaz63@gmail.com'])
+        self.assertEqual(email.to, ['luisugaz@gmail.com'])
 
     def test_view_send_email_with_context(self):
         """Prueba el envío de correo incluyendo el contexto del tema/ejercicio."""

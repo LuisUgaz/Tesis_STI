@@ -36,6 +36,9 @@ class Command(BaseCommand):
                     res = generar_representacion_formal(ej)
                     if res:
                         ej.meta_geometria = res
+                        # Copiar la respuesta pedagógica generada de la IA a la explicación técnica
+                        if 'explicacion_pedagogica' in res:
+                            ej.explicacion_tecnica = res['explicacion_pedagogica']
                         ej.save()
                         exitos += 1
                         self.stdout.write(self.style.SUCCESS(f"Éxito: ID {ej.id}"))

@@ -107,3 +107,92 @@ def validar_estado_acceso_tema(usuario, tema_solicitado):
         return False, 'TEMA_PENDIENTE', tema_recomendado_obj.nombre
 
     return True, None, None
+
+def obtener_siguiente_tema_diagnostico(usuario):
+    """
+    Calcula los temas evaluados en el examen diagnóstico del estudiante y devuelve
+    el siguiente tema con menor desempeño (PDP más bajo) que aún no ha sido completado.
+    """
+    from AppEvaluar.models import RespuestaUsuario
+    from django.db.models import Avg, StdDev
+    
+    try:
+        # 1. Verificar Diagnóstico
+        if not ResultadoDiagnostico.objects.filter(estudiante=usuario).exists():
+            return None
+
+        respuestas = RespuestaUsuario.objects.filter(
+            usuario=usuario
+        ).select_related('pregunta', 'opcion_seleccionada', 'pregunta__tema')
+
+        if not respuestas.exists():
+            return None
+
+        resumen_temas = {}
+        pesos_dificultad = {'Básico': 3, 'Intermedio': 2, 'Avanzado': 1}
+
+        # Estadísticas globales para normalización de tiempo
+        stats_tiempo = RespuestaUsuario.objects.filter(
+            opcion_seleccionada__es_correcta=True
+        ).values('pregunta_id').annotate(
+            promedio=Avg('tiempo_respuesta'),
+            desviacion=StdDev('tiempo_respuesta')
+        )
+        dict_stats = {s['pregunta_id']: s for s in stats_tiempo}
+
+        for respuesta in respuestas:
+            pregunta = respuesta.pregunta
+            if not pregunta.tema:
+                continue
+            tema_nombre = pregunta.tema.nombre
+            dificultad = pregunta.dificultad or 'Básico'
+            peso = pesos_dificultad.get(dificultad, 1)
+
+            if tema_nombre not in resumen_temas:
+                resumen_temas[tema_nombre] = {'score_obtenido': 0.0, 'score_maximo': 0}
+            
+            resumen_temas[tema_nombre]['score_maximo'] += peso
+            
+            es_correcta = False
+            if respuesta.opcion_seleccionada and respuesta.opcion_seleccionada.es_correcta:
+                es_correcta = True
+            
+            if es_correcta:
+                puntos_ganados = float(peso)
+                if respuesta.tiempo_respuesta:
+                    stats = dict_stats.get(pregunta.id)
+                    if stats and stats['promedio'] and stats['desviacion']:
+                        promedio = float(stats['promedio'])
+                        desviacion = float(stats['desviacion'])
+                        if desviacion > 0:
+                            z_score = (respuesta.tiempo_respuesta - promedio) / desviacion
+                            if z_score > 1.5:
+                                puntos_ganados *= (1 - min(0.3, (z_score - 1.5) * 0.1))
+                
+                resumen_temas[tema_nombre]['score_obtenido'] += puntos_ganados
+
+        # Calcular PDP por tema
+        lista_desempeno = []
+        for tema_nombre, datos in resumen_temas.items():
+            pdp = (datos['score_obtenido'] / datos['score_maximo']) * 100 if datos['score_maximo'] > 0 else 0
+            lista_desempeno.append({
+                'tema_nombre': tema_nombre,
+                'pdp': pdp
+            })
+
+        # Ordenar por PDP de menor a mayor (peores temas primero)
+        lista_desempeno.sort(key=lambda x: x['pdp'])
+
+        # Buscar el primer tema que no esté completado por el estudiante
+        for item in lista_desempeno:
+            tema_obj = Tema.objects.filter(nombre=item['tema_nombre']).first()
+            if tema_obj:
+                completado, _ = verificar_completitud_tema(usuario, tema_obj)
+                if not completado:
+                    return tema_obj
+    except Exception:
+        # Retorno seguro en caso de cualquier error
+        return None
+
+    return None
+

@@ -337,10 +337,12 @@ class EstudianteDetalleJSONView(LoginRequiredMixin, TeacherRequiredMixin, View):
         
         # 1. Diagnóstico
         diagnosticos = ResultadoDiagnostico.objects.filter(estudiante=user).select_related('examen')
+        dificultad_actual = user.profile.nivel_dificultad_actual if hasattr(user, 'profile') else 'Básico'
         diag_data = [{
             'examen': d.examen.nombre,
             'puntaje': int((float(d.puntaje) * 20 / 100) + 0.5),
-            'fecha': d.fecha_realizacion.strftime("%d/%m/%Y")
+            'fecha': d.fecha_realizacion.strftime("%d/%m/%Y"),
+            'dificultad_actual': dificultad_actual
         } for d in diagnosticos]
 
         # 2. Exámenes de Tema
@@ -792,28 +794,28 @@ def ver_resultados(request, examen_id):
         for tema, datos in resumen_temas.items():
             datos['porcentaje'] = round((datos['correctas'] / datos['total']) * 100, 2)
 
-        # El puntaje total lo tomamos del persistido si existe, si no, lo calculamos (compatibilidad)
-        if resultado_persistido:
-            # El modelo guarda sobre 100, pero la vista actual muestra sobre 20
-            # Regla: 0.5 o más redondea hacia arriba (int(x + 0.5))
-            valor_base_20 = float(resultado_persistido.puntaje) * 20 / 100
-            puntaje_total = int(valor_base_20 + 0.5)
-        else:
-            valor_base_20 = (total_correctas / total_preguntas) * 20 if total_preguntas > 0 else 0
-            puntaje_total = int(valor_base_20 + 0.5)
+    # El puntaje total lo tomamos del persistido si existe, si no, lo calculamos (compatibilidad)
+    if resultado_persistido:
+        # El modelo guarda sobre 100, pero la vista actual muestra sobre 20
+        # Regla: 0.5 o más redondea hacia arriba (int(x + 0.5))
+        valor_base_20 = float(resultado_persistido.puntaje) * 20 / 100
+        puntaje_total = int(valor_base_20 + 0.5)
+    else:
+        valor_base_20 = (total_correctas / total_preguntas) * 20 if total_preguntas > 0 else 0
+        puntaje_total = int(valor_base_20 + 0.5)
 
-        # Obtener recomendación generada (HU08)
-        recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
+    # Obtener recomendación generada (HU08)
+    recomendacion = RecomendacionEstudiante.objects.filter(usuario=request.user).first()
 
-        return render(request, 'AppEvaluar/resultados.html', {
-            'examen': examen,
-            'respuestas': respuestas,
-            'puntaje_total': puntaje_total,
-            'total_correctas': total_correctas,
-            'total_preguntas': total_preguntas,
-            'resumen_temas': resumen_temas,
-            'recomendacion': recomendacion
-        })
+    return render(request, 'AppEvaluar/resultados.html', {
+        'examen': examen,
+        'respuestas': respuestas,
+        'puntaje_total': puntaje_total,
+        'total_correctas': total_correctas,
+        'total_preguntas': total_preguntas,
+        'resumen_temas': resumen_temas,
+        'recomendacion': recomendacion
+    })
 
 class BancoPreguntasCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
     model = Ejercicio
@@ -1018,14 +1020,32 @@ class ConfirmarImportacionView(LoginRequiredMixin, TeacherRequiredMixin, View):
         return redirect('evaluar:banco_preguntas_list')
 
 @login_required
-@student_required
 def rendir_examen_tema(request, examen_id):
     """
     Vista para que el estudiante rinda un examen de tema basado en el banco de ejercicios.
     Incluye validación secuencial: debe haber resuelto el examen anterior del mismo tema.
+    Para docentes, se permite previsualizar el examen de forma de lectura libre.
     """
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+        raise PermissionDenied("Acceso no autorizado.")
+
     examen = get_object_or_404(Examen, id=examen_id)
+    es_docente = request.user.profile.rol == 'Docente'
     
+    if es_docente:
+        # Los docentes pueden ver el examen de forma libre sin validaciones de intentos o secuencia.
+        ejercicios = examen.preguntas_ejercicio.all().prefetch_related('opciones')
+        
+        if request.method == 'POST':
+            messages.info(request, "Los docentes no registran respuestas de exámenes.")
+            return redirect('tutoria:tema_detalle', slug=examen.tema.slug)
+            
+        return render(request, 'AppEvaluar/rendir_examen_tema.html', {
+            'examen': examen,
+            'ejercicios': ejercicios,
+            'es_docente': True
+        })
+
     # 1. Validar si el estudiante ya realizó el examen
     if ResultadoExamen.objects.filter(estudiante=request.user, examen=examen).exists():
         messages.error(request, "Ya has realizado este examen de tema.")
@@ -1113,7 +1133,8 @@ def rendir_examen_tema(request, examen_id):
         
     return render(request, 'AppEvaluar/rendir_examen_tema.html', {
         'examen': examen,
-        'ejercicios': ejercicios
+        'ejercicios': ejercicios,
+        'es_docente': False
     })
 
 @login_required

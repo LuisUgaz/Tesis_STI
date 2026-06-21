@@ -20,7 +20,7 @@ class StudentRequiredMixin(UserPassesTestMixin):
     
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            raise PermissionDenied("Solo los estudiantes pueden acceder a esta secciÃ³n.")
+            raise PermissionDenied("Solo los estudiantes pueden acceder a esta sección.")
         return super().handle_no_permission()
 
 class AdminRequiredMixin(UserPassesTestMixin):
@@ -38,7 +38,7 @@ class AdminRequiredMixin(UserPassesTestMixin):
     
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            raise PermissionDenied("Acceso restringido: Solo los administradores pueden acceder a esta secciÃ³n.")
+            raise PermissionDenied("Acceso restringido: Solo los administradores pueden acceder a esta sección.")
         return super().handle_no_permission()
 
 class RegisterView(FormView):

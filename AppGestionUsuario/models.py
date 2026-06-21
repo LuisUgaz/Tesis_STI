@@ -87,7 +87,7 @@ class MetricasEstudiante(models.Model):
 
 class ConfiguracionGlobal(models.Model):
     nombre_sistema = models.CharField(max_length=200, default="Tesis STI")
-    email_contacto = models.EmailField(default="luisugaz63@gmail.com")
+    email_contacto = models.EmailField(default="luisugaz@gmail.com")
     texto_footer = models.TextField(default="© 2026 Tesis STI - Inteligencia en Geometría", blank=True, null=True)
 
     class Meta:

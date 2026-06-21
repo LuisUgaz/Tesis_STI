@@ -57,6 +57,35 @@ class ListaTemasViewTest(TestCase):
         temas_en_contexto = response.context['temas']
         self.assertEqual(temas_en_contexto[0].nombre, "Ángulos")
 
+    def test_contexto_es_repaso(self):
+        """Verifica que el contexto 'es_repaso' sea True cuando el tema recomendado es un repaso vencido."""
+        self.client.login(username='estudiante', password='password123')
+        
+        # 1. Crear recomendación
+        RecomendacionEstudiante.objects.create(
+            usuario=self.user_estudiante, 
+            tema="Ángulos",
+            metrica_desempeno=100.0
+        )
+        
+        # 2. Crear RepasoProgramado vencido para 'Ángulos'
+        from AppEvaluar.models import RepasoProgramado
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        tema_angulos = Tema.objects.get(nombre="Ángulos")
+        RepasoProgramado.objects.create(
+            estudiante=self.user_estudiante,
+            tema=tema_angulos,
+            fecha_proximo_repaso=timezone.now() - timedelta(days=1),
+            estado=True
+        )
+        
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['es_repaso'])
+        self.assertContains(response, "¡Es hora de repasar!")
+
 class TemaDetalleViewTest(TestCase):
     def setUp(self):
         self.client = Client()
@@ -64,6 +93,10 @@ class TemaDetalleViewTest(TestCase):
         # Crear usuarios
         self.user_estudiante = User.objects.create_user(username='estudiante', password='password123')
         Profile.objects.create(user=self.user_estudiante, rol='Estudiante', nombres='Est', apellidos='Test')
+        
+        from AppEvaluar.models import ExamenDiagnostico, ResultadoDiagnostico
+        examen_diag = ExamenDiagnostico.objects.create(nombre="Diagnóstico Inicial", descripcion="Diagnóstico")
+        ResultadoDiagnostico.objects.create(estudiante=self.user_estudiante, examen=examen_diag, puntaje=50.0)
         
         self.user_docente = User.objects.create_user(username='docente', password='password123')
         Profile.objects.create(user=self.user_docente, rol='Docente', nombres='Doc', apellidos='Test')
@@ -93,6 +126,9 @@ class TemaDetalleViewTest(TestCase):
     def test_acceso_estudiante_sin_recomendacion_redirige(self):
         """Verifica que un estudiante sea redirigido si no tiene recomendación."""
         self.client.login(username='estudiante', password='password123')
+        # Eliminar el diagnóstico del estudiante para simular la redirección obligatoria
+        from AppEvaluar.models import ResultadoDiagnostico
+        ResultadoDiagnostico.objects.filter(estudiante=self.user_estudiante).delete()
         response = self.client.get(self.url_detalle)
         self.assertRedirects(response, reverse('tutoria:lista_temas'))
 
@@ -143,7 +179,7 @@ class TemaDetalleViewTest(TestCase):
         self.assertEqual(response.context['seccion'], 'teoria')
 
     def test_acceso_secciones_futuras_muestra_placeholder(self):
-        """Verifica que las secciones futuras (ejercicios/videos) muestren un placeholder."""
+        """Verifica que las secciones de ejercicios y videos carguen correctamente."""
         self.client.login(username='estudiante', password='password123')
         RecomendacionEstudiante.objects.create(usuario=self.user_estudiante, tema=self.tema.nombre, metrica_desempeno=40.0)
         
@@ -151,4 +187,5 @@ class TemaDetalleViewTest(TestCase):
             response = self.client.get(self.url_detalle + f"?seccion={seccion}")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.context['seccion'], seccion)
-            self.assertContains(response, "Próximamente")
+            expected_title = "Ejercicios: Ángulos" if seccion == 'ejercicios' else "Videos: Ángulos"
+            self.assertContains(response, expected_title)

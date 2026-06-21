@@ -291,7 +291,11 @@
             const diagDiv = document.getElementById('modal-diag-list');
             diagDiv.innerHTML = data.diagnosticos.length ? '' : '<p class="text-muted small">No realizado</p>';
             data.diagnosticos.forEach(d => {
-                diagDiv.innerHTML += `<div class="d-flex justify-content-between mb-1"><span>${d.examen}</span><span class="fw-bold text-primary">${d.puntaje} / 20</span></div>`;
+                diagDiv.innerHTML += `
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>${d.examen} <span class="badge bg-secondary text-light ms-1" style="font-size: 0.75rem; padding: 3px 8px; border-radius: 10px;">${d.dificultad_actual}</span></span>
+                        <span class="fw-bold text-primary">${d.puntaje} / 20</span>
+                    </div>`;
             });
 
             // Cargar Exámenes

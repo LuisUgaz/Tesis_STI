@@ -9,6 +9,7 @@ from .models import (
 
 class OpcionInline(admin.TabularInline):
     model = Opcion
+    fields = ('texto', 'es_correcta', 'retroalimentacion')
     extra = 3
 
 class PreguntaAdmin(admin.ModelAdmin):
@@ -17,7 +18,7 @@ class PreguntaAdmin(admin.ModelAdmin):
     inlines = [OpcionInline]
     fieldsets = (
         (None, {
-            'fields': ('examen', 'texto', 'imagen', 'tipo')
+            'fields': ('examen', 'texto', 'imagen', 'tipo', 'explicacion_tecnica')
         }),
         ('Clasificación Académica', {
             'fields': ('tema', 'dificultad'),
@@ -39,9 +40,20 @@ class RespuestaUsuarioAdmin(admin.ModelAdmin):
     readonly_fields = ('fecha_respuesta',)
 
 class ResultadoDiagnosticoAdmin(admin.ModelAdmin):
-    list_display = ('estudiante', 'examen', 'puntaje', 'fecha_realizacion')
+    list_display = ('estudiante', 'dificultad_actual', 'tema_recomendado', 'examen', 'puntaje', 'fecha_realizacion')
     list_filter = ('examen', 'fecha_realizacion')
     readonly_fields = ('fecha_realizacion',)
+
+    def dificultad_actual(self, obj):
+        return obj.estudiante.profile.nivel_dificultad_actual if hasattr(obj.estudiante, 'profile') else '-'
+    dificultad_actual.short_description = 'Dificultad Actual'
+    dificultad_actual.admin_order_field = 'estudiante__profile__nivel_dificultad_actual'
+
+    def tema_recomendado(self, obj):
+        rec = RecomendacionEstudiante.objects.filter(usuario=obj.estudiante).first()
+        return rec.tema if rec else '-'
+    tema_recomendado.short_description = 'Tema Recomendado'
+    tema_recomendado.admin_order_field = 'estudiante__recomendaciones__tema'
 
 # --- Prácticas Personalizadas (HU14) ---
 
@@ -71,12 +83,23 @@ class EjercicioAdmin(admin.ModelAdmin):
 
 @admin.register(ResultadoEjercicio)
 class ResultadoEjercicioAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'ejercicio_id', 'es_correcto', 'tiempo_empleado', 'fecha_resolucion')
+    list_display = ('usuario', 'dificultad_actual', 'tema_recomendado', 'ejercicio_id', 'es_correcto', 'tiempo_empleado', 'fecha_resolucion')
     list_filter = ('es_correcto', 'fecha_resolucion', 'ejercicio__tema')
     readonly_fields = ('fecha_resolucion',)
 
     def ejercicio_id(self, obj):
         return f"Ejercicio #{obj.ejercicio.id}"
+
+    def dificultad_actual(self, obj):
+        return obj.usuario.profile.nivel_dificultad_actual if hasattr(obj.usuario, 'profile') else '-'
+    dificultad_actual.short_description = 'Dificultad Actual'
+    dificultad_actual.admin_order_field = 'usuario__profile__nivel_dificultad_actual'
+
+    def tema_recomendado(self, obj):
+        rec = RecomendacionEstudiante.objects.filter(usuario=obj.usuario).first()
+        return rec.tema if rec else '-'
+    tema_recomendado.short_description = 'Tema Recomendado'
+    tema_recomendado.admin_order_field = 'usuario__recomendaciones__tema'
 
 @admin.register(RecomendacionEstudiante)
 class RecomendacionEstudianteAdmin(admin.ModelAdmin):

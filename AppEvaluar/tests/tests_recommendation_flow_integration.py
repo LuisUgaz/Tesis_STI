@@ -93,8 +93,8 @@ class RecommendationFlowIntegrationTest(TestCase):
         response = self.client.get(reverse('tutoria:tema_detalle', args=[self.tema_angulos.slug]))
         self.assertRedirects(response, reverse('tutoria:lista_temas'))
 
-    @patch('google.generativeai.GenerativeModel.generate_content')
-    def test_ia_feedback_integration(self, mock_generate):
+    @patch('AppEvaluar.services.genai.Client')
+    def test_ia_feedback_integration(self, mock_client_class):
         """
         Verifica que el endpoint de IA feedback funcione correctamente.
         """
@@ -109,9 +109,11 @@ class RecommendationFlowIntegrationTest(TestCase):
         )
 
         # Mock de la IA
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.text = "Explicación de la IA: Fallaste porque los triángulos tienen 3 lados."
-        mock_generate.return_value = mock_response
+        mock_client.models.generate_content.return_value = mock_response
 
         # Llamar al endpoint AJAX
         response = self.client.get(reverse('evaluar:ia_feedback', args=[respuesta.id]))
@@ -119,7 +121,7 @@ class RecommendationFlowIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['feedback'], mock_response.text)
-        self.assertTrue(mock_generate.called)
+        self.assertTrue(mock_client.models.generate_content.called)
 
     def test_unauthorized_ia_feedback(self):
         """Verifica que un usuario no pueda pedir feedback de respuestas de otros."""
