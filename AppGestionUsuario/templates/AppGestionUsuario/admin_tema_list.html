@@ -1,0 +1,42 @@
+{% extends 'home.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="fas fa-layer-group me-2 text-primary"></i>Temas</h2>
+        <a href="{% url 'admin_tema_create' %}" class="btn btn-success btn-sm shadow-sm"><i class="fas fa-plus me-1"></i> Nuevo Tema</a>
+    </div>
+    <div class="card shadow-sm border-0 mb-4" style="border-radius: 14px;">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-9">
+                    <input type="text" name="q" class="form-control form-control-sm" value="{{ request.GET.q }}" placeholder="Buscar por nombre o descripcion">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark btn-sm flex-grow-1">Buscar</button>
+                    <a href="{% url 'admin_tema_list' %}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card shadow-sm border-0" style="border-radius: 14px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th class="ps-4">Tema</th><th>Slug</th><th>Descripcion</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                <tbody>
+                    {% for tema in temas %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ tema.nombre }}</td>
+                        <td><code>{{ tema.slug|default:"-" }}</code></td>
+                        <td class="text-muted small">{{ tema.descripcion|default:"-"|truncatechars:80 }}</td>
+                        <td class="text-end pe-4"><a href="{% url 'admin_tema_update' tema.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-5 text-muted">No hay temas registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

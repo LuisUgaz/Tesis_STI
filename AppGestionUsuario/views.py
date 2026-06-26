@@ -4,13 +4,20 @@ from django.views import View
 from django.views.generic import FormView, DetailView, ListView, CreateView, UpdateView
 from django.db.models import Q
 from django.urls import reverse_lazy
-from .forms import UserRegistrationForm, ContactoForm, AdminUserForm, ConfiguracionGlobalForm, PaginaEstaticaForm, InsigniaForm
+from .forms import (
+    UserRegistrationForm, ContactoForm, AdminUserForm, ConfiguracionGlobalForm,
+    PaginaEstaticaForm, InsigniaForm, AdminProfileForm, AdminTemaForm,
+    AdminContenidoTemaForm, AdminResultadoDiagnosticoForm,
+    AdminRecomendacionEstudianteForm
+)
 from django.contrib import messages
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from .models import MetricasEstudiante, Insignia, Profile, ConfiguracionGlobal, PaginaEstatica
+from AppTutoria.models import Tema, ContenidoTema
+from AppEvaluar.models import ResultadoDiagnostico, RecomendacionEstudiante
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -327,6 +334,206 @@ class BadgeManagementDeleteView(AdminRequiredMixin, View):
         badge.delete()
         messages.success(request, f"Insignia '{nombre}' eliminada correctamente.")
         return redirect('admin_badge_list')
+
+class AdminFormContextMixin:
+    template_name = 'AppGestionUsuario/admin_model_form.html'
+    page_title = ''
+    page_icon = 'fas fa-edit'
+    back_url_name = 'home'
+    submit_label = 'Guardar cambios'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = self.page_title
+        context['page_icon'] = self.page_icon
+        context['back_url_name'] = self.back_url_name
+        context['submit_label'] = self.submit_label
+        return context
+
+class AdminProfileListView(AdminRequiredMixin, ListView):
+    model = Profile
+    template_name = 'AppGestionUsuario/admin_profile_list.html'
+    context_object_name = 'profiles'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Profile.objects.select_related('user').order_by('apellidos', 'nombres')
+        q = self.request.GET.get('q')
+        rol = self.request.GET.get('rol')
+        if q:
+            queryset = queryset.filter(
+                Q(user__username__icontains=q) |
+                Q(nombres__icontains=q) |
+                Q(apellidos__icontains=q) |
+                Q(user__email__icontains=q)
+            )
+        if rol:
+            queryset = queryset.filter(rol=rol)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['roles'] = [choice[0] for choice in Profile.ROLE_CHOICES]
+        return context
+
+class AdminProfileUpdateView(AdminRequiredMixin, AdminFormContextMixin, UpdateView):
+    model = Profile
+    form_class = AdminProfileForm
+    page_title = 'Editar Perfil'
+    page_icon = 'fas fa-id-card'
+    back_url_name = 'admin_profile_list'
+    success_url = reverse_lazy('admin_profile_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Perfil actualizado correctamente.")
+        return super().form_valid(form)
+
+class AdminTemaListView(AdminRequiredMixin, ListView):
+    model = Tema
+    template_name = 'AppGestionUsuario/admin_tema_list.html'
+    context_object_name = 'temas'
+    paginate_by = 20
+    ordering = ['nombre']
+
+    def get_queryset(self):
+        queryset = Tema.objects.all().order_by('nombre')
+        q = self.request.GET.get('q')
+        if q:
+            queryset = queryset.filter(Q(nombre__icontains=q) | Q(descripcion__icontains=q))
+        return queryset
+
+class AdminTemaCreateView(AdminRequiredMixin, AdminFormContextMixin, CreateView):
+    model = Tema
+    form_class = AdminTemaForm
+    page_title = 'Nuevo Tema'
+    page_icon = 'fas fa-layer-group'
+    back_url_name = 'admin_tema_list'
+    success_url = reverse_lazy('admin_tema_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Tema creado correctamente.")
+        return super().form_valid(form)
+
+class AdminTemaUpdateView(AdminRequiredMixin, AdminFormContextMixin, UpdateView):
+    model = Tema
+    form_class = AdminTemaForm
+    page_title = 'Editar Tema'
+    page_icon = 'fas fa-layer-group'
+    back_url_name = 'admin_tema_list'
+    success_url = reverse_lazy('admin_tema_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Tema actualizado correctamente.")
+        return super().form_valid(form)
+
+class AdminContenidoTemaListView(AdminRequiredMixin, ListView):
+    model = ContenidoTema
+    template_name = 'AppGestionUsuario/admin_contenido_tema_list.html'
+    context_object_name = 'contenidos'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = ContenidoTema.objects.select_related('tema').order_by('tema__nombre')
+        q = self.request.GET.get('q')
+        if q:
+            queryset = queryset.filter(Q(tema__nombre__icontains=q) | Q(cuerpo_html__icontains=q))
+        return queryset
+
+class AdminContenidoTemaCreateView(AdminRequiredMixin, AdminFormContextMixin, CreateView):
+    model = ContenidoTema
+    form_class = AdminContenidoTemaForm
+    page_title = 'Nuevo Contenido Teorico'
+    page_icon = 'fas fa-file-alt'
+    back_url_name = 'admin_contenido_tema_list'
+    success_url = reverse_lazy('admin_contenido_tema_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Contenido teorico creado correctamente.")
+        return super().form_valid(form)
+
+class AdminContenidoTemaUpdateView(AdminRequiredMixin, AdminFormContextMixin, UpdateView):
+    model = ContenidoTema
+    form_class = AdminContenidoTemaForm
+    page_title = 'Editar Contenido Teorico'
+    page_icon = 'fas fa-file-alt'
+    back_url_name = 'admin_contenido_tema_list'
+    success_url = reverse_lazy('admin_contenido_tema_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Contenido teorico actualizado correctamente.")
+        return super().form_valid(form)
+
+class AdminResultadoDiagnosticoListView(AdminRequiredMixin, ListView):
+    model = ResultadoDiagnostico
+    template_name = 'AppGestionUsuario/admin_resultado_diagnostico_list.html'
+    context_object_name = 'resultados'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = ResultadoDiagnostico.objects.select_related('estudiante', 'estudiante__profile', 'examen').order_by('-fecha_realizacion')
+        q = self.request.GET.get('q')
+        if q:
+            queryset = queryset.filter(
+                Q(estudiante__username__icontains=q) |
+                Q(estudiante__profile__nombres__icontains=q) |
+                Q(estudiante__profile__apellidos__icontains=q) |
+                Q(examen__nombre__icontains=q)
+            )
+        return queryset
+
+class AdminResultadoDiagnosticoUpdateView(AdminRequiredMixin, AdminFormContextMixin, UpdateView):
+    model = ResultadoDiagnostico
+    form_class = AdminResultadoDiagnosticoForm
+    page_title = 'Editar Resultado Diagnostico'
+    page_icon = 'fas fa-chart-pie'
+    back_url_name = 'admin_resultado_diagnostico_list'
+    success_url = reverse_lazy('admin_resultado_diagnostico_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Resultado diagnostico actualizado correctamente.")
+        return super().form_valid(form)
+
+class AdminRecomendacionListView(AdminRequiredMixin, ListView):
+    model = RecomendacionEstudiante
+    template_name = 'AppGestionUsuario/admin_recomendacion_list.html'
+    context_object_name = 'recomendaciones'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = RecomendacionEstudiante.objects.select_related('usuario', 'usuario__profile').order_by('-fecha_generacion')
+        q = self.request.GET.get('q')
+        if q:
+            queryset = queryset.filter(
+                Q(usuario__username__icontains=q) |
+                Q(usuario__profile__nombres__icontains=q) |
+                Q(usuario__profile__apellidos__icontains=q) |
+                Q(tema__icontains=q)
+            )
+        return queryset
+
+class AdminRecomendacionCreateView(AdminRequiredMixin, AdminFormContextMixin, CreateView):
+    model = RecomendacionEstudiante
+    form_class = AdminRecomendacionEstudianteForm
+    page_title = 'Nueva Recomendacion'
+    page_icon = 'fas fa-lightbulb'
+    back_url_name = 'admin_recomendacion_list'
+    success_url = reverse_lazy('admin_recomendacion_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Recomendacion creada correctamente.")
+        return super().form_valid(form)
+
+class AdminRecomendacionUpdateView(AdminRequiredMixin, AdminFormContextMixin, UpdateView):
+    model = RecomendacionEstudiante
+    form_class = AdminRecomendacionEstudianteForm
+    page_title = 'Editar Recomendacion'
+    page_icon = 'fas fa-lightbulb'
+    back_url_name = 'admin_recomendacion_list'
+    success_url = reverse_lazy('admin_recomendacion_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Recomendacion actualizada correctamente.")
+        return super().form_valid(form)
 
 class GetUserDataView(AdminRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):

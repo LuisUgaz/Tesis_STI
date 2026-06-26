@@ -1,6 +1,9 @@
 from django import forms
+from django.db import models
 from django.contrib.auth.models import User
 from .models import Profile, ConfiguracionGlobal, PaginaEstatica, Insignia
+from AppTutoria.models import Tema, ContenidoTema
+from AppEvaluar.models import ResultadoDiagnostico, RecomendacionEstudiante
 from django.core.exceptions import ValidationError
 
 class UserRegistrationForm(forms.Form):
@@ -145,6 +148,73 @@ class PaginaEstaticaForm(forms.ModelForm):
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
             'slug': forms.TextInput(attrs={'class': 'form-control'}),
             'contenido_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+        }
+
+class AdminProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = [
+            'nombres', 'apellidos', 'rol', 'grado', 'seccion',
+            'nivel_dificultad_actual', 'puntos_acumulados', 'nivel_estudiante'
+        ]
+        widgets = {
+            'nombres': forms.TextInput(attrs={'class': 'form-control'}),
+            'apellidos': forms.TextInput(attrs={'class': 'form-control'}),
+            'rol': forms.Select(attrs={'class': 'form-select'}),
+            'grado': forms.TextInput(attrs={'class': 'form-control'}),
+            'seccion': forms.TextInput(attrs={'class': 'form-control'}),
+            'nivel_dificultad_actual': forms.Select(attrs={'class': 'form-select'}),
+            'puntos_acumulados': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'nivel_estudiante': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+        }
+
+class AdminTemaForm(forms.ModelForm):
+    class Meta:
+        model = Tema
+        fields = ['nombre', 'slug', 'descripcion']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+
+class AdminContenidoTemaForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = Tema.objects.filter(contenido__isnull=True).order_by('nombre')
+        if self.instance and self.instance.pk:
+            queryset = Tema.objects.filter(
+                models.Q(contenido__isnull=True) | models.Q(pk=self.instance.tema_id)
+            ).order_by('nombre')
+        self.fields['tema'].queryset = queryset
+
+    class Meta:
+        model = ContenidoTema
+        fields = ['tema', 'cuerpo_html', 'material_pdf']
+        widgets = {
+            'tema': forms.Select(attrs={'class': 'form-select'}),
+            'cuerpo_html': forms.Textarea(attrs={'class': 'form-control', 'rows': 12}),
+            'material_pdf': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+class AdminResultadoDiagnosticoForm(forms.ModelForm):
+    class Meta:
+        model = ResultadoDiagnostico
+        fields = ['estudiante', 'examen', 'puntaje']
+        widgets = {
+            'estudiante': forms.Select(attrs={'class': 'form-select'}),
+            'examen': forms.Select(attrs={'class': 'form-select'}),
+            'puntaje': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0, 'max': 100}),
+        }
+
+class AdminRecomendacionEstudianteForm(forms.ModelForm):
+    class Meta:
+        model = RecomendacionEstudiante
+        fields = ['usuario', 'tema', 'metrica_desempeno']
+        widgets = {
+            'usuario': forms.Select(attrs={'class': 'form-select'}),
+            'tema': forms.TextInput(attrs={'class': 'form-control'}),
+            'metrica_desempeno': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': 0, 'max': 100}),
         }
 
 class InsigniaForm(forms.ModelForm):

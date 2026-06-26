@@ -12,6 +12,9 @@ class RendirExamenTemaDocenteTest(TestCase):
         # Crear docente y estudiante con sus perfiles correspondientes
         self.docente_user = User.objects.create_user(username='docente_test', password='password123')
         Profile.objects.create(user=self.docente_user, rol='Docente', grado='2do', seccion='A')
+
+        self.admin_user = User.objects.create_user(username='admin_sistema', password='password123')
+        Profile.objects.create(user=self.admin_user, rol='Administrador', grado='2do', seccion='A')
         
         self.estudiante_user = User.objects.create_user(username='estudiante_test', password='password123')
         Profile.objects.create(user=self.estudiante_user, rol='Estudiante', grado='2do', seccion='A')
@@ -61,6 +64,15 @@ class RendirExamenTemaDocenteTest(TestCase):
         self.assertEqual(response.status_code, 302)
         # Redirige al detalle del tema
         self.assertRedirects(response, reverse('tutoria:tema_detalle', args=[self.tema.slug]))
+
+    def test_administrador_puede_ver_examen_sin_restricciones(self):
+        """El administrador debe previsualizar el examen sin registrar respuestas."""
+        self.client.login(username='admin_sistema', password='password123')
+        url = reverse('evaluar:rendir_examen_tema', args=[self.examen.id])
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "disabled")
 
     def test_estudiante_flujo_normal(self):
         """El estudiante puede ingresar a rendir el examen y se registra su sesión."""

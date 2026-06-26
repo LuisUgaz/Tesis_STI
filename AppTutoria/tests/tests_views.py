@@ -17,6 +17,10 @@ class ListaTemasViewTest(TestCase):
         # Crear usuario docente
         self.user_docente = User.objects.create_user(username='docente', password='password123')
         self.profile_docente = Profile.objects.create(user=self.user_docente, rol='Docente')
+
+        # Crear usuario administrador
+        self.user_admin = User.objects.create_user(username='admin_sistema', password='password123')
+        self.profile_admin = Profile.objects.create(user=self.user_admin, rol='Administrador')
         
         # Crear algunos temas
         Tema.objects.create(nombre="Triángulos")
@@ -32,6 +36,12 @@ class ListaTemasViewTest(TestCase):
     def test_acceso_docente_permitido_lista(self):
         """Verifica que un docente pueda acceder a la lista de temas."""
         self.client.login(username='docente', password='password123')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_acceso_administrador_permitido_lista(self):
+        """Verifica que un administrador pueda acceder a la lista de temas."""
+        self.client.login(username='admin_sistema', password='password123')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
@@ -100,6 +110,9 @@ class TemaDetalleViewTest(TestCase):
         
         self.user_docente = User.objects.create_user(username='docente', password='password123')
         Profile.objects.create(user=self.user_docente, rol='Docente', nombres='Doc', apellidos='Test')
+
+        self.user_admin = User.objects.create_user(username='admin_sistema', password='password123')
+        Profile.objects.create(user=self.user_admin, rol='Administrador', nombres='Admin', apellidos='Test')
         
         # Crear temas y contenido
         self.tema = Tema.objects.create(nombre="Ángulos", slug="angulos")
@@ -122,6 +135,13 @@ class TemaDetalleViewTest(TestCase):
         self.client.login(username='docente', password='password123')
         response = self.client.get(self.url_detalle)
         self.assertEqual(response.status_code, 200)
+
+    def test_acceso_administrador_permitido(self):
+        """Verifica que un administrador pueda acceder al contenido como supervisor."""
+        self.client.login(username='admin_sistema', password='password123')
+        response = self.client.get(self.url_detalle)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['es_docente'])
 
     def test_acceso_estudiante_sin_recomendacion_redirige(self):
         """Verifica que un estudiante sea redirigido si no tiene recomendación."""

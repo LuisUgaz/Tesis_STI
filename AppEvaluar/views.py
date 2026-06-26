@@ -1026,11 +1026,11 @@ def rendir_examen_tema(request, examen_id):
     Incluye validación secuencial: debe haber resuelto el examen anterior del mismo tema.
     Para docentes, se permite previsualizar el examen de forma de lectura libre.
     """
-    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente', 'Administrador']:
         raise PermissionDenied("Acceso no autorizado.")
 
     examen = get_object_or_404(Examen, id=examen_id)
-    es_docente = request.user.profile.rol == 'Docente'
+    es_docente = request.user.profile.rol in ['Docente', 'Administrador']
     
     if es_docente:
         # Los docentes pueden ver el examen de forma libre sin validaciones de intentos o secuencia.

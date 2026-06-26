@@ -317,7 +317,7 @@
                             <p>{{ video.descripcion|default:"Sin descripción disponible." }}</p>
                             
                             {% if video.url_video %}
-                                <a href="{{ video.url_video }}" target="_blank" class="btn-play" onclick="registrarVista('{{ video.id }}')">
+                                <a href="{{ video.url_video }}" target="_blank" class="btn-play" {% if not es_docente %}onclick="registrarVista('{{ video.id }}')"{% endif %}>
                                     Ver Video <i class="fas fa-external-link-alt"></i>
                                 </a>
                             {% else %}
@@ -368,7 +368,9 @@
             currentVideoId = videoId;
             playerContainer.innerHTML = `<video id="mainVideo" controls autoplay src="${url}" style="width:100%"></video>`;
             const video = document.getElementById("mainVideo");
+            {% if not es_docente %}
             video.onended = () => registrarVista(videoId);
+            {% endif %}
             vTitle.innerText = title;
             modal.style.display = "flex";
         }

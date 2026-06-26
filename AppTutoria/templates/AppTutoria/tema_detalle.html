@@ -607,7 +607,7 @@
                                         <h5 class="fw-bold text-primary mb-2">{{ video.titulo }}</h5>
                                         <p class="small text-muted mb-4">{{ video.descripcion|truncatechars:100 }}</p>
                                     </div>
-                                    <button class="btn-play w-100" onclick="{% if video.url_video %}window.open('{{ video.url_video }}','_blank'); registrarVista({{ video.id }}){% else %}openLocalVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}', {{ video.id }}){% endif %}">
+                                    <button class="btn-play w-100" onclick="{% if video.url_video %}window.open('{{ video.url_video }}','_blank');{% if not es_docente %} registrarVista({{ video.id }});{% endif %}{% else %}openLocalVideo('{{ video.archivo_video.url }}', '{{ video.titulo }}', {{ video.id }}){% endif %}">
                                         Ver Video
                                     </button>
                                 </div>
@@ -781,7 +781,9 @@
                 </div>
             `;
             document.body.appendChild(modal);
+            {% if not es_docente %}
             modal.querySelector('video').onended = () => registrarVista(videoId);
+            {% endif %}
         };
 
         window.registrarVista = function(videoId) {

@@ -16,6 +16,10 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from .forms import VideoTemaForm
 
+ROLES_ACCESO_TEMAS = ['Estudiante', 'Docente', 'Administrador']
+ROLES_SUPERVISION_TEMAS = ['Docente', 'Administrador']
+
+
 class TeacherRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_authenticated and hasattr(self.request.user, 'profile') and self.request.user.profile.rol == 'Docente'
@@ -74,7 +78,7 @@ def lista_temas(request):
     Los docentes pueden ver todos los temas sin restricciones.
     """
     # Verificar que el usuario tenga el perfil adecuado
-    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ROLES_ACCESO_TEMAS:
         raise PermissionDenied("No tienes permiso para acceder a la lista de temas.")
 
     # Lista de temas desde la base de datos con sus exámenes asociados
@@ -150,12 +154,12 @@ def tema_detalle(request, slug):
     Muestra el contenido detallado de un tema específico.
     Los docentes supervisan todo. Los estudiantes siguen su ruta recomendada.
     """
-    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ROLES_ACCESO_TEMAS:
         raise PermissionDenied("Acceso no autorizado.")
 
     # 2. Obtener el tema por slug
     tema = get_object_or_404(Tema, slug=slug)
-    es_docente = request.user.profile.rol == 'Docente'
+    es_docente = request.user.profile.rol in ROLES_SUPERVISION_TEMAS
 
     # 3. Verificar acceso solo para estudiantes (HU08 / Refactor Validacion)
     if not es_docente:
@@ -302,12 +306,12 @@ def video_list(request, slug):
     """
     Muestra la lista de videos asociados a un tema específico.
     """
-    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ['Estudiante', 'Docente']:
+    if not hasattr(request.user, 'profile') or request.user.profile.rol not in ROLES_ACCESO_TEMAS:
         raise PermissionDenied("Acceso denegado.")
 
     # 2. Obtener el tema por slug
     tema = get_object_or_404(Tema, slug=slug)
-    es_docente = request.user.profile.rol == 'Docente'
+    es_docente = request.user.profile.rol in ROLES_SUPERVISION_TEMAS
 
     # 3. Validar acceso solo para estudiantes (HU08 / Refactor Validacion)
     if not es_docente:
