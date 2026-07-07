@@ -649,11 +649,24 @@ def validar_respuesta(request):
 @student_required
 def rendir_examen(request, examen_id):
     examen = get_object_or_404(ExamenDiagnostico, id=examen_id)
+    respuestas_usuario = RespuestaUsuario.objects.filter(usuario=request.user, pregunta__examen=examen)
+    resultado_previo = ResultadoDiagnostico.objects.filter(estudiante=request.user, examen=examen).first()
+    progreso_diagnostico = ProgresoEstudiante.objects.filter(
+        usuario=request.user,
+        referencia_id=examen.id,
+        tipo_actividad__icontains='Diagn'
+    ).exists()
     
     # Validar si el estudiante ya realizó el examen (HU06)
-    if ResultadoDiagnostico.objects.filter(estudiante=request.user, examen=examen).exists():
+    if resultado_previo and respuestas_usuario.exists() and progreso_diagnostico:
         messages.error(request, "Ya has realizado este examen diagnóstico.")
         return redirect('evaluar:ver_resultados', examen_id=examen.id)
+
+    elif resultado_previo:
+        # Un resultado sin progreso del flujo real es inconsistente y no debe bloquear
+        # a un estudiante que aun no resolvio el diagnostico.
+        resultado_previo.delete()
+        respuestas_usuario.delete()
 
     preguntas = examen.preguntas.all().prefetch_related('opciones')
     
@@ -763,10 +776,31 @@ def ver_resultados(request, examen_id):
     examen = get_object_or_404(ExamenDiagnostico, id=examen_id)
     respuestas = RespuestaUsuario.objects.filter(usuario=request.user, pregunta__examen=examen)
     resultado_persistido = ResultadoDiagnostico.objects.filter(estudiante=request.user, examen=examen).first()
+    progreso_diagnostico = ProgresoEstudiante.objects.filter(
+        usuario=request.user,
+        referencia_id=examen.id,
+        tipo_actividad__icontains='Diagn'
+    ).exists()
     
-    if not respuestas.exists() and not resultado_persistido:
+    if not respuestas.exists():
+        if resultado_persistido:
+            resultado_persistido.delete()
+            messages.warning(
+                request,
+                "Se encontrÃ³ un resultado incompleto para este examen. Puedes rendir el diagnÃ³stico nuevamente."
+            )
+            return redirect('evaluar:rendir_examen', examen_id=examen.id)
         messages.warning(request, "No tienes resultados para este examen.")
         return redirect('home')
+
+    if resultado_persistido and not progreso_diagnostico:
+        resultado_persistido.delete()
+        respuestas.delete()
+        messages.warning(
+            request,
+            "Se encontro un resultado incompleto para este examen. Puedes rendir el diagnostico nuevamente."
+        )
+        return redirect('evaluar:rendir_examen', examen_id=examen.id)
 
     total_preguntas = examen.preguntas.count()
     total_correctas = 0

@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from AppGestionUsuario.models import Profile
 from AppEvaluar.models import ExamenDiagnostico, Pregunta, Opcion, RespuestaUsuario, ResultadoDiagnostico
-from AppTutoria.models import Tema
+from AppTutoria.models import Tema, ProgresoEstudiante
 
 class EvaluarViewsTest(TestCase):
     def setUp(self):
@@ -61,6 +61,19 @@ class EvaluarViewsTest(TestCase):
             examen=self.examen,
             puntaje=100.0
         )
+        RespuestaUsuario.objects.create(
+            usuario=self.user_student,
+            pregunta=self.pregunta,
+            opcion_seleccionada=Opcion.objects.get(texto="Opcion A")
+        )
+        ProgresoEstudiante.objects.create(
+            usuario=self.user_student,
+            tema=self.tema_obj,
+            tipo_actividad='Examen Diagnóstico',
+            referencia_id=self.examen.id,
+            grado=self.user_student.profile.grado,
+            seccion=self.user_student.profile.seccion
+        )
         
         data = {
             f'pregunta_{self.pregunta.id}': Opcion.objects.get(texto="Opcion A").id
@@ -72,6 +85,75 @@ class EvaluarViewsTest(TestCase):
         self.assertContains(response, "Ya has realizado este examen diagnóstico.")
         # No deben haberse creado nuevos resultados
         self.assertEqual(ResultadoDiagnostico.objects.count(), 1)
+
+    def test_orphan_diagnostic_result_does_not_block_exam(self):
+        self.client.login(username='student', password='password123')
+        ResultadoDiagnostico.objects.create(
+            estudiante=self.user_student,
+            examen=self.examen,
+            puntaje=100.0
+        )
+
+        response = self.client.get(self.url_examen)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'AppEvaluar/rendir_examen.html')
+        self.assertContains(response, "Pregunta 1")
+        self.assertEqual(ResultadoDiagnostico.objects.count(), 0)
+
+    def test_seeded_diagnostic_result_with_responses_does_not_block_exam_without_progress(self):
+        self.client.login(username='student', password='password123')
+        ResultadoDiagnostico.objects.create(
+            estudiante=self.user_student,
+            examen=self.examen,
+            puntaje=100.0
+        )
+        RespuestaUsuario.objects.create(
+            usuario=self.user_student,
+            pregunta=self.pregunta,
+            opcion_seleccionada=Opcion.objects.get(texto="Opcion A")
+        )
+
+        response = self.client.get(self.url_examen)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'AppEvaluar/rendir_examen.html')
+        self.assertEqual(ResultadoDiagnostico.objects.count(), 0)
+        self.assertEqual(RespuestaUsuario.objects.count(), 0)
+
+    def test_results_view_redirects_orphan_diagnostic_result_to_exam(self):
+        self.client.login(username='student', password='password123')
+        ResultadoDiagnostico.objects.create(
+            estudiante=self.user_student,
+            examen=self.examen,
+            puntaje=100.0
+        )
+        url_resultados = reverse('evaluar:ver_resultados', kwargs={'examen_id': self.examen.id})
+
+        response = self.client.get(url_resultados)
+
+        self.assertRedirects(response, self.url_examen)
+        self.assertEqual(ResultadoDiagnostico.objects.count(), 0)
+
+    def test_results_view_redirects_seeded_result_with_responses_without_progress(self):
+        self.client.login(username='student', password='password123')
+        ResultadoDiagnostico.objects.create(
+            estudiante=self.user_student,
+            examen=self.examen,
+            puntaje=100.0
+        )
+        RespuestaUsuario.objects.create(
+            usuario=self.user_student,
+            pregunta=self.pregunta,
+            opcion_seleccionada=Opcion.objects.get(texto="Opcion A")
+        )
+        url_resultados = reverse('evaluar:ver_resultados', kwargs={'examen_id': self.examen.id})
+
+        response = self.client.get(url_resultados)
+
+        self.assertRedirects(response, self.url_examen)
+        self.assertEqual(ResultadoDiagnostico.objects.count(), 0)
+        self.assertEqual(RespuestaUsuario.objects.count(), 0)
 
     def test_results_view_shows_score(self):
         self.client.login(username='student', password='password123')
